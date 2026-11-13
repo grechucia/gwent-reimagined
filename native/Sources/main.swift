@@ -31,6 +31,7 @@ final class GameView: MTKView {
             let s = window?.backingScaleFactor ?? 2
             drawableSize = CGSize(width: b.width * s, height: b.height * s)
         }
+        layer?.contentsScale = drawableSize.width / b.width
     }
     private var tracking: NSTrackingArea?
     override func updateTrackingAreas() {
