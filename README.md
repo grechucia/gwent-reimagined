@@ -11,7 +11,7 @@
 ![License](https://img.shields.io/badge/license-MIT%20%2B%20Commons%20Clause-green)
 ![Version](https://img.shields.io/badge/version-1.0-gold)
 
-![Title screen](docs/screenshots/title.jpg)
+![Title screen](docs/screenshots/title.png)
 
 </div>
 
