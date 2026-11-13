@@ -1,0 +1,4285 @@
+/* Gwint — język polski. Struktura identyczna jak lang/en.js; tłumaczone są wartości. */
+(window.GWENT_LANGS = window.GWENT_LANGS || {})["pl"] = {
+ "name": "Polski",
+ "cards": {
+  "spe_decoy": {
+   "name": "Manekin do ćwiczeń",
+   "quote": "Kiedy skończą się chłopi, manekiny też nieźle łapią strzały."
+  },
+  "spe_frost": {
+   "name": "Trzaskający mróz",
+   "quote": "Najlepsze w mrozie jest to, że trupy poległych nie gniją tak szybko."
+  },
+  "spe_clear": {
+   "name": "Czyste niebo",
+   "quote": "Słońce świeci, Dromle! Słońce świeci! Może jednak jest jeszcze nadzieja..."
+  },
+  "spe_horn": {
+   "name": "Róg dowódcy",
+   "quote": "Plus jeden do morale, minus trzy do słuchu."
+  },
+  "ntr_geralt": {
+   "name": "Geralt z Rivii",
+   "quote": "Jeśli taka jest cena ratowania świata, to lepiej niech ten świat zginie."
+  },
+  "ntr_roach": {
+   "name": "Płotka",
+   "quote": "Dawaj, Płotka! Szybciej!"
+  },
+  "ntr_ciri": {
+   "name": "Cirilla Fiona Elen Riannon",
+   "quote": "Wiesz, kiedy bajki przestają być bajkami? Kiedy ludzie zaczynają w nie wierzyć."
+  },
+  "ntr_mysterious_elf": {
+   "name": "Avallac'h",
+   "quote": "Wy, ludzie, macie... osobliwe gusta."
+  },
+  "ntr_dandelion": {
+   "name": "Jaskier",
+   "quote": "Jaskier, jesteś cynikiem, rozpustnikiem, kurwiarzem, łgarzem – i moim najlepszym przyjacielem."
+  },
+  "ntr_triss": {
+   "name": "Triss Merigold",
+   "quote": "Poradzę sobie. Zaufaj mi."
+  },
+  "ntr_vesemir": {
+   "name": "Vesemir",
+   "quote": "Jak cię będą wieszać, poproś o wodę. Nim przyniosą, wszystko się może zdarzyć."
+  },
+  "ntr_yennefer": {
+   "name": "Yennefer z Vengerbergu",
+   "quote": "Magia to Chaos, Sztuka i Nauka. Jest przekleństwem, błogosławieństwem i postępem."
+  },
+  "spe_fog": {
+   "name": "Gęsta mgła",
+   "quote": "Marzenie dobrego dowódcy... koszmar złego."
+  },
+  "spe_scorch": {
+   "name": "Pożoga",
+   "quote": "Słupy ognia obracają najpotężniejszych w popiół. Reszta drży w szoku i przerażeniu."
+  },
+  "spe_cull": {
+   "name": "Odstrzał",
+   "quote": "Nie każda śmierć jest bohaterska. Większość to tylko… wątła szyja spotykająca ostrą stal."
+  },
+  "spe_rain": {
+   "name": "Ulewny deszcz",
+   "quote": "Nawet deszcz w tym kraju śmierdzi szczynami."
+  },
+  "nr_villen": {
+   "name": "Villentretenmerth",
+   "quote": "Każe się też zwać Borkh Trzy Kawki... nazwy to nie jego mocna strona."
+  },
+  "nr_zoltan": {
+   "name": "Zoltan Chivay",
+   "quote": "Życie bez starych kompanów i gorzały jest jak baba bez zadka."
+  },
+  "nr_foltest_king": {
+   "name": "Foltest, Król Temerii",
+   "quote": "To naturalne i piękne, że mężczyzna kocha swoją siostrę."
+  },
+  "nr_foltest_lord": {
+   "name": "Foltest, Wódz Północy",
+   "quote": "Pal licho doradców i ich knowania. Ufam ostrzom moich żołnierzy."
+  },
+  "nr_foltest_siegemaster": {
+   "name": "Foltest, Zdobywca",
+   "quote": "Dobrze wycelowana balista burzy nie tylko mury wroga, ale i jego morale."
+  },
+  "nr_foltest_steelforged": {
+   "name": "Foltest, Żelazny Władca",
+   "quote": "Piękny dzień na bitwę."
+  },
+  "nr_foltest_son_of_medell": {
+   "name": "Foltest, Syn Medella",
+   "quote": "Do diaska, rządzę tym krajem i nie zamierzam przemykać się po kątach."
+  },
+  "nr_blue_stripes_1": {
+   "name": "Komandos Niebieskich Pasów",
+   "quote": "Zrobiłbym dla Temerii wszystko. Głównie jednak dla niej zabijam."
+  },
+  "nr_blue_stripes_2": {
+   "name": "Komandos Niebieskich Pasów",
+   "quote": "Zrobiłbym dla Temerii wszystko. Głównie jednak dla niej zabijam."
+  },
+  "nr_blue_stripes_3": {
+   "name": "Komandos Niebieskich Pasów",
+   "quote": "Zrobiłbym dla Temerii wszystko. Głównie jednak dla niej zabijam."
+  },
+  "nr_olgierd": {
+   "name": "Olgierd von Everec",
+   "quote": "Przynajmniej wiesz już, że niełatwo tracę głowę."
+  },
+  "nr_catapult_1": {
+   "name": "Katapulta",
+   "quote": "Bogowie pomagają tym, którzy mają lepsze katapulty."
+  },
+  "nr_catapult_2": {
+   "name": "Katapulta",
+   "quote": "Bogowie pomagają tym, którzy mają lepsze katapulty."
+  },
+  "nr_crinfrid_1": {
+   "name": "Rębacz z Crinfrid",
+   "quote": "Ostatnio nie szło nam z potworami, to się zaciągnęliśmy."
+  },
+  "nr_crinfrid_2": {
+   "name": "Rębacz z Crinfrid",
+   "quote": "Ostatnio nie szło nam z potworami, to się zaciągnęliśmy."
+  },
+  "nr_crinfrid_3": {
+   "name": "Rębacz z Crinfrid",
+   "quote": "Ostatnio nie szło nam z potworami, to się zaciągnęliśmy."
+  },
+  "nr_ballista_1": {
+   "name": "Balista",
+   "quote": "Nigdy nie trafia dwa razy w to samo miejsce, co może być prawdziwym problemem."
+  },
+  "nr_ballista_2": {
+   "name": "Balista",
+   "quote": "Nigdy nie trafia dwa razy w to samo miejsce, co może być prawdziwym problemem."
+  },
+  "nr_banner_nurse": {
+   "name": "Medyczka Burej Chorągwi",
+   "quote": "Szyj czerwone do czerwonego, białe do białego, a wszystko będzie dobrze."
+  },
+  "nr_esterad": {
+   "name": "Esterad Thyssen",
+   "quote": "Jak wszyscy Thyssenowie był wysoki, potężnie zbudowany i zbrodniczo przystojny."
+  },
+  "nr_natalis": {
+   "name": "Jan Natalis",
+   "quote": "Ten plac powinien nosić imiona moich żołnierzy, poległych. Nie moje."
+  },
+  "nr_kaedwen_siege_1": {
+   "name": "Kaedweński inżynier oblężniczy",
+   "quote": "„Trzeba skalibrować ramię o pięć stopni”. „Zrobić co o ile?”"
+  },
+  "nr_kaedwen_siege_2": {
+   "name": "Kaedweński inżynier oblężniczy",
+   "quote": "„Trzeba skalibrować ramię o pięć stopni”. „Zrobić co o ile?”"
+  },
+  "nr_keira": {
+   "name": "Keira Metz",
+   "quote": "Jeśli mam dziś zginąć, chcę wyglądać olśniewająco."
+  },
+  "nr_philippa": {
+   "name": "Filippa Eilhart",
+   "quote": "Wkrótce władza królów zwiędnie, a Loża zajmie należne jej miejsce."
+  },
+  "nr_poor_infantry_1": {
+   "name": "Biedna pierdolona piechota",
+   "quote": "Weteran wojenny jestem! ...poratujecie koroną?"
+  },
+  "nr_poor_infantry_2": {
+   "name": "Biedna pierdolona piechota",
+   "quote": "Weteran wojenny jestem! ...poratujecie koroną?"
+  },
+  "nr_poor_infantry_3": {
+   "name": "Biedna pierdolona piechota",
+   "quote": "Weteran wojenny jestem! ...poratujecie koroną?"
+  },
+  "nr_stennis": {
+   "name": "Książę Stennis",
+   "quote": "Toż on, kurwa, w złotej zbroi chodzi. Złotej. Jasne, że to dupek."
+  },
+  "nr_sheldon": {
+   "name": "Sheldon Skaggs",
+   "quote": "Byłem tam, na pierwszej linii! Tam, gdzie walka była najgęstsza!"
+  },
+  "nr_siege_tower": {
+   "name": "Wieża oblężnicza",
+   "quote": "Kocham poranny łoskot wież oblężniczych. Brzmi jak zwycięstwo."
+  },
+  "nr_dijkstra": {
+   "name": "Zygfryd Dijkstra",
+   "quote": "Gwint jest jak polityka, tylko uczciwszy."
+  },
+  "nr_sheala": {
+   "name": "Sheala de Tancarville",
+   "quote": "Loży brak pokory. Żądza władzy może nas jeszcze zgubić."
+  },
+  "nr_thaler": {
+   "name": "Talar",
+   "quote": "Odpierdol się! Nie wszyscy jesteśmy jebanymi lowelasami. Niektórzy mają głębię..."
+  },
+  "nr_vernon": {
+   "name": "Vernon Roche",
+   "quote": "Patriota... i prawdziwy skurwysyn."
+  },
+  "nr_ves": {
+   "name": "Ves",
+   "quote": "Lepiej żyć jeden dzień jak król niż całe życie jak żebrak."
+  },
+  "nr_trebuchet": {
+   "name": "Trebusz",
+   "quote": "Zamek sam się nie rozwali, co? Toczyć te trebusze!"
+  },
+  "ne_emhyr_imperial": {
+   "name": "Emhyr var Emreis, Jego Cesarska Mość",
+   "quote": "Niebiosa płakały, gdy umarła moja Pavetta. Po mnie nie zapłaczą."
+  },
+  "ne_emhyr_emperor": {
+   "name": "Emhyr var Emreis, Cesarz Nilfgaardu",
+   "quote": "Twoje pobudki mnie nie interesują. Tylko wyniki."
+  },
+  "ne_emhyr_whiteflame": {
+   "name": "Emhyr var Emreis, Biały Płomień",
+   "quote": "Miecz to tylko jedno z wielu narzędzi w rękach władcy."
+  },
+  "ne_emhyr_relentless": {
+   "name": "Emhyr var Emreis, Bezlitosny",
+   "quote": "Nie zwą mnie Cierpliwym. Uważaj, by ciebie nie zwano Bezgłowym."
+  },
+  "ne_emhyr_invader_of_the_north": {
+   "name": "Emhyr var Emreis, Najeźdźca Północy",
+   "quote": "Cesarze rozkazują tłumom, a nie panują nad dwiema rzeczami: czasem i własnym sercem."
+  },
+  "ne_cahir": {
+   "name": "Cahir Mawr Dyffryn aep Ceallach",
+   "quote": "Oczy błyszczały mu spod skrzydlatego hełmu. Na ostrzu miecza lśnił ogień."
+  },
+  "ne_shilard": {
+   "name": "Shilard Fitz-Oesterlen",
+   "quote": "Wojna to tylko wrzask i wściekłość – historię kształtuje dyplomacja."
+  },
+  "ne_renuald": {
+   "name": "Renuald aep Matsen",
+   "quote": "Mówią, że brygada Impera niczego się nie boi. Nieprawda. Renuald straszy ich na śmierć."
+  },
+  "ne_impera_brigade_1": {
+   "name": "Gwardzista brygady Impera",
+   "quote": "Brygada Impera nigdy się nie poddaje. Nigdy."
+  },
+  "ne_impera_brigade_2": {
+   "name": "Gwardzista brygady Impera",
+   "quote": "Brygada Impera nigdy się nie poddaje. Nigdy."
+  },
+  "ne_impera_brigade_3": {
+   "name": "Gwardzista brygady Impera",
+   "quote": "Brygada Impera nigdy się nie poddaje. Nigdy."
+  },
+  "ne_impera_brigade_4": {
+   "name": "Gwardzista brygady Impera",
+   "quote": "Brygada Impera nigdy się nie poddaje. Nigdy."
+  },
+  "ne_nauzicaa_1": {
+   "name": "Jeździec brygady Nauzyka",
+   "quote": "Cesarz nauczy Północ dyscypliny."
+  },
+  "ne_nauzicaa_2": {
+   "name": "Jeździec brygady Nauzyka",
+   "quote": "Cesarz nauczy Północ dyscypliny."
+  },
+  "ne_nauzicaa_3": {
+   "name": "Jeździec brygady Nauzyka",
+   "quote": "Cesarz nauczy Północ dyscypliny."
+  },
+  "ne_stefan": {
+   "name": "Stefan Skellen",
+   "quote": "Mój znak szpeci twarz naszej przyszłej cesarzowej. To moje największe osiągnięcie."
+  },
+  "ne_vreemde": {
+   "name": "Vreemde",
+   "quote": "Dyscyplina to najgroźniejsza broń Cesarstwa."
+  },
+  "ne_morteisen": {
+   "name": "Morteisen",
+   "quote": "Żaden nordlingowy pikinier ani krasnoludzki włócznik nie pokona wyszkolonej kawalerii."
+  },
+  "ne_letho": {
+   "name": "Letho z Gulety",
+   "quote": "Wiedźmini nie umierają w łóżkach."
+  },
+  "ne_menno": {
+   "name": "Menno Coehoorn",
+   "quote": "Uważny oddział zwiadowczy cenię wyżej niż najlepszą brygadę jazdy."
+  },
+  "ne_vattier": {
+   "name": "Vattier de Rideaux",
+   "quote": "Nie ma problemu, którego nie rozwiązałby dobrze zaplanowany zamach."
+  },
+  "ne_tibor": {
+   "name": "Tibor Eggebracht",
+   "quote": "Albaaaa! Naprzód!! Alba! Niech żyje Cesarz!"
+  },
+  "ne_assire": {
+   "name": "Czarodziejka: Assire var Anahid",
+   "quote": "Nilfgaardzcy magowie mają wybór: służalcze posłuszeństwo albo szubienica."
+  },
+  "ne_cynthia": {
+   "name": "Czarodziejka: Cynthia",
+   "quote": "Talenty Cynthii bywają zabójcze. Trzeba ją trzymać na krótkiej smyczy."
+  },
+  "ne_fringilla": {
+   "name": "Czarodziejka: Fringilla Vigo",
+   "quote": "Magia jest najwyższym dobrem. Przekracza wszelkie granice i podziały."
+  },
+  "ne_black_archer": {
+   "name": "Łucznik czarnej piechoty",
+   "quote": "Celuję w kolano. Zawsze."
+  },
+  "ne_black_archer_1": {
+   "name": "Łucznik czarnej piechoty",
+   "quote": "Celuję w kolano. Zawsze."
+  },
+  "ne_albrich": {
+   "name": "Albrich",
+   "quote": "Kula ognia? Oczywiście. Czego tylko Wasza Cesarska Mość sobie życzy."
+  },
+  "ne_young_emissary_1": {
+   "name": "Młody emisariusz",
+   "quote": "Jeśli dobrze się spiszę, może następnym razem poślą mnie gdzieś, gdzie jest bardziej cywilizowanie."
+  },
+  "ne_young_emissary_2": {
+   "name": "Młody emisariusz",
+   "quote": "Jeśli dobrze się spiszę, może następnym razem poślą mnie gdzieś, gdzie jest bardziej cywilizowanie."
+  },
+  "ne_puttkammer": {
+   "name": "Puttkammer",
+   "quote": "Wiele się nauczyłem w akademii wojskowej w Braibant. Na przykład szorowania ziemniaków."
+  },
+  "ne_archer_support": {
+   "name": "Pomocnicy łucznicy z Etolii",
+   "quote": "Podwajamy albo nic – celuj mu w fiuta."
+  },
+  "ne_archer_support_1": {
+   "name": "Pomocnicy łucznicy z Etolii",
+   "quote": "Podwajamy albo nic – celuj mu w fiuta."
+  },
+  "ne_moorvran": {
+   "name": "Morvran Voorhis",
+   "quote": "Letnie słońce odbite w cichych wodach Alby – to dla mnie Nilfgaard."
+  },
+  "mo_eredin_commander": {
+   "name": "Eredin, Dowódca Czerwonych Jeźdźców",
+   "quote": "Śmiało. Pokaż mi swoje obroty, piruety i finty. Chcę popatrzeć."
+  },
+  "mo_eredin_bringer_of_death": {
+   "name": "Eredin, Zwiastun Śmierci",
+   "quote": "To nieuniknione."
+  },
+  "mo_eredin_destroyer": {
+   "name": "Eredin, Niszczyciel Światów",
+   "quote": "Długo na to czekałem..."
+  },
+  "mo_eredin_king": {
+   "name": "Eredin, Król Dzikiego Gonu",
+   "quote": "Zachowaj trochę godności. Wiesz, jak to się skończy."
+  },
+  "mo_eredin_the_treacherous": {
+   "name": "Eredin Bréacc Glas, Zdradziecki",
+   "quote": "Bawi mnie to. Jesteś moją zabawką."
+  },
+  "mo_ghoul": {
+   "name": "Ghul",
+   "quote": "Jeśli ghule są częścią kręgu życia... to jest to cholernie okrutny krąg."
+  },
+  "mo_cow": {
+   "name": "Krowa",
+   "quote": "Muuu!"
+  },
+  "mo_bovine_defense": {
+   "name": "Bydlęca Straż Obywatelska",
+   "quote": "Grrrrr!"
+  },
+  "mo_forktail": {
+   "name": "Widłogon",
+   "quote": "Widłogon... Pfff! Te skurczybyki mają ogony jak tasaki."
+  },
+  "mo_werewolf": {
+   "name": "Wilkołak",
+   "quote": "Wilki nie są takie złe, jak mówią. Za to wilkołaki – te są gorsze."
+  },
+  "mo_witch_velen": {
+   "name": "Wiedźma – Kucharka",
+   "quote": "Pokroimy cię, chłopcze. Wyjdzie z ciebie zacny rosołek."
+  },
+  "mo_witch_velen_1": {
+   "name": "Wiedźma – Prządka",
+   "quote": "Czuję twój ból. Widzę twój strach..."
+  },
+  "mo_witch_velen_2": {
+   "name": "Wiedźma – Szeptucha",
+   "quote": "Będę twoją najlepszą – i ostatnią."
+  },
+  "mo_bruxa": {
+   "name": "Wampir – Bruxa",
+   "quote": "Podła, krwiożercza ludojadka. Trochę jak moja teściowa."
+  },
+  "mo_ekkima": {
+   "name": "Wampir – Ekimma",
+   "quote": "Kto by pomyślał, że przerośnięte nietoperze lubią tandetną biżuterię?"
+  },
+  "mo_fleder": {
+   "name": "Wampir – Fleder",
+   "quote": "Wyższe wampiry obejmują swoje ofiary. Fledery rozszarpują je na strzępy."
+  },
+  "mo_garkain": {
+   "name": "Wampir – Garkain",
+   "quote": "Krwiopijcy i trupojady tak plugawi, że sama ich brzydota paraliżuje wrogów."
+  },
+  "mo_katakan": {
+   "name": "Wampir – Katakan",
+   "quote": "Piją krew Kontynentu od czasów Koniunkcji."
+  },
+  "mo_imlerith": {
+   "name": "Imlerith",
+   "quote": "Ladd nahw! Zabić ich! Zaściełać ziemię ich flakami!"
+  },
+  "mo_celaeno_harpy": {
+   "name": "Harpia celaeno",
+   "quote": "Zwykłe harpie żywią się padliną. Harpie celaeno... żywią się snami."
+  },
+  "mo_kayran": {
+   "name": "Kejran",
+   "quote": "Zabić kejrana? Proste. Weź najlepszy miecz... sprzedaj go i wynajmij wiedźmina."
+  },
+  "mo_gaunter_odimm": {
+   "name": "Gaunter O'Dimm",
+   "quote": "Zawsze spełnia dokładnie to, czego sobie życzysz. I w tym problem."
+  },
+  "mo_gaunter_odimm_darkness": {
+   "name": "Gaunter O'Dimm – Ciemność",
+   "quote": "Nie lękaj się cieni, lecz światła."
+  },
+  "mo_nekker": {
+   "name": "Nekker",
+   "quote": "Te cholerstwa są niemal urocze, jeśli pominąć cały ten aspekt bezwzględnych zabójców."
+  },
+  "mo_nekker_1": {
+   "name": "Nekker",
+   "quote": "Te cholerstwa są niemal urocze, jeśli pominąć cały ten aspekt bezwzględnych zabójców."
+  },
+  "mo_nekker_2": {
+   "name": "Nekker",
+   "quote": "Te cholerstwa są niemal urocze, jeśli pominąć cały ten aspekt bezwzględnych zabójców."
+  },
+  "mo_foglet": {
+   "name": "Mglak",
+   "quote": "Mgła skrada się na kocich łapach. Mglaki skradają się po ciałach swych ofiar."
+  },
+  "mo_plague_maiden": {
+   "name": "Zaraza",
+   "quote": "Chorzy bredzą o kobiecie pokrytej wrzodami, otoczonej stadami wściekłych szczurów..."
+  },
+  "mo_toad": {
+   "name": "Ropucha",
+   "quote": "Wielka. Paskudna. Brzydka. Siedzi w kanałach."
+  },
+  "mo_gravehag": {
+   "name": "Grobowa baba",
+   "quote": "Długie jęzory mają do wysysania szpiku – i do smagania ofiar."
+  },
+  "mo_leshen": {
+   "name": "Leszy",
+   "quote": "Nigdy nie polujemy w tych lasach. Nawet gdyby cała wieś miała pomrzeć z głodu."
+  },
+  "mo_caranthir": {
+   "name": "Caranthir Ar-Feiniel",
+   "quote": "Zireael! Czekam."
+  },
+  "mo_wyvern": {
+   "name": "Wiwerna",
+   "quote": "Wyobraź sobie skrzyżowanie skrzydlatego węża z koszmarem. Wiwerny są gorsze."
+  },
+  "mo_gryffin": {
+   "name": "Gryf",
+   "quote": "Gryfy lubią bawić się ofiarą. Zjadają ją żywcem, kawałek po kawałku."
+  },
+  "mo_arachas": {
+   "name": "Arachas",
+   "quote": "Brzydota – sposób natury, by powiedzieć: „Trzymaj się, kurwa, z daleka”."
+  },
+  "mo_arachas_1": {
+   "name": "Arachas",
+   "quote": "Brzydota – sposób natury, by powiedzieć: „Trzymaj się, kurwa, z daleka”."
+  },
+  "mo_arachas_2": {
+   "name": "Arachas",
+   "quote": "Brzydota – sposób natury, by powiedzieć: „Trzymaj się, kurwa, z daleka”."
+  },
+  "mo_arachas_behemoth": {
+   "name": "Arachas – Behemot",
+   "quote": "Jak skrzyżowanie kraba, pająka... i jebanej góry."
+  },
+  "mo_draug": {
+   "name": "Draug",
+   "quote": "Niektórzy nie umieją przyznać się do porażki. Walczą dalej zza grobu."
+  },
+  "sc_francesca_queen": {
+   "name": "Francesca Findabair, Królowa Dol Blathanna",
+   "quote": "Popiół użyźni glebę. Na wiosnę dolina znów zakwitnie."
+  },
+  "sc_francesca_beautiful": {
+   "name": "Francesca Findabair, Piękna",
+   "quote": "Starsze Rasy zapomniały więcej, niż ludzie kiedykolwiek będą w stanie poznać."
+  },
+  "sc_francesca_daisy": {
+   "name": "Francesca Findabair, Stokrotka z Dolin",
+   "quote": "Nie pozwól, by moja uroda zepsuła ci celność."
+  },
+  "sc_francesca_pureblood": {
+   "name": "Francesca Findabair, Elfka czystej krwi",
+   "quote": "Aby żyć w pokoju, najpierw musimy zabijać. Oto okrutny finał ludzkiego ucisku."
+  },
+  "sc_francesca_hope_of_the_aen_seidhe": {
+   "name": "Francesca Findabair, Nadzieja Aen Seidhe",
+   "quote": "Daede sian caente, Aen Seidhe en'allane ael coeden..."
+  },
+  "sc_riordain": {
+   "name": "Riordain",
+   "quote": "Spójrz im w oczy, nasyć się ich strachem. Potem zadaj ostatni cios."
+  },
+  "sc_havekar_support": {
+   "name": "Przemytnik Havekarów",
+   "quote": "Walczę dla tego, kto płaci najlepiej. Albo kogo najłatwiej obrabować."
+  },
+  "sc_havekar_support_1": {
+   "name": "Przemytnik Havekarów",
+   "quote": "Walczę dla tego, kto płaci najlepiej. Albo kogo najłatwiej obrabować."
+  },
+  "sc_havekar_support_2": {
+   "name": "Przemytnik Havekarów",
+   "quote": "Walczę dla tego, kto płaci najlepiej. Albo kogo najłatwiej obrabować."
+  },
+  "sc_dennis": {
+   "name": "Dennis Cranmer",
+   "quote": "Umiem wykonywać rozkazy, więc swoje rady możesz sobie wsadzić w komin."
+  },
+  "sc_mahakam": {
+   "name": "Obrońca Mahakamu",
+   "quote": "Mówię wam, urodziliśmy się do walki – tniemy prosto po kolanach!"
+  },
+  "sc_mahakam_1": {
+   "name": "Obrońca Mahakamu",
+   "quote": "Mówię wam, urodziliśmy się do walki – tniemy prosto po kolanach!"
+  },
+  "sc_barclay": {
+   "name": "Barclay Els",
+   "quote": "Nasz miód śmierdzi szczynami, tak? Łatwo to naprawić – złamię ci, kurwa, nos!"
+  },
+  "sc_isengrim": {
+   "name": "Isengrim Faoiltiarna",
+   "quote": "Dociera to do nich, gdy zauważą moją bliznę: świadomość nieuchronnej śmierci."
+  },
+  "sc_dol_infantry_1": {
+   "name": "Zwiadowca z Dol Blathanna",
+   "quote": "Tropią jak psy gończe, biegają jak jelenie i zabijają jak bezduszne skurwysyny."
+  },
+  "sc_dol_infantry_2": {
+   "name": "Zwiadowca z Dol Blathanna",
+   "quote": "Tropią jak psy gończe, biegają jak jelenie i zabijają jak bezduszne skurwysyny."
+  },
+  "sc_vrihedd_cadet": {
+   "name": "Rekrut brygady Vrihedd",
+   "quote": "Nienawiść płonie jaśniej niż każdy ogień i tnie głębiej niż każde ostrze."
+  },
+  "sc_vrihedd_brigade_1": {
+   "name": "Weteran brygady Vrihedd",
+   "quote": "„Vrihedd? Co to znaczy?” „Kłopoty”."
+  },
+  "sc_saskia": {
+   "name": "Saesenthessis",
+   "quote": "Piękna, czysta, dzika – idealny symbol rebelii."
+  },
+  "sc_havekar_nurse": {
+   "name": "Uzdrowicielka Havekarów",
+   "quote": "Jasne, połatam cię. Ale to będzie kosztować."
+  },
+  "sc_havekar_nurse_1": {
+   "name": "Uzdrowicielka Havekarów",
+   "quote": "Jasne, połatam cię. Ale to będzie kosztować."
+  },
+  "sc_havekar_nurse_2": {
+   "name": "Uzdrowicielka Havekarów",
+   "quote": "Jasne, połatam cię. Ale to będzie kosztować."
+  },
+  "sc_elf_skirmisher": {
+   "name": "Elfi harcownik",
+   "quote": "Cokolwiek słyszałeś, elfy nie skalpują ludzi. Za dużo wszy."
+  },
+  "sc_elf_skirmisher_1": {
+   "name": "Elfi harcownik",
+   "quote": "Cokolwiek słyszałeś, elfy nie skalpują ludzi. Za dużo wszy."
+  },
+  "sc_elf_skirmisher_2": {
+   "name": "Elfi harcownik",
+   "quote": "Cokolwiek słyszałeś, elfy nie skalpują ludzi. Za dużo wszy."
+  },
+  "sc_dol_archer": {
+   "name": "Łuczniczka z Dol Blathanna",
+   "quote": "Zrób jeszcze krok, dh'oine. Ze strzałą między oczami wyglądałbyś lepiej."
+  },
+  "sc_milva": {
+   "name": "Milva",
+   "quote": "Z każdą wypuszczoną strzałą myślę o tacie. Byłby dumny. Chyba."
+  },
+  "sc_iorveth": {
+   "name": "Iorweth",
+   "quote": "Król czy żebrak, co za różnica? O jednego dh'oine mniej."
+  },
+  "sc_vrihedd_brigade": {
+   "name": "Weteran brygady Vrihedd",
+   "quote": "„Vrihedd? Co to znaczy?” „Kłopoty”."
+  },
+  "sc_yaevinn": {
+   "name": "Yaevinn",
+   "quote": "Jesteśmy kroplami deszczu, które razem tworzą straszliwą burzę."
+  },
+  "sc_toruviel": {
+   "name": "Toruviel",
+   "quote": "Chętnie zabiłabym cię z bliska, patrząc ci w oczy... Ale cuchniesz, człowieku."
+  },
+  "sc_filavandrel": {
+   "name": "Filavandrel aen Fidháil",
+   "quote": "Choć jest nas teraz niewielu i jesteśmy rozproszeni, nasze serca płoną jaśniej niż kiedykolwiek."
+  },
+  "sc_temptress": {
+   "name": "Kusicielka",
+   "quote": "Hej! Masz ochotę się zabawić?"
+  },
+  "sc_schirru": {
+   "name": "Schirrú",
+   "quote": "Czas spojrzeć śmierci w twarz."
+  },
+  "spe_mardroeme": {
+   "name": "Mardroeme",
+   "quote": "Zjedz ich dość, a świat nigdy już nie będzie taki sam..."
+  },
+  "spe_skellige_fleet": {
+   "name": "Flota Skellige",
+   "quote": "Spójrzcie na horyzont! Nadchodzą!"
+  },
+  "spe_storm": {
+   "name": "Sztorm Skellige",
+   "quote": "To nie jest zwykła burza. To gniew bogów."
+  },
+  "sk_crach_an_craite": {
+   "name": "Crach an Craite",
+   "quote": "Król musi być mądry. Król musi budzić szacunek. Król musi mieć jaja."
+  },
+  "sk_king_bran": {
+   "name": "Bran an Tuirseach: Żelazny Król",
+   "quote": "Nikt nie zastąpi Brana. Choć na pewno będą próbować."
+  },
+  "sk_birna": {
+   "name": "Birna Bran: Spiskowczyni",
+   "quote": "Skellige musi mieć silnego króla. Za wszelką cenę."
+  },
+  "sk_madman_lugos": {
+   "name": "Lugos an Drummond: Szalony",
+   "quote": "WAAAAAAAGH!!!!"
+  },
+  "sk_holger": {
+   "name": "Holger an Dimun: Czarnoręki",
+   "quote": "A teraz wypijmy za cesarza Nilfgaardu – niech mu fiut na wieki zwiędnie!"
+  },
+  "sk_arnvald": {
+   "name": "Arnvald",
+   "quote": "Na wyspie jego imię było synonimem lojalności. Przez jakiś czas."
+  },
+  "sk_kambi": {
+   "name": "Kambi",
+   "quote": "Gdy nadejdzie czas, kogut Kambi zapieje i obudzi Hemdalla."
+  },
+  "sk_shield_maiden_1": {
+   "name": "Tarczowniczka klanu Drummond",
+   "quote": "Rozbiją się o nasze tarcze jak fale o skalisty brzeg."
+  },
+  "sk_shield_maiden_2": {
+   "name": "Tarczowniczka klanu Drummond",
+   "quote": "Rozbiją się o nasze tarcze jak fale o skalisty brzeg."
+  },
+  "sk_shield_maiden_3": {
+   "name": "Tarczowniczka klanu Drummond",
+   "quote": "Rozbiją się o nasze tarcze jak fale o skalisty brzeg."
+  },
+  "sk_draig": {
+   "name": "Draig Bon-Dhu",
+   "quote": "Posłuchajcie teraz opowieści o bohaterskich czynach klanu an Craite."
+  },
+  "sk_donar": {
+   "name": "Donar an Hindar",
+   "quote": "Zebrałem wszystkich jarlów. Teraz przedstaw swoją sprawę."
+  },
+  "sk_craite_warrior_1": {
+   "name": "Wojownik klanu an Craite",
+   "quote": "Przyniosę an Craite'om taką chwałę, że bardowie ochrypną, śpiewając o mnie pieśni!"
+  },
+  "sk_craite_warrior_2": {
+   "name": "Wojownik klanu an Craite",
+   "quote": "Przyniosę an Craite'om taką chwałę, że bardowie ochrypną, śpiewając o mnie pieśni!"
+  },
+  "sk_cerys": {
+   "name": "Cerys",
+   "quote": "Zwą mnie Krogulcem, wiesz czemu? Bo takie szczury jak ty jem na śniadanie."
+  },
+  "sk_hemdall": {
+   "name": "Hemdall",
+   "quote": "Gdy nadejdzie czas Białego Zimna, Hemdall zadmie w róg do bitwy."
+  },
+  "sk_hjalmar": {
+   "name": "Hjalmar an Craite",
+   "quote": "Zamiast opłakiwać poległych, wypijmy za ich pamięć!"
+  },
+  "sk_young_berserker_1": {
+   "name": "Młody berserker",
+   "quote": "Chcesz trochę?"
+  },
+  "sk_young_berserker_2": {
+   "name": "Młody berserker",
+   "quote": "Krew dla Svalbloda! Czaszki na jego tron!"
+  },
+  "sk_young_berserker_3": {
+   "name": "Młody berserker",
+   "quote": "Uderz mnie! No dalej, mocniej! To ma być ból?"
+  },
+  "sk_transformed_young_berserker": {
+   "name": "Przemieniony młody berserker",
+   "quote": "Grrraaaaar!"
+  },
+  "sk_vildkaarl": {
+   "name": "Vildkaarl",
+   "quote": "Zabijaj, miażdż, rąb!"
+  },
+  "sk_berserker": {
+   "name": "Berserker",
+   "quote": "Najemnicy walczą dla złota. Rycerze pojedynkują się dla honoru. On zabija dla krwi."
+  },
+  "sk_transformed_vildkaarl": {
+   "name": "Przemieniony Vildkaarl",
+   "quote": "Raz w życiu widziałem, jak walczą... i raz wystarczyło."
+  },
+  "sk_transformed_berserker": {
+   "name": "Przemieniony berserker",
+   "quote": "Ten niedźwiedź jakoś dziwnie ci smakuje?"
+  },
+  "sk_blueboy": {
+   "name": "Lugos Siny",
+   "quote": "Zaraz się porzygam z nudów."
+  },
+  "sk_gremist": {
+   "name": "Gremist",
+   "quote": "Arcydruid, mistrz alchemii i najbardziej zrzędliwy stary pierdziel na Wyspach."
+  },
+  "sk_brokva_archer": {
+   "name": "Łucznik klanu Brokvar",
+   "quote": "Czyli trafiasz w ruchomy cel z dwustu kroków. Ja też. W sztormie."
+  },
+  "sk_ermion": {
+   "name": "Ermion",
+   "quote": "Tylko ignoranci lekceważą znaczenie mitów."
+  },
+  "sk_longship_1": {
+   "name": "Drakkar: Czarna Helga",
+   "quote": "W górę rzeki nim nie popłyniesz, ale w pogoń za cesarską flotą – jak najbardziej."
+  },
+  "sk_longship_2": {
+   "name": "Drakkar: Ulfhedinn",
+   "quote": "Ulfhedinn? To jakaś ryba? O nie, nie... to coś o wiele, wiele gorszego."
+  },
+  "sk_longship_3": {
+   "name": "Drakkar: Ragnarök",
+   "quote": "Morze jest nasze, razem ze wszystkim, co po nim pływa i żegluje!"
+  },
+  "sk_war_longship": {
+   "name": "Wojenny drakkar: Postrach Mórz",
+   "quote": "Wystarczy wspomnieć tę nazwę przy Nilfgaardczyku, a poczuje rozlewające się ciepło w gaciach."
+  },
+  "sk_light_longship_1": {
+   "name": "Lekki drakkar: Ogar Żagli",
+   "quote": "Lekkie i szybkie, idealne do ścigania powolnych fregat kupieckich."
+  },
+  "sk_light_longship_2": {
+   "name": "Lekki drakkar: Morski Sęp",
+   "quote": "Uciec im? Na wodach Skellige? Powodzenia."
+  },
+  "sk_light_longship_3": {
+   "name": "Lekki drakkar: Koń Fal",
+   "quote": "Wystarczy mała dziura, by zatonął największy okręt."
+  },
+  "spe_execution": {
+   "name": "Egzekucja",
+   "quote": "Nie mogę, kurwa, oddychać! Nie mogą palić tych nieszczęśników gdzie indziej?"
+  },
+  "spe_royal_decree": {
+   "name": "Królewski dekret",
+   "quote": "...niniejszym zarządzam, co następuje..."
+  },
+  "spe_decoration": {
+   "name": "Odznaczenie",
+   "quote": "Nie bogactwo ni sława, lecz szczere zamiary – to czyni bohatera z ciebie!"
+  },
+  "spe_royal_guards": {
+   "name": "Gwardia królewska Radowida",
+   "quote": "Zrobią wszystko dla swego króla. Wiedzą, co im zrobi, jeśli odmówią."
+  },
+  "re_radovid_king_redania": {
+   "name": "Radowid: Król Redanii",
+   "quote": "Sędzia. Ława przysięgłych. Kat. Król."
+  },
+  "re_radovid_mad_king": {
+   "name": "Radowid: Szalony Król",
+   "quote": "Król powinien być bezlitosny dla wrogów i hojny dla przyjaciół."
+  },
+  "re_radovid_strategist": {
+   "name": "Radowid: Strateg",
+   "quote": "Mówią, że szachy uczą myśleć strategicznie. Co za bzdura!"
+  },
+  "re_redanian_knight_1": {
+   "name": "Redański rycerz",
+   "quote": "Za chwałę! Za Radowida!"
+  },
+  "re_redanian_knight_2": {
+   "name": "Redański rycerz",
+   "quote": "Nie zatrzymasz galopującego konia kawaleryjskiego!"
+  },
+  "re_priscilla": {
+   "name": "Pryscylla",
+   "quote": "Wyobraź sobie Jaskra w sukience i już wiesz, o co chodzi."
+  },
+  "re_redanian_elite": {
+   "name": "Redańska elita",
+   "quote": "Umrę za Redanię, zabiję za Redanię… Nawet robaki będę jadł za Redanię!"
+  },
+  "re_olgierd": {
+   "name": "Olgierd von Everec",
+   "quote": "Przynajmniej wiesz już, że niełatwo tracę głowę."
+  },
+  "re_trollololo": {
+   "name": "Trollololo",
+   "quote": "Wstąp do armii króla Radowida. Rozkaz mieć – pilnować łódki."
+  },
+  "re_gaunter_odimm": {
+   "name": "Gaunter O'Dimm",
+   "quote": "Zawsze spełnia dokładnie to, czego sobie życzysz. I w tym problem."
+  },
+  "re_gaunter_odimm_darkness": {
+   "name": "Gaunter O'Dimm – Ciemność",
+   "quote": "Nie lękaj się cieni, lecz światła."
+  },
+  "re_black_cat_dog": {
+   "name": "Czarny kot i pies",
+   "quote": "Wolimy zachować nasze imiona dla siebie. Myśl o nas jak o… przyjaciołach domu."
+  },
+  "re_vlodimir_von_everec": {
+   "name": "Vlodimir von Everec",
+   "quote": "Vlodimir lubił się zabawić za życia i bardzo tęsknił za rozrywką po śmierci."
+  },
+  "re_caretaker": {
+   "name": "Dozorca",
+   "quote": "Są na niebie i ziemi rzeczy, o których nie śniło się filozofom."
+  },
+  "re_graden": {
+   "name": "Graden",
+   "quote": "Z początku paliliśmy każdą księgę czarnej magii, jaką znaleźliśmy. Ostatnio uznaliśmy, że rozsądniej będzie najpierw je przeczytać."
+  },
+  "re_shani": {
+   "name": "Shani",
+   "quote": "Jestem medykiem. Zwykle wiem, co robię, kiedy coś przepisuję."
+  },
+  "re_iris_von_everec": {
+   "name": "Iris von Everec",
+   "quote": "Tak mało pamiętam... Lecz gdy myślę o mojej róży, zaczynam sobie przypominać."
+  },
+  "re_ewald_borsodi": {
+   "name": "Ewald Borsodi",
+   "quote": "Obmyślałam ten plan przez ponad rok, ale nadszedł czas działania. Mogę liczyć na twoją pomoc?"
+  },
+  "re_horst_borsodi": {
+   "name": "Horst Borsodi",
+   "quote": "Mój dom aukcyjny to przede wszystkim miejsce spotkań elity elit."
+  },
+  "re_sigi_reuven": {
+   "name": "Sigi Reuven",
+   "quote": "Na pewno nie wygląda ci ani trochę znajomo...?"
+  },
+  "re_phillippa": {
+   "name": "Filippa Eilhart",
+   "quote": "Filippa Eilhart, choć bardzo atrakcyjna, była zdecydowanie bardzo niemiła."
+  },
+  "re_foot_soldier_1": {
+   "name": "Redański piechur",
+   "quote": "Krwawiłem za Redanię! Zabijałem za Redanię... Do diabła, nawet gwałciłem za Redanię!"
+  },
+  "re_foot_soldier_2": {
+   "name": "Redański piechur",
+   "quote": "Krwawiłem za Redanię! Zabijałem za Redanię... Do diabła, nawet gwałciłem za Redanię!"
+  },
+  "re_agent": {
+   "name": "Redański agent",
+   "quote": "Ośmiokrotny mistrz zabawy w chowanego w pojedynkę."
+  },
+  "re_archer": {
+   "name": "Redański łucznik",
+   "quote": "Ostatnie, co usłyszysz, to brzdęk zwalnianej cięciwy."
+  },
+  "spe_toussaint_wine": {
+   "name": "Wino z Toussaint",
+   "quote": "Ku czci naszych dzielnych rycerzy będziemy ucztować od zmierzchu po pierwszy brzask!"
+  },
+  "to_anna_henrietta_duchess": {
+   "name": "Anna Henrietta: Księżna Toussaint",
+   "quote": "Pozdrawiam was, szlachetni rycerze."
+  },
+  "to_anna_henrietta_ladyship": {
+   "name": "Anna Henrietta: Jej Oświecona Wysokość",
+   "quote": "Impertynencji jednej znieść nie mogę."
+  },
+  "to_anna_henrietta_little_weasel": {
+   "name": "Anna Henrietta: Łasiczka",
+   "quote": "Złożyliście śluby, przygotowaliście ciało i duszę. Nadszedł czas, by je sprawdzić."
+  },
+  "to_gregoire_gorgon": {
+   "name": "Gregoire de Gorgon",
+   "quote": "Gregoire? Ta góra mięśni w zbroi? Jasne, że o nim słyszałem! Kto nie słyszał?"
+  },
+  "to_knight_errant_1": {
+   "name": "Błędni rycerze",
+   "quote": "Porzućcie ścieżkę hańby, a oszczędzimy was."
+  },
+  "to_knight_errant_2": {
+   "name": "Błędni rycerze",
+   "quote": "Porzućcie ścieżkę hańby, a oszczędzimy was."
+  },
+  "to_bootblack": {
+   "name": "Pucybut",
+   "quote": "Nie szukasz przypadkiem roboty? Bylibyśmy zgranym duetem."
+  },
+  "to_toussaint_knight_1": {
+   "name": "Rycerz z Toussaint",
+   "quote": "Przysięgam na czaplę, że zapłacisz własną krwią."
+  },
+  "to_toussaint_knight_2": {
+   "name": "Rycerz z Toussaint",
+   "quote": "Przysięgam na czaplę, że zapłacisz własną krwią."
+  },
+  "to_toussaint_knight_3": {
+   "name": "Rycerz z Toussaint",
+   "quote": "Przysięgam na czaplę, że zapłacisz własną krwią."
+  },
+  "to_minstrel": {
+   "name": "Minstrel",
+   "quote": "Był sobie rycerz, co winem się upił. Jechał on drogą, mój panie; I spotkał damę, co piękna była, Pośród stogów siana, mój panie..."
+  },
+  "to_regis": {
+   "name": "Regis",
+   "quote": "Niektórzy uważają mnie za potwora. Za żądnego krwi, dzikiego potwora."
+  },
+  "to_regis_higher_vampire": {
+   "name": "Regis: Wyższy wampir",
+   "quote": "Jego spojrzenie hipnotyzuje i wprawia w głęboki sen. Potem pije do syta, zmienia się w nietoperza i odlatuje."
+  },
+  "to_damien_tour": {
+   "name": "Damien de la Tour",
+   "quote": "Dobrze służyłem Beauclair. Przynajmniej... mam taką nadzieję."
+  },
+  "to_dettlaff": {
+   "name": "Dettlaff",
+   "quote": "Nie kochał jak człowiek, lecz jak zwierzę. Szaleńczo, głęboko, bezwarunkowo. Dziko."
+  },
+  "to_dettlaff_higher_vampire": {
+   "name": "Dettlaff: Wyższy wampir",
+   "quote": "Nie kochał jak człowiek, lecz jak zwierzę. Szaleńczo, głęboko, bezwarunkowo. Dziko."
+  },
+  "to_champion": {
+   "name": "Mistrz turnieju",
+   "quote": "Twoja obecność na tym turnieju jest obrazą mego honoru!"
+  },
+  "to_milton": {
+   "name": "Milton de Peyrac-Peyran",
+   "quote": "Lśniącego w promieniach słońca Beauclair nie sposób było pomylić z nikim innym – błędny rycerz z łbem wielkiego białego byka na tarczy."
+  },
+  "to_lui_alberni": {
+   "name": "Lui Alberni",
+   "quote": "Niektórzy twierdzą, że Goliat był niegdyś słynnym rycerzem..."
+  },
+  "to_lui_alberni_golyat": {
+   "name": "Lui Alberni: Goliat",
+   "quote": "Niektórzy twierdzą, że Goliat był niegdyś słynnym rycerzem..."
+  },
+  "to_barnabas": {
+   "name": "Barnaba-Basil Foulty",
+   "quote": "Będę ci służył jako majordomus Corvo Bianco."
+  },
+  "to_vivienne": {
+   "name": "Vivienne",
+   "quote": "Vivienne to trochę dziwaczka jak na damę dworu. Ale na bogów, urody i wdzięku odmówić jej nie można!"
+  },
+  "to_vivienne_oriole": {
+   "name": "Vivienne: Wilga",
+   "quote": "Któż nie chciałby żyć wolny jak ptak? Cóż, zapytaj Vivienne de Tabris."
+  },
+  "to_marlene": {
+   "name": "Marlene: Zjawa",
+   "quote": "Nikt nie zasiądzie z tobą do stołu, żadna łyżka cię nie nasyci, nigdy więcej nie zechcesz ujrzeć swego odbicia w lustrze."
+  },
+  "to_orianna": {
+   "name": "Orianna",
+   "quote": "Wilki śpią pośród drzew, nietoperze kołysze wiew..."
+  },
+  "to_orianna_bruxa": {
+   "name": "Orianna",
+   "quote": "...lecz jedna dusza nie śpi, niespokojna, lękając się ghuli, wiedźm i upiorów."
+  },
+  "to_artorius_vigo": {
+   "name": "Artorius Vigo",
+   "quote": "Mówi się, że stworzył iluzję tak realistyczną, że sam zaczął w nią wierzyć..."
+  },
+  "to_witch_lynx_crag": {
+   "name": "Wiedźma z Rysiej Skały",
+   "quote": "Mieszka w chacie na Rysiej Skale, a wielu miejscowych się jej boi."
+  },
+  "to_guillaume": {
+   "name": "Guillaume de Launfal",
+   "quote": "Guillaume był wzorem błędnego rycerza – chłopcem z plakatu Toussaint."
+  },
+  "to_palmerin": {
+   "name": "Palmerin de Launfal",
+   "quote": "Krążyły plotki, że szanowny baron Palmerin de Launfal wdał się w bezbożny romans z sukkubem."
+  },
+  "to_duchess_informant": {
+   "name": "Informatorka księżnej",
+   "quote": "Anna Henrietta budzi się każdego ranka przy śpiewie swoich ptaków."
+  },
+  "to_prophet_lebioda": {
+   "name": "Prorok Lebioda",
+   "quote": "Bądź sam sobie sędzią i władcą, bo tylko ty odpowiesz za swoje czyny przed samym sobą."
+  },
+  "to_roderick": {
+   "name": "Roderick z Dun Tynne",
+   "quote": "Roderick żył jak pustelnik, unikając towarzystwa."
+  },
+  "to_unseen_elder": {
+   "name": "Nieznany Starszy",
+   "quote": "Nikt, nawet wśród wyższych wampirów, nie wie dokładnie, ile lat ma Nieznany Starszy."
+  },
+  "to_syanna": {
+   "name": "Sylwia Anna",
+   "quote": "Wasza Wysokość... Księżniczkę dotknęła klątwa Czarnego Słońca. Obawiam się, że nie ma nadziei..."
+  },
+  "to_lady_lake": {
+   "name": "Pani Jeziora",
+   "quote": "Weź ten miecz jako znak mej łaski. Przez wieki leżał w tych głębinach, czekając... na ciebie."
+  },
+  "spe_curse": {
+   "name": "Klątwa",
+   "quote": "Każdy, kto tu przyjdzie, zginie w straszliwych męczarniach."
+  },
+  "ve_lady_wood_whispess": {
+   "name": "Panie Lasu: Szeptucha",
+   "quote": "Będę twoją najlepszą – i ostatnią."
+  },
+  "ve_lady_wood_brewess": {
+   "name": "Panie Lasu: Kucharka",
+   "quote": "Pokroimy cię, chłopcze. Wyjdzie z ciebie zacny rosołek."
+  },
+  "ve_lady_wood_weavess": {
+   "name": "Panie Lasu: Prządka",
+   "quote": "Czuję twój ból. Widzę twój strach..."
+  },
+  "ve_ghost_tree": {
+   "name": "Duch w drzewie",
+   "quote": "Ducha otacza wiele tajemnic, ale jedno wydaje się pewne: Wiedźmy go zabiły, a potem pochwyciły jego ducha i uwięziły w drzewie."
+  },
+  "ve_cutthroat": {
+   "name": "Rzezimieszek",
+   "quote": "Ach, nic tak nie koi jak bulgot krwi."
+  },
+  "ve_angry_peasants": {
+   "name": "Wściekli chłopi",
+   "quote": "Chcesz wiedzieć, jaki mają problem? Zawsze są głodni."
+  },
+  "ve_deserter_1": {
+   "name": "Dezerter",
+   "quote": "Pierdolę wojsko."
+  },
+  "ve_deserter_2": {
+   "name": "Dezerter",
+   "quote": "Pierdolę króla!"
+  },
+  "ve_marauder_1": {
+   "name": "Maruder",
+   "quote": "Kupca umęczymy, a konie sprzedamy."
+  },
+  "ve_marauder_2": {
+   "name": "Maruder",
+   "quote": "Bo możemy robić, co nam się żywnie podoba! Ha, ha, ha!"
+  },
+  "ve_abandoned_girl": {
+   "name": "Porzucona dziewczynka",
+   "quote": "Miejscowi chłopi zostawiają dzieci w lesie jako dar dla Pań Lasu."
+  },
+  "ve_bloody_baron": {
+   "name": "Krwawy Baron",
+   "quote": "Nie byłem dobrym ojcem. Ale na pewno byłem dobrym wojownikiem!"
+  },
+  "ve_water_hag": {
+   "name": "Wodna baba",
+   "quote": "Ludzie gadają, że wodne baby to żony utopców. Jak to prawda, to nic dziwnego, że z nich takie wredne suki."
+  },
+  "ve_allgod": {
+   "name": "Wszechbóg",
+   "quote": "Składajcie ofiary albo poznajcie boski gniew! Jedzenie ma być dobre, bo i tak poznacie mój gniew."
+  },
+  "ve_drowner": {
+   "name": "Utopiec",
+   "quote": "Choć wiedźmin złota pożąda, za ubicie utopca dasz mu jeno srebrny grosz, a najwyżej trzy półgroszki."
+  },
+  "ve_ghoul_1": {
+   "name": "Ghul",
+   "quote": "Jeśli ghule są częścią kręgu życia... to jest to cholernie okrutny krąg."
+  },
+  "ve_ghoul_2": {
+   "name": "Ghul",
+   "quote": "Częsty gość na polach bitew."
+  },
+  "ve_hungry_wolves_1": {
+   "name": "Głodne wilki",
+   "quote": "Otoczeni przez tę watahę wilków czuliśmy się jak trzy małe świnki."
+  },
+  "ve_hungry_wolves_2": {
+   "name": "Głodne wilki",
+   "quote": "Wilki wyszły z lasu, zeżarły bydło, a potem otoczyły dom. Wyły jak szalone."
+  },
+  "ve_hungry_wolves_3": {
+   "name": "Głodne wilki",
+   "quote": "„Spokojnie, umiem oswajać wilki...” – ostatnie słowa myśliwego Dunbara."
+  },
+  "ve_hungry_wolves_4": {
+   "name": "Głodne wilki",
+   "quote": "Jak z każdą bestią, rozprawia się z nimi szybko i ostrożnie."
+  },
+  "ve_noonwraith": {
+   "name": "Południca",
+   "quote": "Rodzą się z jakiejś strasznej tragedii związanej z nieszczęśliwą miłością."
+  },
+  "ve_penitent": {
+   "name": "Pokutnik",
+   "quote": "Miejsca nawiedzane przez tego potwora szybko spowija mgła i ciemność. Ci, którzy się w niej zgubią, zwykle nie wracają do żywych."
+  },
+  "ve_nightwraith": {
+   "name": "Północnica",
+   "quote": "Ile szkody może wyrządzić blada, wychudzona kobieta zaplątana w podartą suknię? Jak się okazuje, sporo."
+  },
+  "ve_fiend": {
+   "name": "Bies",
+   "quote": "Bies wygląda jak jeleń. Ogromny, zły jeleń."
+  },
+  "ve_chort": {
+   "name": "Czart",
+   "quote": "Czarty są mniejsze od biesów, to prawda. Ale wciąż dość duże, by zabić."
+  },
+  "ve_fugas": {
+   "name": "Fugas",
+   "quote": "Heh, rozkazy mi wydajesz? Ty? Człowiek?"
+  },
+  "ve_tamara_strenger": {
+   "name": "Tamara Strenger",
+   "quote": "Gdy żar Ognia rozpali twe serce, daje ci siłę i prowadzi ścieżką prawdy przez resztę życia."
+  },
+  "ve_johnny": {
+   "name": "Johnny",
+   "quote": "Piotr Piper przyniósł księciu Proximo garść marynowanych papryczek znad Pontaru."
+  },
+  "ve_thecla": {
+   "name": "Tekla",
+   "quote": "Była bardzo starą, ślepą kobietą, którą miejscowi uważali za mądrą."
+  },
+  "ve_anna_strenger": {
+   "name": "Anna Strenger",
+   "quote": "Anna tak nienawidziła męża, że była gotowa na wszystko, by się od niego uwolnić – i od dziecka, które w niej począł."
+  },
+  "ve_pellar": {
+   "name": "Guślarz",
+   "quote": "Zbierzcie duchy na tę stypę, duszy błądzącej nie zostawcie, usłyszcie me wezwanie, mą pokorną prośbę, rozkujcie jego kajdany, uwolnijcie go."
+  },
+  "spe_dimensional_door": {
+   "name": "Wrota wymiarów",
+   "quote": "Bardzo przydatne do podróży do innych wymiarów i sprowadzania apokalipsy na świat."
+  },
+  "spe_white_frost_1": {
+   "name": "Biały Mróz",
+   "quote": "To początek końca!"
+  },
+  "spe_white_frost_2": {
+   "name": "Biały Mróz",
+   "quote": "To początek końca!"
+  },
+  "spe_white_frost_3": {
+   "name": "Biały Mróz",
+   "quote": "To początek końca!"
+  },
+  "wh_eredin_commander": {
+   "name": "Eredin: Dowódca Dearg Ruadhri",
+   "quote": "Jakieś ostatnie słowa?"
+  },
+  "wh_auberon_king": {
+   "name": "Auberon Muircetach: Król Aen Elle",
+   "quote": "Po ponad sześciuset pięćdziesięciu latach życia niewiele już ekscytuje."
+  },
+  "wh_winter_queen": {
+   "name": "Królowa Zimy: Niszczycielka Światów",
+   "quote": "Prawda jest tylko odłamkiem lodu."
+  },
+  "wh_caranthir_navigator": {
+   "name": "Caranthir Ar-Feiniel: Czarodziej-Nawigator",
+   "quote": "Ulubiony syn, który wybrał życie złoczyńcy."
+  },
+  "wh_imlerith_general": {
+   "name": "Imlerith: Generał Dzikiego Gonu",
+   "quote": "Siostry mówiły, że przybędziesz. Widziały twoje przybycie na tafli wody."
+  },
+  "wh_wild_hunt_warrior_1": {
+   "name": "Wojownik Dzikiego Gonu",
+   "quote": "Białe Zimno nadchodzi."
+  },
+  "wh_wild_hunt_warrior_2": {
+   "name": "Wojownik Dzikiego Gonu",
+   "quote": "Uważa to za przedni żart – rozłupywać czaszki żywych czaszkami umarłych."
+  },
+  "wh_imlerith": {
+   "name": "Imlerith",
+   "quote": "Przechwalał się, że żadna broń nie przebije jego zbroi. I miał rację – nawet po śmierci."
+  },
+  "wh_cirilla": {
+   "name": "Cirilla",
+   "quote": "Zireael ma wielką moc, nad którą nie panuje."
+  },
+  "wh_avallach": {
+   "name": "Avallac'h",
+   "quote": "Wy, ludzie, macie… osobliwe gusta."
+  },
+  "wh_wild_hunt_rider_1": {
+   "name": "Jeździec Dzikiego Gonu",
+   "quote": "Najpierw w oczy rzucają się bawole rogi na ich hełmach, a potem grzebień między nimi."
+  },
+  "wh_wild_hunt_rider_2": {
+   "name": "Jeździec Dzikiego Gonu",
+   "quote": "Kawalkada upiorów na nieumarłych koniach galopujących po niebie."
+  },
+  "wh_wild_hunt_rider_3": {
+   "name": "Jeździec Dzikiego Gonu",
+   "quote": "Malują niebo śniegiem, a ziemię ogniem."
+  },
+  "wh_aen_elle_conqueror_1": {
+   "name": "Zdobywca Aen Elle",
+   "quote": "Koniec jednego świata może być początkiem innego."
+  },
+  "wh_aen_elle_conqueror_2": {
+   "name": "Zdobywca Aen Elle",
+   "quote": "Jeśli się nie podporządkują, zostaną wygnani!"
+  },
+  "wh_aen_elle_conqueror_3": {
+   "name": "Zdobywca Aen Elle",
+   "quote": "Dla jego szlachetnego rodu moralność to tylko kaprys, na który stać innych. A konkretnie tych, którzy przegrywają."
+  },
+  "wh_wild_hunt_hound_1": {
+   "name": "Ogar Dzikiego Gonu",
+   "quote": "Krzyknij „Pogrom!” i spuść psy wojny."
+  },
+  "wh_wild_hunt_hound_2": {
+   "name": "Ogar Dzikiego Gonu",
+   "quote": "Kto jest grzecznym pieskiem? No, na pewno nie on."
+  },
+  "wh_nithral": {
+   "name": "Nithral",
+   "quote": "Osobista kawalkada Eredina skupia tylko najbrutalniejszych i najdzikszych z Aen Elle."
+  },
+  "wh_geels": {
+   "name": "Ge'els",
+   "quote": "Obrazy powinny przekazywać emocje, nie słowa."
+  },
+  "wh_naglfar_taskmaster": {
+   "name": "Nadzorca z Naglfara",
+   "quote": "Dba o to, by statek miał zasilanie, wyciskając esencję życia z tych nic nieznaczących ludzkich robaków."
+  },
+  "wh_naglfar_crew": {
+   "name": "Załoga Naglfara",
+   "quote": "Ludzie nie wiedzą, co napędza Naglfar. Dla tych, którzy odkryją prawdę... cóż, dla nich jest już za późno."
+  },
+  "wh_naglfar_cartographer": {
+   "name": "Kartograf z Naglfara",
+   "quote": "Już prawie jesteśmy, panie!"
+  },
+  "wh_naglfar": {
+   "name": "Naglfar",
+   "quote": "Naglfar stoczy ostateczną bitwę dobra ze złem, zwaną Ragh nar Roog."
+  },
+  "wh_navigator_1": {
+   "name": "Nawigator",
+   "quote": "To potężni magowie, którzy umieli manipulować przestrzenią i otwierać portale między światami."
+  },
+  "wh_navigator_2": {
+   "name": "Nawigator",
+   "quote": "Prowadzili Jeźdźców Gonu mistycznymi ścieżkami przez czas i przestrzeń, by dotrzeć do innych światów."
+  },
+  "wh_navigator_3": {
+   "name": "Nawigator",
+   "quote": "Wszyscy są uczniami Avallac'ha."
+  },
+  "wu_vilgefortz_magician_kovir": {
+   "name": "Vilgefortz: Mag z Koviru",
+   "quote": "Natura nie zna myśli filozoficznej."
+  },
+  "wu_tissaia": {
+   "name": "Tissaia de Vries",
+   "quote": "Tu nie wejdą. Nikt nie zapraszał tych królewskich pachołków, wykonujących rozkazy swoich krótkowzrocznych królów!"
+  },
+  "wu_rats_giselher": {
+   "name": "Szczury: Giselher",
+   "quote": "Chce nas rozzłościć? Niech drań gada."
+  },
+  "wu_rats_asse": {
+   "name": "Szczury: Asse",
+   "quote": "Od trzech dni polował na Nilfgaardczyków, oszalały z żądzy zemsty za to, co maruderzy zrobili jego rodzinie."
+  },
+  "wu_rats_iskra": {
+   "name": "Szczury: Iskra",
+   "quote": "Pęd rozwiewał jej piękne, ciemne włosy, odsłaniając małe, spiczaste ucho ozdobione filigranowym kolczykiem."
+  },
+  "wu_rats_kayleigh": {
+   "name": "Szczury: Kayleigh",
+   "quote": "Obudził się w dymie, ogniu i krwi, wśród zwłok przybranych rodziców i rodzeństwa."
+  },
+  "wu_rats_mistle": {
+   "name": "Szczury: Mistle",
+   "quote": "Za pniem ukazała się młoda kobieta o krótkich jasnych włosach, w czerwonym kubraku i wysokich, lśniących butach sięgających nad kolano."
+  },
+  "wu_rats_reef": {
+   "name": "Szczury: Reef",
+   "quote": "Opieka nad rannymi nie była w zwyczaju zabójców z nilfgaardzkich oddziałów specjalnych."
+  },
+  "wu_ralf_blunden": {
+   "name": "Ralf Blunden",
+   "quote": "Znakiem rozpoznawczym Profesora jest wyszukany dobór słów i dowcipne komentarze."
+  },
+  "wu_bomb_heaver": {
+   "name": "Miotacz bomb",
+   "quote": "Uwaga na głowy!"
+  },
+  "wu_gascon_light_cavalry": {
+   "name": "Lekka kawaleria Gaskona",
+   "quote": "Pościg się zaczął!"
+  },
+  "wu_gascon_slinger": {
+   "name": "Procarze Gaskona",
+   "quote": "Im większy, tym łatwiej trafić."
+  },
+  "wu_gascon_infiltrator": {
+   "name": "Infiltrator Gaskona",
+   "quote": "Mamy robotę do wykonania."
+  },
+  "wu_gascon": {
+   "name": "Gaskon",
+   "quote": "Przybłędy ze Spalli – to ty im przewodzisz? To ciebie zwą Księciem Psów?"
+  },
+  "wu_dorregaray": {
+   "name": "Dorregaray z Vole",
+   "quote": "Dorregaray to miłośnik potworów, choć opracował własny system ich klasyfikacji."
+  },
+  "wu_ortolan": {
+   "name": "Arcymistrz Ortolan",
+   "quote": "Był legendarnym magiem, który kierował eksperymentami w zamku Rissberg."
+  },
+  "wu_coral": {
+   "name": "Koral",
+   "quote": "Jej prawdziwe imię to Astrid Lyttneyd Ásgeirrfinnbjornsdottir, ale nigdy nie mieściło się w żadnym formularzu."
+  },
+  "wu_leo_bonhart": {
+   "name": "Leo Bonhart",
+   "quote": "Więc nie boisz się śmierci? To spójrz na tego małego Szczura. To jest śmierć."
+  },
+  "wu_azar_javed": {
+   "name": "Azar Javed",
+   "quote": "Tym razem nasikałeś pod wiatr."
+  },
+  "wu_strays_spalla": {
+   "name": "Przybłędy ze Spalli",
+   "quote": "Uwolnię cię od tej sakiewki."
+  },
+  "wu_gerhart_aelle": {
+   "name": "Gerhart z Aelle",
+   "quote": "Gerhart z Aelle, zwany Hen Gedymdeith, był najstarszym żyjącym czarodziejem – aż do śmierci podczas przewrotu na Thanedd."
+  },
+  "wu_lydia_bredevoort": {
+   "name": "Lydia van Bredevoort",
+   "quote": "Pędzlem czy czarami – nie było zdarzenia, uczucia ani sceny, której Lydia nie umiałaby oddać. Poza radością."
+  },
+  "wu_dana_meadbh": {
+   "name": "Dana Méadbh",
+   "quote": "Przez trawy porastające polanę płynęła złotowłosa królowa. Królowa Pól."
+  },
+  "wu_rience": {
+   "name": "Rience",
+   "quote": "Uwielbiam patrzeć, jak ludzie cierpią."
+  },
+  "wu_visenna": {
+   "name": "Visenna",
+   "quote": "Blizna oczywiście zostanie. Nowa do kolekcji."
+  },
+  "wu_operator": {
+   "name": "Operator",
+   "quote": "Gdy czas i przestrzeń zapadają się przed nami, rozszerzają się za nami..."
+  },
+  "wu_cosimo_malaspina": {
+   "name": "Cosimo Malaspina: Mistrz Mutacji",
+   "quote": "Dzieci ciągle proszą go o prezenty. Nie wie czemu, ale to pomaga znaleźć obiekty do eksperymentów."
+  },
+  "wu_coen": {
+   "name": "Coën",
+   "quote": "Nie ma czegoś takiego jak uczciwa walka. W walce wykorzystuje się każdą przewagę i każdą okazję."
+  },
+  "wu_stygga_castle": {
+   "name": "Zamek Stygga",
+   "quote": "Wiedźmini ze Szkoły Kota nie zabawili długo w zamku Stygga. Zresztą nigdzie indziej też nie."
+  },
+  "wu_vesemir": {
+   "name": "Vesemir",
+   "quote": "Jak cię będą wieszać, poproś o wodę. Nim przyniosą, wszystko się może zdarzyć."
+  },
+  "wu_haern_caduch": {
+   "name": "Haern Caduch",
+   "quote": "Wykuta w lodowej skale gór Amell siedziba dawno porzuconej Szkoły Niedźwiedzia pozostaje pilnie strzeżoną tajemnicą."
+  },
+  "wu_ivo_belhaven": {
+   "name": "Ivo z Belhaven",
+   "quote": "Nie brak mi rozumu, tylko uczuć."
+  },
+  "wu_lambert": {
+   "name": "Lambert",
+   "quote": "O, takie negocjacje to ja rozumiem."
+  },
+  "wu_keldar": {
+   "name": "Keldar",
+   "quote": "Wy tępe, bezmózgie humanoidy! Co znaczy „nie wiem”? Na wampiry poszlibyście z figurką Lebiody, wysmarowani czosnkiem!"
+  },
+  "wu_ivar": {
+   "name": "Ivar Złe Oko",
+   "quote": "Za każdą blizną stoi straszna historia – zdziwiłbyś się, jak wiele z nich jest prawdziwych."
+  },
+  "wu_gorthur_gvaed": {
+   "name": "Gorthur Gvaed",
+   "quote": "W twierdzy było wiele zwojów i rękopisów o legendzie Dzikiego Gonu – i to nie bez powodu."
+  },
+  "wu_kaer_morhen": {
+   "name": "Kaer Morhen",
+   "quote": "Kości na dnie fosy twierdzy pozostają przypomnieniem rzezi zrodzonej z nienawiści."
+  },
+  "wu_kaer_seren": {
+   "name": "Kaer Seren",
+   "quote": "Księgozbiór Kaer Seren był jej największym skarbem i przedmiotem zazdrości grupy nadgorliwych magów."
+  },
+  "wu_gezras": {
+   "name": "Gezras z Leydy",
+   "quote": "Zawsze lepiej wziąć zlecenie od Aen Seidhe niż od dh'oine – o wiele mniejsza szansa, że zamiast monet dostaniesz nóż pod żebro."
+  },
+  "wu_geralt_1": {
+   "name": "Geralt z Rivii",
+   "quote": "Jeśli taka jest cena ratowania świata, to lepiej niech ten świat zginie."
+  },
+  "wu_gaetan": {
+   "name": "Gaetan",
+   "quote": "Zamordować mnie, żeby zaoszczędzić parę koron? I ja mam chronić takich skurwysynów?"
+  },
+  "wu_brehen": {
+   "name": "Brehen",
+   "quote": "Znany jako Kot z Iello. Przydomek zawdzięcza nie pochodzeniu, lecz rzezi tamtejszych chłopów. Właściwie masakrze."
+  },
+  "wu_gerd": {
+   "name": "Gerd",
+   "quote": "Miał zlecenie na smoka, syrenę i strzygę. Ścigali go też mściwy rycerz, łowcy nagród i bandyci."
+  },
+  "wu_warrit": {
+   "name": "Warrit Wszechwidzący",
+   "quote": "Lekko modyfikując znak Supirre, Warrit zyskał zdolność widzenia... wszystkiego."
+  },
+  "wu_erland": {
+   "name": "Erland z Larviku",
+   "quote": "Erland założył Szkołę Gryfa w nadziei, że rycerskie wartości poprawią reputację wiedźminów wśród prostego ludu."
+  },
+  "wu_arnaghad": {
+   "name": "Arnaghad",
+   "quote": "Robota wiedźmina to zabijać potwory i brać monetę. Nic więcej, nic mniej."
+  },
+  "wu_letho": {
+   "name": "Letho z Gulety",
+   "quote": "Wiedźmini nigdy nie umierają w swoich łóżkach."
+  },
+  "wu_eskel": {
+   "name": "Eskel",
+   "quote": "Jestem prostym wiedźminem, Wilku. Nie walczę ze smokami, nie bratam się z królami i nie sypiam z czarodziejkami..."
+  },
+  "wu_kolgrim": {
+   "name": "Kolgrim",
+   "quote": "Szczęście uśmiechało się do niego tylko wtedy, gdy towarzyszył mu wyjątkowy pech."
+  },
+  "wu_swallow_potion": {
+   "name": "Eliksir Jaskółka",
+   "quote": "Jaskółka, symbol wiosny i odnowy, dała nazwę eliksirowi, który przyspiesza zasklepianie i gojenie się ran."
+  },
+  "spe_sign_igni": {
+   "name": "Znak: Igni",
+   "quote": "Jeden ruch palców wiedźmina może zapalić lampę… albo spopielić wroga."
+  },
+  "spe_sign_quen": {
+   "name": "Znak: Quen",
+   "quote": "Geralt, czując w ustach żelazny smak krwi, wykrzyczał zaklęcie, z palcami ułożonymi w Znak Quen."
+  },
+  "spe_sign_axii": {
+   "name": "Znak: Aksji",
+   "quote": "Geralt kreśli palcami prawej dłoni Znak Aksji nad łbem wierzchowca i szepcze inkantację."
+  },
+  "spe_sign_aard": {
+   "name": "Znak: Aard",
+   "quote": "Podmuch skupionej energii, który miażdży wszystko na swojej drodze. Świetny, gdy zapomnisz kluczy."
+  },
+  "spe_sign_yrden": {
+   "name": "Znak: Yrden",
+   "quote": "Położył się obok zmumifikowanych szczątków Addy, kreśląc Znak Yrden na wewnętrznej stronie wieka jej sarkofagu."
+  },
+  "wu_alzur_maker": {
+   "name": "Alzur: Twórca Zaklęć",
+   "quote": "Buntownik… wyrzutek... rycerz… nawet czarodziej, wierzcie lub nie."
+  },
+  "wu_koshchey": {
+   "name": "Koszczej",
+   "quote": "Jak ci powiem, że koszczej to śmierć, i tak pójdziesz nad strumień, co?"
+  },
+  "wu_doppler_1": {
+   "name": "Doppler",
+   "quote": "Pójdę już i zgubię się w tłumie."
+  },
+  "wu_idr": {
+   "name": "Idr",
+   "quote": "Kto jest grzecznym pieskiem? – Idarran"
+  },
+  "wu_iris_von_everec": {
+   "name": "Iris von Everec",
+   "quote": "Tak mało pamiętam... Lecz gdy myślę o mojej róży, zaczynam sobie przypominać."
+  },
+  "wu_sarah": {
+   "name": "Sara",
+   "quote": "Mała Sara chce się bawić!"
+  },
+  "wu_djinn": {
+   "name": "Dżinn",
+   "quote": "Dżinn, mili panowie, spełnia tylko trzy życzenia. Tak uwolniony, ucieka w nieznane wymiary."
+  },
+  "wu_myrgtabrakke": {
+   "name": "Myrgtabrakke",
+   "quote": "Nigdy nie stawaj między smoczycą a jej młodymi."
+  },
+  "wu_vincent_meis": {
+   "name": "Vincent Meis",
+   "quote": "Za dnia kapitan straży miejskiej Wyzimy. Nocą bezlitosny mściciel i obrońca uciśnionych."
+  },
+  "wu_raging_bear": {
+   "name": "Rozjuszony niedźwiedź",
+   "quote": "Oswoić? Och, chłopcze, ludzie mogą tresować niedźwiedzie, ale to wcale nie znaczy, że je oswajają..."
+  },
+  "wu_iris_companions_1": {
+   "name": "Towarzysze Iris: Czarny pies",
+   "quote": "Wolimy zachować nasze imiona dla siebie. Myśl o nas jak o… przyjaciołach domu."
+  },
+  "wu_iris_companions_2": {
+   "name": "Towarzysze Iris: Czarny kot",
+   "quote": "Wolimy zachować nasze imiona dla siebie. Myśl o nas jak o… przyjaciołach domu."
+  },
+  "wu_vlodimir_von_everec": {
+   "name": "Vlodimir von Everec",
+   "quote": "Vlodimir lubił się zabawić za życia i bardzo tęsknił za rozrywką po śmierci."
+  },
+  "wu_phoenix": {
+   "name": "Feniks",
+   "quote": "Co było pierwsze, jajko czy kura? W porównaniu z zagadką feniksa to pytanie wydaje się wręcz błahe."
+  },
+  "wu_boris": {
+   "name": "Borys",
+   "quote": "Gdy już posmakował ludzkiego mięsa, nie tknie niczego innego."
+  },
+  "wu_marlene_trastamara": {
+   "name": "Marlena de Trastamara",
+   "quote": "Nikt nie zasiądzie z tobą do stołu, żadna łyżka cię nie nasyci, nigdy więcej nie zechcesz ujrzeć swego odbicia w lustrze."
+  },
+  "wu_idarran_ulivo": {
+   "name": "Idarran z Ulivo",
+   "quote": "Gdy już posmakował ludzkiego mięsa, nie tknie niczego innego."
+  },
+  "wu_mad_kiyan": {
+   "name": "Szalony Kiyan",
+   "quote": "Żyjemy na spokojnej wyspie niewiedzy pośród czarnych mórz nieskończoności i nie było nam pisane, byśmy daleko żeglowali."
+  },
+  "wu_cicada": {
+   "name": "Cykada",
+   "quote": "Ivo Mirce, lepiej znany jako Cykada, był przestępcą i ochroniarzem."
+  },
+  "wu_nivellen": {
+   "name": "Nivellen",
+   "quote": "Uciekaj, śmiertelniku! Pożrę cię! Rozszarpię na kawałki!"
+  },
+  "wu_vilgefortz_sorcerer": {
+   "name": "Vilgefortz: Czarodziej z Roggeveen",
+   "quote": "Wziąłeś gwiazdy odbite nocą w tafli jeziora za niebo."
+  },
+  "wu_doppler_2": {
+   "name": "Doppler",
+   "quote": "Pójdę już i zgubię się w tłumie."
+  },
+  "wu_pellar": {
+   "name": "Guślarz",
+   "quote": "Zbierzcie duchy na tę stypę, duszy błądzącej nie zostawcie, usłyszcie me wezwanie, mą pokorną prośbę, rozkujcie jego kajdany, uwolnijcie go."
+  },
+  "wu_kelpie": {
+   "name": "Kelpie",
+   "quote": "Na północy „kelpie” to był potwór morski..."
+  },
+  "wu_vysogota": {
+   "name": "Vysogota z Corvo",
+   "quote": "Ja, Vysogota z Corvo, nie wierzę w istnienie bogów."
+  },
+  "wu_angouleme": {
+   "name": "Angouleme",
+   "quote": "Przeklęci kuglarze! Sami oszuści!"
+  },
+  "wu_tea_vea_1": {
+   "name": "Tea i Vea",
+   "quote": "Jej szabla, dobyta szybciej, niż oko mogło dostrzec, przecięła powietrze."
+  },
+  "wu_tea_vea_2": {
+   "name": "Tea i Vea",
+   "quote": "Jej szabla, dobyta szybciej, niż oko mogło dostrzec, przecięła powietrze."
+  },
+  "wu_iola": {
+   "name": "Iola",
+   "quote": "Kapłanka powoli pokręciła głową, pociągnęła nosem i otarła łzę."
+  },
+  "wu_rhapsodic_melody": {
+   "name": "Rapsodyczna melodia",
+   "quote": "Wojna nie jest taka straszna, gdy dorzucić do niej chwytliwą melodię."
+  },
+  "wu_nenneke": {
+   "name": "Nenneke",
+   "quote": "Niewielu wie o leczeniu więcej niż Nenneke."
+  },
+  "wu_kalkstein": {
+   "name": "Adalbertus Kalkstein",
+   "quote": "Nim Kalkstein opuścił ten świat, zostawił nam kilka mało pochlebnych słów o naszym łaskawym królu..."
+  },
+  "wu_gerd_2": {
+   "name": "Gerd",
+   "quote": "Prawy i dzielny, śmierci się nie bał. Takim był wiedźmin Gerd."
+  },
+  "wu_lambert_2": {
+   "name": "Lambert",
+   "quote": "Lambert, Lambert, ty chuju."
+  },
+  "wu_eskel_2": {
+   "name": "Eskel",
+   "quote": "Słyszałem, jak sapiesz, z trzech mil. Po prostu nie chciałem oddać dogodnej pozycji."
+  },
+  "wu_sheenaz": {
+   "name": "Sh'eenaz",
+   "quote": "Wymówki, głupie i naiwne wymówki: ani krzty poświęcenia!"
+  },
+  "wu_george_kagen": {
+   "name": "Jerzy z Kagen",
+   "quote": "Zamiast potworów znalazł tylko wieśniaków, którzy palili fałszywe ognie, by topić i łupić przybijające statki."
+  },
+  "wu_leo": {
+   "name": "Leo",
+   "quote": "Złapałby tę strzałę, gdyby tylko ktoś go uprzedził."
+  },
+  "wu_renfri": {
+   "name": "Renfri",
+   "quote": "W tej baśni księżniczka i potwór to ta sama osoba."
+  },
+  "wu_gimpy_gerwin": {
+   "name": "Kulawy Gerwin",
+   "quote": "Trzymaj tę hołotę na krótkiej smyczy. I nie bój się użyć bata!"
+  },
+  "wu_fugas": {
+   "name": "Fugas",
+   "quote": "Heh, rozkazy mi wydajesz? Ty? Człowiek?"
+  },
+  "wu_barnabas": {
+   "name": "Barnaba Beckenbauer",
+   "quote": "Myślę, że ten naprawdę ci się spodoba!"
+  },
+  "wu_torque": {
+   "name": "Torque",
+   "quote": "Gdzie elf nie może pójść sam, tam diabła pośle."
+  },
+  "wu_deserter_1": {
+   "name": "Dezerter",
+   "quote": "Ciekawe, że co drugi dezerter to ochotnik."
+  },
+  "wu_deserter_2": {
+   "name": "Dezerter",
+   "quote": "Ciekawe, że co drugi dezerter to ochotnik."
+  },
+  "wu_deserter_3": {
+   "name": "Dezerter",
+   "quote": "Ciekawe, że co drugi dezerter to ochotnik."
+  },
+  "wu_bloody_baron": {
+   "name": "Krwawy Baron",
+   "quote": "Nie byłem dobrym ojcem, wiem, ale… może jeszcze nie jest za późno."
+  },
+  "wu_essi_daven": {
+   "name": "Essi Daven",
+   "quote": "Kiedy nie masz talentu, nie masz luksusu wyboru publiczności."
+  },
+  "wu_fercart": {
+   "name": "Fercart",
+   "quote": "Pionki nigdy nie poznają niewidzialnych rąk, które prowadzą je ku pewnej zgubie."
+  },
+  "wu_artaud_terranova": {
+   "name": "Artaud Terranova",
+   "quote": "Ambicja potrafi zaślepić."
+  },
+  "wu_auckes": {
+   "name": "Auckes",
+   "quote": "Letho ma plan… co mogłoby pójść nie tak?"
+  },
+  "wu_serrit": {
+   "name": "Serrit",
+   "quote": "Robimy, co musimy. Nie wstydzę się tego."
+  },
+  "wu_junod": {
+   "name": "Junod z Belhaven",
+   "quote": "Plotka głosi, że zrodził się z niezwykłej miłości olbrzymki i BARDZO odważnego krasnoluda."
+  },
+  "wu_berengar": {
+   "name": "Berengar",
+   "quote": "Przekonanie wodnika, by nie składał w ofierze nagradzanej krowy, nie było łatwym zadaniem."
+  },
+  "wu_stregobor": {
+   "name": "Stregobor",
+   "quote": "Będę szczery, choć dla własnego dobra nie powinienem."
+  },
+  "wu_renew": {
+   "name": "Odnowienie",
+   "quote": "Medicus curat, magicae sanat."
+  },
+  "wu_prophet_lebioda": {
+   "name": "Prorok Lebioda",
+   "quote": "Bądź sam sobie sędzią i władcą, bo tylko ty odpowiesz za swoje czyny przed samym sobą."
+  },
+  "wu_johnny": {
+   "name": "Johnny",
+   "quote": "Piotr Piper przyniósł księciu Proximo garść marynowanych papryczek znad Pontaru."
+  },
+  "wu_istredd": {
+   "name": "Istredd",
+   "quote": "Miłość może pchnąć do szaleństw. Utrata miłości – tym bardziej."
+  },
+  "wu_salma": {
+   "name": "Salma",
+   "quote": "Nie kłamię. I nie zabijam bez powodu."
+  },
+  "wu_field_marshal_duda": {
+   "name": "Marszałek polny Duda",
+   "quote": "Brylanty! Brylanty!"
+  },
+  "spe_lyria_rivia_morale": {
+   "name": "Lyria i Rivia: Wysokie morale",
+   "quote": "Za Lyrię i Rivię!"
+  },
+  "lr_meve_princess": {
+   "name": "Meve: Księżniczka Lyrii",
+   "quote": "Bogowie nad nami czuwają, wyjdziemy z bitwy bez szwanku."
+  },
+  "lr_rivian_mauler": {
+   "name": "Riviański rębacz",
+   "quote": "Ugh, z tymi to same kłopoty."
+  },
+  "lr_grey_rider": {
+   "name": "Szary Jeździec",
+   "quote": "Wojny wygrywa nie stal i krew, lecz informacja."
+  },
+  "lr_prince_anseis": {
+   "name": "Książę Anséis",
+   "quote": "Twoja obecność na tym turnieju jest obrazą mego honoru!"
+  },
+  "lr_royal_guard": {
+   "name": "Gwardia królewska",
+   "quote": "Każdy musi służyć z bezwarunkową lojalnością i mieć diabelsko przystojną szczękę."
+  },
+  "lr_landsknecht": {
+   "name": "Lyryjski lancknecht",
+   "quote": "Lepiej nie śmiej się z ich durnych czapek. Uwierz mi."
+  },
+  "lr_knighthood": {
+   "name": "Rycerstwo",
+   "quote": "Uklęknij jako zwykły człowiek, powstań jako rycerz."
+  },
+  "lr_reynard_odo": {
+   "name": "Reynard Odo",
+   "quote": "Pod twoim mężem służyłem dziesięć lat, pod tobą kolejne osiem."
+  },
+  "lr_war_wagon": {
+   "name": "Wóz bojowy",
+   "quote": "Hej, łucznicy! Naprzód, naprzód, naprzód!"
+  },
+  "lr_wagenburg": {
+   "name": "Tabor wozowy",
+   "quote": "Dh'oine potrafią zrobić broń ze wszystkiego. Nawet ze zwykłego wozu..."
+  },
+  "lr_gascon": {
+   "name": "Gaskon",
+   "quote": "Robię to, co zawsze, a jeszcze mi za to płacą!"
+  },
+  "lr_pikeman": {
+   "name": "Riviański pikinier",
+   "quote": "Zejdź z tego wysokiego konia i stań do walki!"
+  },
+  "lr_light_cavalry": {
+   "name": "Lekka kawaleria",
+   "quote": "Spokojnie, wszyscy. I bądźcie czujni."
+  },
+  "lr_rayla": {
+   "name": "Rayla",
+   "quote": "Wyjątki to prosta droga do przelewu ludzkiej krwi. Wszyscy Scoia'tael muszą zginąć."
+  },
+  "lr_wagon": {
+   "name": "Wóz",
+   "quote": "Woźnica przysięgał, że wiezie ziarno. Ale ziarno nie brzęczy na wybojach..."
+  },
+  "lr_lyrian_cavalry": {
+   "name": "Lyryjska kawaleria",
+   "quote": "Jeździec jest wart tyle, co jego wierzchowiec. A lyryjskie konie należą do najlepszych na Kontynencie."
+  },
+  "lr_hajduk": {
+   "name": "Lyryjski hajduk",
+   "quote": "Wojna, wojna... Na co to, do cholery, komu..."
+  },
+  "spe_wyvern_shield": {
+   "name": "Tarcza z łusek wiwerny",
+   "quote": "Mocniejsza niż zwykła tarcza i o wiele bardziej stylowa."
+  },
+  "spe_mantlet": {
+   "name": "Mantelet",
+   "quote": "Coś jak bękart tarczy i palisady."
+  },
+  "spe_watchman": {
+   "name": "Strażnik",
+   "quote": "Nawet nie widzę ponad tym cholerstwem."
+  },
+  "spe_garrison": {
+   "name": "Garnizon",
+   "quote": "Puk, puk… jest ktoś w domu?"
+  },
+  "lr_meve_white_queen": {
+   "name": "Meve: Biała Królowa",
+   "quote": "Ja dokonałem wyboru. Czas, byś ty dokonał swojego."
+  },
+  "lr_piercing_missile": {
+   "name": "Przebijający pocisk",
+   "quote": "Nie ma zbroi, której nie da się przebić."
+  },
+  "lr_trebuchet": {
+   "name": "Lyryjski trebusz",
+   "quote": "Czujesz? Ziemia drży za każdym razem, gdy Gruba Berta wypuszcza kamień."
+  },
+  "lr_arbalest": {
+   "name": "Lyryjska arbaleta",
+   "quote": "Trafię w dziesiątkę ze stu kroków! No, może nie za pierwszym razem..."
+  },
+  "lr_sapper": {
+   "name": "Riviański saper",
+   "quote": "Pierwszy Nilfgaardczyk, który próbował prześlizgnąć się przez nasze linie, był cwanym skurczybykiem."
+  },
+  "lr_villem": {
+   "name": "Książę Villem",
+   "quote": "Chłopak nie nadaje się do korony. Brak mu i rozumu, i męstwa."
+  },
+  "lr_scout": {
+   "name": "Zwiadowca",
+   "quote": "Jeśli nasi zwiadowcy nie wrócą, zawracamy."
+  },
+  "lr_winch": {
+   "name": "Kołowrót",
+   "quote": "To kołowrót. Nie ma się czym zachwycać."
+  },
+  "lr_banner": {
+   "name": "Lyryjski sztandar",
+   "quote": "Nasz herb? Czarny orzeł. Los naszych wrogów? Czysta niedola."
+  },
+  "lr_scytheman_1": {
+   "name": "Lyryjski kosynier",
+   "quote": "Naszych żywią, a wrogom krew puszczają."
+  },
+  "lr_scytheman_2": {
+   "name": "Lyryjski kosynier",
+   "quote": "Duch ochoczy, i to jak, ale te cholerne buty mnie wykończą."
+  },
+  "lr_scytheman_3": {
+   "name": "Lyryjski kosynier",
+   "quote": "Jest czas zbiorów, czas siewu... i czas śmierci..."
+  },
+  "lr_caldwell": {
+   "name": "Hrabia Caldwell",
+   "quote": "Wasza Wysokość... Żeby królowa wypytywała pospólstwo, toż to zwyczajnie nie przystoi..."
+  },
+  "lr_carroballista": {
+   "name": "Karrobalista",
+   "quote": "Ta balista jest na wozie."
+  },
+  "lr_siege": {
+   "name": "Oblężenie",
+   "quote": "Nie ma twierdzy nie do zdobycia. Są tylko twierdze niewarte zdobywania."
+  },
+  "lr_onager": {
+   "name": "Riviański onager",
+   "quote": "Za Riviiię!"
+  },
+  "lr_blacksmith": {
+   "name": "Lyryjski kowal",
+   "quote": "Coś z niczego... moja specjalność."
+  },
+  "sy_carlo_varese": {
+   "name": "Carlo Varese: Tasak",
+   "quote": "Moje świnie nie będą dziś głodne dzięki tobie."
+  },
+  "sy_francis_bedlam": {
+   "name": "Franciszek Bedlam: Król Żebraków",
+   "quote": "Ty mówisz trybut, ja mówię podatki."
+  },
+  "sy_cyprian_wiley": {
+   "name": "Cyprian Wiley: Sukinsyn Junior",
+   "quote": "Wojna z Sukinsynem sprawi, że rynsztoki Novigradu spłyną krwią."
+  },
+  "sy_gudrun_bjornsdottir": {
+   "name": "Gudrun Bjornsdottir: Królowa Piratów",
+   "quote": "Odnalazła wolność wśród błękitnych wód i słonego wiatru."
+  },
+  "sy_cyrus_hemmelfart": {
+   "name": "Cyrus Hemmelfart: Hierarcha Novigradu",
+   "quote": "Pod całą tą chucią, chciwością i próżnością kryje się honorowy człowiek."
+  },
+  "sy_sigi_reuven": {
+   "name": "Sigi Reuven",
+   "quote": "Na pewno nie wygląda ci ani trochę znajomo...?"
+  },
+  "sy_flyndr_crew": {
+   "name": "Załoga Flyndra",
+   "quote": "Łajdacy i złodzieje pijani grogiem, rozlewem krwi i łupami – czy można marzyć o lepszej załodze?"
+  },
+  "spe_dimeritium_shackles": {
+   "name": "Kajdany z dimerytu",
+   "quote": "Terranova krzyknął, zatoczył się, wygiął do tyłu, pochylił do przodu, po czym zwymiotował i jęknął. Było jasne, z czego zrobiono jego kajdany."
+  },
+  "sy_flaming_rose_footman": {
+   "name": "Piechur Zakonu Płonącej Róży",
+   "quote": "Do Zakonu może wstąpić każdy – rycerz, chłop, nawet wiedźmin."
+  },
+  "sy_bare_knuckle_brawler": {
+   "name": "Pięściarz na gołe pięści",
+   "quote": "To wszystko, co z niego zostało? Chyba się zrzygam..."
+  },
+  "sy_witch_hunter": {
+   "name": "Łowca czarownic",
+   "quote": "Długie płaszcze, kapelusze z szerokim rondem i krzywe uśmiechy – łowców czarownic trudno przeoczyć."
+  },
+  "sy_witch_hunter_executioner": {
+   "name": "Kat łowców czarownic",
+   "quote": "Szkoda by było, gdybym obciął ci choć kosmyk tych pięknych włosów."
+  },
+  "sy_casino_bouncers": {
+   "name": "Bramkarze kasyna",
+   "quote": "Junior gadał, że nasze paskudne gęby odstraszają całą forsę. Nie bardzo widzę, jak to ma pomóc..."
+  },
+  "sy_caleb_menge": {
+   "name": "Caleb Menge",
+   "quote": "Oszuści, heretycy, czarownice! Zalewają nasze miasto, psują naszą cnotę i zagrażają naszemu sposobowi życia!"
+  },
+  "sy_greater_brothers": {
+   "name": "Starsi Bracia",
+   "quote": "Taran? Niepotrzebny, załatwimy to inaczej."
+  },
+  "sy_eternal_fire_inquisitor": {
+   "name": "Inkwizytor Wiecznego Ognia",
+   "quote": "Płonące światło Wiecznego Ognia odsłania wszystko!"
+  },
+  "sy_eternal_fire_priest_1": {
+   "name": "Kapłan Wiecznego Ognia",
+   "quote": "Bliżej, owieczki moje, zbliżcie się. Niech Wieczny Ogień ogrzeje wasze dusze!"
+  },
+  "sy_eternal_fire_priest_2": {
+   "name": "Kapłan Wiecznego Ognia",
+   "quote": "Bliżej, owieczki moje, zbliżcie się. Niech Wieczny Ogień ogrzeje wasze dusze!"
+  },
+  "sy_eternal_fire_priest_3": {
+   "name": "Kapłan Wiecznego Ognia",
+   "quote": "Bliżej, owieczki moje, zbliżcie się. Niech Wieczny Ogień ogrzeje wasze dusze!"
+  },
+  "sy_roderick_wett": {
+   "name": "Roderick de Wett",
+   "quote": "Hrabia de Wett jest wyjątkowo odrażający i arogancki, ale przynajmniej lubi czasem zagrać w kościanego pokera."
+  },
+  "sy_ulrich": {
+   "name": "Ulrich",
+   "quote": "Gdy Zakon rozwiązano, ci, którzy nie przyłączyli się do łowców czarownic, utworzyli Upadłych Rycerzy, a Ulrich został ich Wielkim Mistrzem."
+  },
+  "sy_inquisitional_pyres": {
+   "name": "Stosy inkwizycji",
+   "quote": "Ogień oczyszcza."
+  },
+  "sy_imke": {
+   "name": "Imke",
+   "quote": "Ledwie zwróciła na siebie uwagę Gudrun, a już postanowiła to wykorzystać."
+  },
+  "sy_professor": {
+   "name": "Profesor",
+   "quote": "Obawiam się, że nasze konwentykle mogą się dla ciebie źle skończyć."
+  },
+  "sy_salamandra_assassin": {
+   "name": "Zabójca Salamandry",
+   "quote": "Imię i sakwa pełna złota. Tylko tyle mi trzeba."
+  },
+  "sy_salamandra_assassin_2": {
+   "name": "Zabójca Salamandry",
+   "quote": "Imię i sakwa pełna złota. Tylko tyle mi trzeba."
+  },
+  "sy_walter_veritas": {
+   "name": "Walter Veritas",
+   "quote": "W mieście, które żywi się kłamstwami, prawda może być bronią."
+  },
+  "sy_passiflora": {
+   "name": "Passiflora",
+   "quote": "Więcej tu pielgrzymów niż w świątyni Wiecznego Ognia..."
+  },
+  "sy_fence": {
+   "name": "Paser",
+   "quote": "Wolę określenie „kurator”."
+  },
+  "sy_azar_javed": {
+   "name": "Azar Javed: Renegat",
+   "quote": "Ten czarodziej nie tylko zręcznie włada mocą ognia – można rzec, że ogień stał się częścią jego istoty."
+  },
+  "sy_savolla": {
+   "name": "Savolla",
+   "quote": "Wiedźmińskie mutageny to zapomniany skarb. Czas, by świat poznał ich potencjał."
+  },
+  "sy_madame_luiza": {
+   "name": "Madame Luiza",
+   "quote": "Zaliczyłyśmy więcej chłopa niż wszystkie koszary redańskiej armii razem wzięte."
+  },
+  "sy_saul_navarette": {
+   "name": "Saul de Navarette",
+   "quote": "Koneser z bezdennymi kieszeniami i duszą czarną jak smoła."
+  },
+  "sy_cleaver_gang_1": {
+   "name": "Gang Tasaka",
+   "quote": "Mówiłeś, że z obiema rękami związanymi za plecami. To śmiało, kopnij mnie w rzyć, kiedy najdzie cię ochota."
+  },
+  "sy_cleaver_gang_2": {
+   "name": "Gang Tasaka",
+   "quote": "Falbaniasta suknia czy mahakamski stalowy napierśnik – bez różnicy."
+  },
+  "sy_cleaver_gang_3": {
+   "name": "Gang Tasaka",
+   "quote": "Kto próbuje oszukać Tasaka, ten się niemile zdziwi... I twardo wyląduje."
+  },
+  "sy_cleaver_gang_4": {
+   "name": "Gang Tasaka",
+   "quote": "Nie skąp, kolego. Starczy dla wszystkich."
+  },
+  "sy_mutant_killer": {
+   "name": "Zabójca mutantów",
+   "quote": "Trzeba go trzymać na smyczy, w kagańcu i z klapkami na oczach, inaczej będą kłopoty."
+  },
+  "sy_moreelse": {
+   "name": "Moreelse",
+   "quote": "Niektórzy łowcy czarownic wierzyli, że wytępienie magów i czarodziejek uczyni świat lepszym. Inni nie potrzebowali takiego uzasadnienia."
+  },
+  "sy_graden": {
+   "name": "Graden",
+   "quote": "Z początku paliliśmy każdą księgę czarnej magii, jaką znaleźliśmy. Ostatnio uznaliśmy, że rozsądniej będzie najpierw je przeczytać."
+  },
+  "sy_robber_1": {
+   "name": "Rabuś",
+   "quote": "J-już oddałem ci wszystkie pieniądze!"
+  },
+  "sy_robber_2": {
+   "name": "Rabuś",
+   "quote": "J-już oddałem ci wszystkie pieniądze!"
+  },
+  "sy_robber_3": {
+   "name": "Rabuś",
+   "quote": "J-już oddałem ci wszystkie pieniądze!"
+  },
+  "sy_robber_4": {
+   "name": "Rabuś",
+   "quote": "J-już oddałem ci wszystkie pieniądze!"
+  },
+  "sy_tamara_strenger": {
+   "name": "Tamara Strenger",
+   "quote": "Gdy żar Ognia rozpali twe serce, daje ci siłę i prowadzi ścieżką prawdy przez resztę życia."
+  },
+  "sy_nathaniel_pastodi": {
+   "name": "Nathaniel Pastodi",
+   "quote": "Novigrad – gdzie niemożliwe staje się możliwe. Na przykład zawodowy oprawca zostaje wielebnym."
+  },
+  "sy_jacques_aldersberg": {
+   "name": "Jacques de Aldersberg",
+   "quote": "Wiedza jest moim brzemieniem. Tylko ja mogę zapobiec katastrofie."
+  },
+  "sy_igor_hook": {
+   "name": "Igor Hak",
+   "quote": "W lewym narożniku krwiożerczy szelmar, a w prawym... a, cholera... Walka skończona, wstrzymać zakłady!"
+  },
+  "sy_fallen_rayla": {
+   "name": "Upadła Rayla",
+   "quote": "Zginęła od strzał tych, na których polowała. Tak przynajmniej myślano. Salamandra miała wobec niej inne plany."
+  },
+  "sy_sausage_maker": {
+   "name": "Masarz",
+   "quote": "Pozbywanie się ciał i robienie kiełbas – tym się zajmuję."
+  },
+  "sy_octavia_hale": {
+   "name": "Strażnicy: Octavia Hale",
+   "quote": "Biada tym, którzy znajdą się po złej stronie Octavii Hale, samozwańczej, sławnej na cały świat tropicielki – i mścicielki."
+  },
+  "sy_fabian_hale": {
+   "name": "Strażnicy: Fabian Hale",
+   "quote": "Fabian jest bardzo dumny ze swojej pracy, a każde „zwycięstwo” wyrył sobie na skórze jako trwałą pamiątkę najprzyjemniejszych wspomnień."
+  },
+  "sy_ignatius_hale": {
+   "name": "Strażnicy: Ignatius Hale",
+   "quote": "To grzeczny chłopiec."
+  },
+  "sy_gellert_bleinheim": {
+   "name": "Bracia Bleinheim: Gellert",
+   "quote": "Ciekawe, jak sobie radzi mój brat w lesie..."
+  },
+  "sy_roland_bleinheim": {
+   "name": "Bracia Bleinheim: Roland",
+   "quote": "Ciekawe, jak sobie radzi mój brat w kanałach..."
+  },
+  "sy_caesar_bilzen": {
+   "name": "Caesar Bilzen",
+   "quote": "Zapalony wędkarz, skrupulatny kolekcjoner i niezły numer."
+  },
+  "sy_rico_meiersdorf": {
+   "name": "Rico Meiersdorf",
+   "quote": "Nigdy nie przepadałem za pszczołami."
+  },
+  "sy_cleric_flaming_rose": {
+   "name": "Kleryk Płonącej Róży",
+   "quote": "Mamy dwoje oczu, dwoje uszu, ale tylko jeden język, byśmy patrzyli i słuchali dwa razy więcej, niż mówimy."
+  },
+  "sy_eternal_fire_disciple": {
+   "name": "Uczeń Wiecznego Ognia",
+   "quote": "Zajrzyjcie w swe serca, drodzy bracia. Czyż nie płonie w nich pogarda dla niesprawiedliwości?"
+  },
+  "sy_tidecloack_ransacker": {
+   "name": "Łupieżca z Pływołazów",
+   "quote": "W Novigradzie jest więcej bogactwa niż w całym Skellige – i równie wielu biedaków."
+  },
+  "sy_salamandra_lackey": {
+   "name": "Pachołek Salamandry",
+   "quote": "Od pachołków oczekuje się, że pierwsze pięć robót wykonają za darmo, okazując zapał do fachu."
+  },
+  "sy_mutant": {
+   "name": "Mutant",
+   "quote": "Właściwymi narzędziami można kształtować ludzkie ciało jak mokrą glinę."
+  },
+  "sy_salamandra_mage": {
+   "name": "Mag Salamandry",
+   "quote": "Rozpalone ognisko ogrzeje ludzi przez dzień, ale podpalenie ich..."
+  },
+  "sy_sewer_raider": {
+   "name": "Kanałowy rabuś",
+   "quote": "Zbudowane do przerzucania gówna, ale forsę przerzuca równie dobrze."
+  },
+  "sy_inquisitor_helveed": {
+   "name": "Wielki Inkwizytor Helveed",
+   "quote": "Żaden grzeszny nędznik nie ujdzie swego losu w Ogniu. Już ja tego dopilnuję."
+  },
+  "sy_boris": {
+   "name": "Borys",
+   "quote": "Gdy już posmakował ludzkiego mięsa, nie tknie niczego innego."
+  },
+  "sy_halfling_safecracker": {
+   "name": "Niziołek kasiarz",
+   "quote": "Z takim słuchem mógłby być muzykiem. Niestety, z oklasków nie da się tak szybko wzbogacić."
+  },
+  "sy_hammond": {
+   "name": "Hammond",
+   "quote": "Raz pomylony z młodym wielorybem i niemal zharpunowany. Od tamtej pory unika pływania."
+  },
+  "sy_sir_skewertooth": {
+   "name": "Sir Rożnozęby",
+   "quote": "Oto i on! Mój rycerz w świńskiej zbroi!"
+  },
+  "sy_ferko": {
+   "name": "Ferko Rzeźbiarz",
+   "quote": "Niektórzy nazywają to prostackim bandytyzmem. Ale ja uważam to za najwyższą formę sztuki."
+  },
+  "sy_hvitr_aelydia": {
+   "name": "Hvitr i Aelydia",
+   "quote": "Nierozłączni. Niezwyciężeni. Nieodpowiedzialni."
+  },
+  "sy_bincy_blumerholdt": {
+   "name": "Bincy Blumerholdt",
+   "quote": "W całym Novigradzie nikt nie ma bardziej owłosionych stóp ani lepszych lepkich rączek."
+  },
+  "sy_freak_show_1": {
+   "name": "Gabinet osobliwości",
+   "quote": "Jak to czemu? Gra zaczynała się dłużyć!"
+  },
+  "sy_freak_show_2": {
+   "name": "Gabinet osobliwości",
+   "quote": "Szef zawsze ma najwięcej frajdy. Prawdę mówiąc, i tak wolę patrzeć."
+  },
+  "sy_freak_show_3": {
+   "name": "Gabinet osobliwości",
+   "quote": "Gra, w której celność to rzecz subiektywna."
+  },
+  "sy_freak_show_4": {
+   "name": "Gabinet osobliwości",
+   "quote": "Czemu taka smutna mina, przyjacielu?"
+  },
+  "sy_mutated_hound_1": {
+   "name": "Zmutowane ogary",
+   "quote": "Nie mogliśmy się zdecydować, jak go nazwać, i jakoś tak samo wyszło..."
+  },
+  "sy_mutated_hound_2": {
+   "name": "Zmutowane ogary",
+   "quote": "Z najlepszego przyjaciela człowieka zrobiliśmy jego najgorszego wroga."
+  },
+  "sy_adriano_mink": {
+   "name": "Adriano Norka",
+   "quote": "Tutaj, ślicznotko. Siadaj tatusiowi na kolanach."
+  },
+  "sy_beggar": {
+   "name": "Żebrak",
+   "quote": "Mów, co chcesz, o jego technice, ale chyba uchwycił twój lepszy profil."
+  },
+  "sy_payroll_specialist": {
+   "name": "Specjalista od wypłat",
+   "quote": "Strażnicy w Novigradzie pracują za grosze, a żyją jak królowie. Kolejny paradoks Wolnego Miasta..."
+  },
+  "sy_arena_endrega": {
+   "name": "Endriaga z areny",
+   "quote": "Silny jak wół, głupi jak but."
+  },
+  "sy_arena_ghoul": {
+   "name": "Ghul z areny",
+   "quote": "Będzie idealny na twoją arenę. Jak kundel, co wylizuje ci talerz po obiedzie."
+  },
+  "sy_tatterwing": {
+   "name": "Postrzępione Skrzydło",
+   "quote": "Wydaje się trochę ospała. Kilka szybkich szturchnięć w żebra powinno ją ożywić."
+  },
+  "sy_temple_guard": {
+   "name": "Strażnik świątyni",
+   "quote": "Stój! Kto idzie?! Zaprzysiężony Ogniowi czy heretyk?"
+  },
+  "sy_lieutenant_herst": {
+   "name": "Porucznik von Herst",
+   "quote": "Upadek Zakonu nie był dla niego tak bolesny jak dla innych."
+  },
+  "sy_mutant_maker": {
+   "name": "Twórca mutantów",
+   "quote": "Naprawdę jestem naukowcem. To nie moja wina, że profesorowie z Oxenfurtu byli zbyt ograniczeni, by docenić moje szczególne metody badawcze."
+  },
+  "sy_sea_jackal": {
+   "name": "Morski szakal",
+   "quote": "Zdejmowałeś kiedyś pierścienie z trupa, który moczył się dwa tygodnie? Nie? To nie narzekaj."
+  },
+  "sy_fallen_knight": {
+   "name": "Upadły rycerz",
+   "quote": "Porzucił słuszną walkę, a płomień w nim dawno zgasł."
+  },
+  "sy_sukrus": {
+   "name": "Sukrus",
+   "quote": "Jeden z wielu, którzy szukali szczęścia w Novigradzie. I jeden z jeszcze liczniejszych, którzy go nie znaleźli."
+  },
+  "sy_kurt": {
+   "name": "Kurt",
+   "quote": "Ej, Kurt, sprawdź, czego się drze ta Merigold, może czegoś potrzebuje. Rozgrzanego żelaza na język, na przykład?"
+  },
+  "sy_whoreson_senior": {
+   "name": "Sukinsyn Senior",
+   "quote": "Jaki ojciec, taki syn."
+  },
+  "sy_lonely_champion": {
+   "name": "Samotny czempion",
+   "quote": "Dopóki on prowadzi słuszną walkę, Zakon i jego płomień trwają."
+  },
+  "sy_failed_experiment": {
+   "name": "Nieudany eksperyment",
+   "quote": "Nawet nieudane eksperymenty mogą się do czegoś przydać. Jak inaczej przesuwać granice wiedzy?"
+  },
+  "sy_frightener": {
+   "name": "Straszydło Savolli",
+   "quote": "Wiedźmini myśleli, że zbiry z Salamandry nie przedostaną się przez mury Kaer Morhen. Wiedźmini się mylili."
+  },
+  "sy_stolen_mutagens": {
+   "name": "Skradzione mutageny",
+   "quote": "Jak handel organami – tylko o wiele bardziej dochodowe."
+  },
+  "spe_vivaldi_bank": {
+   "name": "Bank Vivaldich",
+   "quote": "Szkoda, że tracimy waszą firmę, ale życzymy wam wszystkiego dobrego!"
+  },
+  "ze_zerrikanterment": {
+   "name": "Zerrikanterment",
+   "quote": "Legenda głosi, że spalił lasy wokół Zerrikanii, odcinając ją od świata pustyniami i pustkowiami."
+  },
+  "ze_baal_zebuth": {
+   "name": "Ball-Zebuth",
+   "quote": "Bóg wilgotnego i mrocznego nieba, uważany za przeciwieństwo Raroga."
+  },
+  "ze_rarog": {
+   "name": "Raróg",
+   "quote": "Groźne bóstwo ognia i ciepłego nieba, uważane za przeciwieństwo Baal-Zebutha."
+  },
+  "ze_villentretenmerth": {
+   "name": "Villentretenmerth",
+   "quote": "Każe się też zwać Borkh Trzy Kawki... nazwy to nie jego mocna strona."
+  },
+  "ze_myrgtabrakke": {
+   "name": "Myrgtabrakke",
+   "quote": "Nigdy nie stawaj między smoczycą a jej młodymi."
+  },
+  "ze_merineaevelth": {
+   "name": "Merineaevelth",
+   "quote": "Królowa Zerrikanii i założycielka Wiernych."
+  },
+  "ze_saulrenith": {
+   "name": "Saulrenith",
+   "quote": "Porywcza i gwałtowna – z taką mieszanką cech lepiej nie zadzierać."
+  },
+  "ze_tea_vea_1": {
+   "name": "Tea i Vea",
+   "quote": "Jej szabla, dobyta szybciej, niż oko mogło dostrzec, przecięła powietrze."
+  },
+  "ze_tea_vea_2": {
+   "name": "Tea i Vea",
+   "quote": "Jej szabla, dobyta szybciej, niż oko mogło dostrzec, przecięła powietrze."
+  },
+  "ze_faithel_1": {
+   "name": "Wierny",
+   "quote": "Ich celem jest odnaleźć smoka, oddać mu cześć i przysiąc wierność."
+  },
+  "ze_faithel_2": {
+   "name": "Wierny",
+   "quote": "Ich celem jest odnaleźć smoka, oddać mu cześć i przysiąc wierność."
+  },
+  "ze_faithel_3": {
+   "name": "Wierny",
+   "quote": "Ich celem jest odnaleźć smoka, oddać mu cześć i przysiąc wierność."
+  },
+  "ze_myrgot": {
+   "name": "Myrgot",
+   "quote": "Naznaczony hańbą Myrgot nigdy nie wrócił do Caingorn po sromotnej porażce w pojedynku z pobożnym rycerzem Eyckiem z Denesle."
+  },
+  "ze_lilit_niya": {
+   "name": "Lilit-Niya",
+   "quote": "Czarne Słońce zwiastowało powrót Lilit – czczonej na Wschodzie jako Niya – i zagładę ludzkości."
+  },
+  "ze_ocvist": {
+   "name": "Ocvist",
+   "quote": "Pan Kwarcowej Góry, Niszczyciel, Pogromca Trajana. W wolnym czasie lubi długie spacery i kolacje przy świecach."
+  },
+  "ze_keltullis": {
+   "name": "Keltullis",
+   "quote": "Walczyli z nią przez wiek, nim zrozumieli, że się nigdzie nie wybiera. To zawarli układ: ona im nie przeszkadza, oni dają jej, czego potrzebuje."
+  },
+  "ze_ostreverg": {
+   "name": "Ostreverg",
+   "quote": "Dawno temu smok Ostreverg spustoszył i złupił świętą Świątynię Frei na Wyspach Skellige."
+  },
+  "ze_germinus": {
+   "name": "Germinus",
+   "quote": "Smok cenił swe skarby ponad wszystko, wylewając gniew na wszystko, co im zagrażało."
+  },
+  "ze_azar_javed": {
+   "name": "Azar Javed",
+   "quote": "Ten czarodziej nie tylko zręcznie włada mocą ognia – można rzec, że ogień stał się częścią jego istoty."
+  },
+  "ze_bart": {
+   "name": "Bart",
+   "quote": "Dobry strażnik powinien być na tyle bezmózgi, by sama myśl o zdradzie pana była niemożliwa."
+  },
+  "ze_venomous_basilisk": {
+   "name": "Jadowity bazyliszek",
+   "quote": "Bazyliszek to najjadowitsze stworzenie na świecie! Bo bazyliszek jest królem wszystkich węży!"
+  },
+  "ze_giant_spotted_spider": {
+   "name": "Olbrzymi cętkowany pająk",
+   "quote": "Każda bestia w lesie jest jego zdobyczą, nawet słonie."
+  },
+  "ze_emetouka": {
+   "name": "Emetouka",
+   "quote": "Ich róg ma ogromną wartość, głównie dlatego, że wielu zginęło, próbując na nie polować."
+  },
+  "ze_leopard_1": {
+   "name": "Lampart",
+   "quote": "Wiele ofiar wzięło ich spokój za bezpieczeństwo – lamparty po prostu wiedzą, że szybko je dogonią."
+  },
+  "ze_leopard_2": {
+   "name": "Lampart",
+   "quote": "Wiele ofiar wzięło ich spokój za bezpieczeństwo – lamparty po prostu wiedzą, że szybko je dogonią."
+  },
+  "ze_tiger_1": {
+   "name": "Tygrys",
+   "quote": "Ulubiona bestia królowej. Zaraz po smokach, rzecz jasna."
+  },
+  "ze_tiger_2": {
+   "name": "Tygrys",
+   "quote": "Ulubiona bestia królowej. Zaraz po smokach, rzecz jasna."
+  },
+  "ze_jackals": {
+   "name": "Szakale",
+   "quote": "Nie najgroźniejsze, ale zaskakująco jedne z najbardziej znienawidzonych dzikich bestii w okolicy."
+  },
+  "ze_boa": {
+   "name": "Boa",
+   "quote": "Żywe ryzyko uduszenia."
+  },
+  "ze_python": {
+   "name": "Pyton",
+   "quote": "„Patrz, jakie dziwne zwalone drzewo! O cholera, rusza w naszą stronę!”"
+  },
+  "ze_viper": {
+   "name": "Żmija",
+   "quote": "„Musiałem uciekać z chałupy, jakaś cholerna żmija urządziła sobie w niej norę”."
+  },
+  "ze_hyenas": {
+   "name": "Hieny",
+   "quote": "„Te pierdolone bestie zawsze polują stadami. Zabiły mi wszystkie kury, a ja nic nie mogłem zrobić”."
+  },
+  "ze_collective_trance": {
+   "name": "Zbiorowy trans",
+   "quote": "Zerrikańczycy mają starą tradycję: zbierają się razem, piją mocny psychodeliczny wywar i uciekają od surowej rzeczywistości."
+  },
+  "ze_hippotoxotai_1": {
+   "name": "Hippotoksotai",
+   "quote": "Tylko tumany kurzu, strzały i śmierć."
+  },
+  "ze_hippotoxotai_2": {
+   "name": "Hippotoksotai",
+   "quote": "Tylko tumany kurzu, strzały i śmierć."
+  },
+  "ze_hippotoxotai_3": {
+   "name": "Hippotoksotai",
+   "quote": "Tylko tumany kurzu, strzały i śmierć."
+  },
+  "ze_skuda_amazon_1": {
+   "name": "Amazonka Skuda",
+   "quote": "Ich legendarna celność jest jak najbardziej prawdziwa."
+  },
+  "ze_skuda_amazon_2": {
+   "name": "Amazonka Skuda",
+   "quote": "„Nie muszę obcinać sobie piersi, żeby trafić w dziesiątkę w pełnym galopie”."
+  },
+  "ze_bomb_maker_1": {
+   "name": "Zerrikański bombardier",
+   "quote": "Interes z zerrikańskimi bombami po prostu... eksploduje."
+  },
+  "ze_bomb_maker_2": {
+   "name": "Zerrikański bombardier",
+   "quote": "Interes z zerrikańskimi bombami po prostu... eksploduje."
+  },
+  "ze_heavy_fire_scorpion": {
+   "name": "Ciężki zerrikański ognisty skorpion",
+   "quote": "Nie najlepsze do zdobywania miast, ale świetne do zrównywania ich z ziemią."
+  },
+  "ze_free_warrior_1": {
+   "name": "Wolny wojownik",
+   "quote": "„Hmm, to uczucie wolności po pokonaniu wroga!”"
+  },
+  "ze_free_warrior_2": {
+   "name": "Wolny wojownik",
+   "quote": "Najpierw pozwala ofierze zgubić się w dżungli, potem zaczyna polowanie."
+  },
+  "ze_free_warrior_3": {
+   "name": "Wolny wojownik",
+   "quote": "Niewielu w królestwach Północy stać na jego miecz."
+  },
+  "ze_free_warrior_4": {
+   "name": "Wolny wojownik",
+   "quote": "„Widzisz to coś, co tam biegnie? Zaraz to zatrzymam”."
+  },
+  "ze_free_warrior_5": {
+   "name": "Wolny wojownik",
+   "quote": "„Najpierw myślałem, że to jeden z tych lampartów, wiesz? Dopiero jak zobaczyłem włócznię, zrozumiałem, że to kobieta”."
+  },
+  "ze_first_faithel_kia": {
+   "name": "Pierwsza wierna Kia",
+   "quote": "Niegdyś bliska przyjaciółka Merineaevelth, jako pierwsza otrzymała zadanie odnalezienia i ochrony boskich smoków świata."
+  },
+  "ze_apucunpture_healer": {
+   "name": "Uzdrowiciel akupunkturzysta",
+   "quote": "Może cię to zdziwi, ale te igły łagodzą ból."
+  },
+  "ze_canyon_herbalist": {
+   "name": "Zielarka z kanionu",
+   "quote": "W kanionie łatwo się zgubić, ale znajomość jego ziół to rzadki dar."
+  },
+  "ze_high_priestess_nia": {
+   "name": "Arcykapłanka Nia",
+   "quote": "W jej imię toczono bitwy. Każdą krwawszą od poprzedniej."
+  },
+  "ze_dragon_priestess_lua": {
+   "name": "Kapłanka smoków Lua",
+   "quote": "Opanowanie tajników smoczej magii to niemały wyczyn."
+  },
+  "ze_rainforest_pathfinder": {
+   "name": "Przewodnik z lasu deszczowego",
+   "quote": "Jak przejść przez las Sar'gaedd? Weź mapę, sprawdź, gdzie jest najbliższa osada plemienna, i wynajmij miejscowego przewodnika."
+  },
+  "ze_steppes_nomad_1": {
+   "name": "Koczownik ze stepów",
+   "quote": "By przetrwać na tych rozległych stepach, trzeba wytrzymałości i jedności."
+  },
+  "ze_steppes_nomad_2": {
+   "name": "Koczownik ze stepów",
+   "quote": "By przetrwać na tych rozległych stepach, trzeba wytrzymałości i jedności."
+  },
+  "ze_war_elephant": {
+   "name": "Słoń bojowy",
+   "quote": "Trudno znaleźć relacje o tym, jak to jest, gdy szarżuje na ciebie batalion zerrikańskich słoni – do tego trzeba ocalałych."
+  },
+  "ze_behemoth": {
+   "name": "Behemot",
+   "quote": "Bestia tak ogromna, że w kupach jej łajna mogłyby zamieszkać całe rodziny. Gdyby nie smród, rzecz jasna."
+  },
+  "ze_balladeer": {
+   "name": "Bard",
+   "quote": "Wiadomo, że zerrikańska królowa była twardą kobietą i tylko słodki głos zręcznego śpiewaka mógł przebić twardą skorupę wokół jej serca."
+  },
+  "ze_alchemist": {
+   "name": "Zerrikański alchemik",
+   "quote": "„A gdybym dodał jeszcze trochę tego...”"
+  },
+  "ze_yellow_witch_korath": {
+   "name": "Żółta Wiedźma Korath",
+   "quote": "Pewien człowiek zapomniał jej pełnego tytułu i przez pomyłkę nazwał ją „piaskową wiedźmą”. Teraz jego lakierowana czaszka zdobi jej laskę."
+  },
+  "ze_sandworm": {
+   "name": "Czerw piaskowy",
+   "quote": "Mimo ogromnych rozmiarów wielu wyczuwa jego nadejście dopiero, gdy jest za późno."
+  },
+  "spe_giant_spider_web": {
+   "name": "Sieci olbrzymiego pająka",
+   "quote": "W Zerrikanii żyją pająki tak wielkie, że w swoje sieci łapią słonie."
+  },
+  "spe_tse_tse_flies": {
+   "name": "Muchy tse-tse",
+   "quote": "Muchy są szczególnie odrażające – składają jaja w ludzkim ciele, a larwy dojrzewają w głowie żywiciela."
+  },
+  "spe_dragon_wrath": {
+   "name": "Gniew smoka",
+   "quote": "Niebo czarne od smug dymu, zieleń zniknęła w ognistym podmuchu."
+  },
+  "ofir_nibras": {
+   "name": "Nibras Malliq z Ofiru",
+   "quote": "Majestatyczny władca dalekiej i egzotycznej krainy, słynącej z bogactwa, odkryć naukowych i potężnej armii."
+  },
+  "ofir_aamad_wise": {
+   "name": "Aamad Mądry",
+   "quote": "Królewski mag malliqa Ofiru."
+  },
+  "ofir_nibras_gale": {
+   "name": "Nibras Wicher",
+   "quote": "Wicher, który omiata wydmy."
+  },
+  "ofir_aamad": {
+   "name": "Aamad, Mag Koronny",
+   "quote": "Cicho, psie. Zabiłeś naszego księcia i za to zapłacisz."
+  },
+  "ofir_caravan_guard": {
+   "name": "Strażnik karawany",
+   "quote": "Na pustyni można zginąć na wiele sposobów. Nie tylko z pragnienia."
+  },
+  "ofir_fortuneteller": {
+   "name": "Wróżbitka",
+   "quote": "Gwiazdy szepczą do niej; ona odpowiada im proroctwem."
+  },
+  "ofir_cavalry": {
+   "name": "Nieśmiertelna kawaleria",
+   "quote": "Może wielbłądy nie są tak szybkie jak konie… ale przynajmniej nie padają po dwóch dniach na pustyni."
+  },
+  "ofir_cataphract_1": {
+   "name": "Katafrakt",
+   "quote": "Ciężka jazda uderzeniowa, której szarża w kilka sekund zmiata całe formacje piechoty."
+  },
+  "ofir_cataphract_2": {
+   "name": "Katafrakt",
+   "quote": "Głupcy myśleli, że ofirskie zbroje są ze szczerego złota. Wielu zapłaciło życiem za próbę zdobycia choć kawałka."
+  },
+  "ofir_cataphract_3": {
+   "name": "Katafrakt",
+   "quote": "Gwałtowny atak tych jeźdźców roztrzaskuje szyki piechoty jak kruche gliniane naczynia."
+  },
+  "ofir_vanguard": {
+   "name": "Straż przednia karawany",
+   "quote": "Niełatwo odnaleźć drogę wśród wędrujących wydm…"
+  },
+  "ofir_king_cobra": {
+   "name": "Kobra królewska",
+   "quote": "Dopóki gram, będzie tańczyć. Ale kiedy przestanę…"
+  },
+  "ofir_merchant": {
+   "name": "Kupiec",
+   "quote": "Mam to, czego pragniesz. A także to, czego nigdy wcześniej nie widziałeś…"
+  },
+  "ofir_radeyah": {
+   "name": "Radeyah",
+   "quote": "Za pięknym uśmiechem można wiele ukryć."
+  },
+  "ofir_war_chariot": {
+   "name": "Rydwan bojowy",
+   "quote": "Rydwan wjechał w tłum, a jego wrogowie padali na ziemię jak zboże pod kosą…"
+  },
+  "ofir_traveling_merchant": {
+   "name": "Wędrowny kupiec",
+   "quote": "Moje towary? Najlepsze pod słońcem. Tylko nie pytaj, skąd je mam."
+  },
+  "ofir_sunsetwanderers": {
+   "name": "Wędrowcy zachodu",
+   "quote": "Wyglądało na to, że Jaskier zamierza podróżować z wiedźminem choćby na kraniec świata."
+  },
+  "ofir_saer_quan": {
+   "name": "Saer Quan",
+   "quote": "Każdy tygrys jest groźny. Zwłaszcza taki, który zasmakował w ludzkim mięsie…"
+  },
+  "ofir_assassin": {
+   "name": "Maraal, Koronny zabójca",
+   "quote": "Kto wie za dużo, ten umiera za wcześnie."
+  },
+  "ofir_war_elephant": {
+   "name": "Ofirski słoń bojowy",
+   "quote": "To coś jak bies, tylko łysy i z nosem do ziemi. Co? Nie, zmyślasz!"
+  },
+  "ofir_desert_banshee": {
+   "name": "Pustynna banshee",
+   "quote": "Boisz się, że umrzesz z pragnienia w piaskach? Spokojnie. Nie pożyjesz tak długo."
+  },
+  "ofir_runewright": {
+   "name": "Mistrz run",
+   "quote": "W słowach drzemie wielka moc. Ale niełatwo zakląć ją w stali."
+  },
+  "ofir_dulla": {
+   "name": "Dulla kh'Amanni",
+   "quote": "Moje towary są bezcenne. Na szczęście dla ciebie przyjmuję umowy jako zapłatę."
+  },
+  "spe_ofir_sandstorm": {
+   "name": "Burza piaskowa",
+   "quote": "W najlepszym razie – piach w zębach. W najgorszym – pogrzebanie żywcem."
+  },
+  "ofir_fathaa": {
+   "name": "Stary Fathaa",
+   "quote": "..."
+  },
+  "ofir_djinn1": {
+   "name": "Dżinn",
+   "quote": "Dżinn, mili panowie, spełnia tylko trzy życzenia. Tak uwolniony, ucieka w nieznane wymiary."
+  },
+  "ofir_djinn2": {
+   "name": "Dżinn",
+   "quote": "Mówią, że dżinn spełni każde życzenie. Może i tak. Ale dopiero gdy cię najpierw zniszczy."
+  },
+  "ofir_djinn3": {
+   "name": "Dżinn",
+   "quote": "Kiedyś mieszkałem w butelce, ale wolę ofirskie lampy, są o wiele wygodniejsze."
+  },
+  "spe_ofir_horn": {
+   "name": "Róg dowódcy",
+   "quote": "Plus jeden do morale, minus trzy do słuchu."
+  },
+  "ofir_desert_serpent": {
+   "name": "Pustynny wąż",
+   "quote": "Najprzebieglejszy dowódca ofirskiej jazdy. Mówią, że zasadzkę umiałby urządzić nawet na gołej pustyni."
+  },
+  "ofir_ofieri_prince": {
+   "name": "Ofirski książę",
+   "quote": "Kiedyś porównał się do żaby z baśni, którą trzeba pocałować, by stała się księciem. Fatalny błąd..."
+  },
+  "ofir_toad_prince": {
+   "name": "Ofirski książę-ropucha",
+   "quote": "Wielka, paskudna, brzydka. Siedzi w kanałach."
+  },
+  "ofir_rider_1": {
+   "name": "Ofirski jeździec",
+   "quote": "Nawet najmniejsze z naszych dzieci jeżdżą konno, a nasze konie przechytrzą większość ludzi."
+  },
+  "ofir_rider_2": {
+   "name": "Ofirski jeździec",
+   "quote": "Myślałem, że Ofirczycy jeżdżą na wielbłądach! To ty masz wielbłądzi łeb, strzelaj wreszcie!"
+  },
+  "ofir_ofieri_mage": {
+   "name": "Aamad",
+   "quote": "Mag nadworny. Ochoczo stanął na czele poszukiwań księcia... który w tajemniczych okolicznościach zniknął gdzieś w Redanii."
+  },
+  "ofir_aamads_guard_1": {
+   "name": "Strażnik Aamada",
+   "quote": "Ojciec nauczył mnie, że lojalność jest ponad wszystko. Kto nie umie dotrzymać słowa, nie jest lepszy od dzikiej bestii."
+  },
+  "ofir_aamads_guard_2": {
+   "name": "Strażnik Aamada",
+   "quote": "Mag osobiście dobiera strażników do wykonywania najważniejszych zadań władcy."
+  },
+  "ofir_warrior_1": {
+   "name": "Ofirski wojownik",
+   "quote": "Kręgosłup ofirskiej armii – zabójcza, świetnie zdyscyplinowana piechota zdolna przyjąć główne uderzenie."
+  },
+  "ofir_warrior_2": {
+   "name": "Ofirski wojownik",
+   "quote": "Swoją odwagą i wściekłym natarciem od razu onieśmielają wrogów."
+  },
+  "ofir_matta": {
+   "name": "Matta Hu'uri",
+   "quote": "Czarodziejki hipnotyzują magią. Ja tańcem."
+  },
+  "ofir_envoy_1": {
+   "name": "Ofirski wysłannik",
+   "quote": "Przybyliśmy z dalekich krain ze szczodrymi darami od naszego władcy."
+  },
+  "ofir_envoy_2": {
+   "name": "Ofirski wysłannik",
+   "quote": "Nawet zwykli ofirscy wysłannicy ubierają się wystawniej niż królowie Północy."
+  },
+  "ofir_envoy_3": {
+   "name": "Ofirski wysłannik",
+   "quote": "Uwielbia drogie wino, rozmowy o polityce i wbijanie ludziom noża w plecy."
+  },
+  "ofir_ifrit_1": {
+   "name": "Ifryt",
+   "quote": "Jeśli wydmy zaczną się ruszać, módl się, żeby to był tylko wiatr."
+  },
+  "ofir_ifrit_2": {
+   "name": "Ifryt",
+   "quote": "Jeśli wydmy zaczną się ruszać, módl się, żeby to był tylko wiatr."
+  },
+  "ofir_ifrit_3": {
+   "name": "Ifryt",
+   "quote": "Jeśli wydmy zaczną się ruszać, módl się, żeby to był tylko wiatr."
+  },
+  "ofir_archmage_1": {
+   "name": "Arcymag",
+   "quote": "Czarodziejów na świecie jest wielu, ale tylko nieliczni mają wiedzę, by panować nad magicznymi stworzeniami."
+  },
+  "ofir_archmage_2": {
+   "name": "Arcymag",
+   "quote": "Na Południu magia i nauka to jedno. Mędrcy są zarazem czarodziejami i uczonymi."
+  },
+  "ofir_chernobog": {
+   "name": "Runa Czarnoboga",
+   "quote": ""
+  },
+  "ofir_perun": {
+   "name": "Runa Peruna",
+   "quote": ""
+  },
+  "ofir_svarog": {
+   "name": "Runa Swaroga",
+   "quote": ""
+  },
+  "ofir_triglav": {
+   "name": "Runa Trzygłowa",
+   "quote": "Pod piaskami Ofiru uczymy się, że nawet bogów można pozbawić zbroi."
+  },
+  "ofir_veles": {
+   "name": "Runa Welesa",
+   "quote": "Wzmacnia moc znaków i wspiera buildy oparte na magii."
+  },
+  "ofir_dazhbog": {
+   "name": "Runa Dadźboga",
+   "quote": "Ostrożnie. Jeszcze gorące."
+  },
+  "ofir_morana": {
+   "name": "Runa Marzanny",
+   "quote": "Na sam jej widok robi mi się słabo…"
+  },
+  "ofir_devana": {
+   "name": "Runa Dziewanny",
+   "quote": "Moje ostrza są tak ostre, że przetną papier!"
+  },
+  "ofir_zoria": {
+   "name": "Runa Zorii",
+   "quote": "Od tej runy bije wyraźny chłód… czyżbym czymś ją uraził?"
+  },
+  "ofir_stribog": {
+   "name": "Runa Strzyboga",
+   "quote": "Ofirscy mistrzowie run potrafią łączyć je w runosłowa o niezwykłej mocy."
+  },
+  "ofir_zaira": {
+   "name": "Zaira",
+   "quote": "Odzyskała zdrowie i urodę, promienniejszą niż kiedykolwiek, ale... zmieniła się."
+  },
+  "ofir_quareen": {
+   "name": "Quareen",
+   "quote": "Mag, który chce zmusić kwarcynę do przybrania postaci zmarłego, musi być wyjątkowo biegły w iluzjach."
+  },
+  "nv_sigismund": {
+   "name": "Zygfryd Dijkstra, Przebiegły",
+   "quote": "Novigrad to wolne miasto. I zamierzam, żeby takie pozostało."
+  },
+  "nv_sigismund2": {
+   "name": "Zygfryd Dijkstra, Polityk",
+   "quote": "Gwint jest bardzo jak polityka, tylko uczciwszy."
+  },
+  "nv_cyrus_hemmelfart": {
+   "name": "Cyrus Hemmelfart: Hierarcha Novigradu",
+   "quote": "Pod całą tą chucią, chciwością i próżnością kryje się honorowy człowiek."
+  },
+  "nv_philippa": {
+   "name": "Filippa Eilhart",
+   "quote": "Wkrótce władza królów zwiędnie, a Loża zajmie należne jej miejsce."
+  },
+  "nv_dijkstra": {
+   "name": "Zygfryd Dijkstra",
+   "quote": "Gwint jest jak polityka, tylko uczciwszy."
+  },
+  "nv_priscilla": {
+   "name": "Pryscylla",
+   "quote": "Wyobraź sobie Jaskra w sukience i już wiesz, o co chodzi."
+  },
+  "nv_margarita": {
+   "name": "Małgorzata Laux-Antille",
+   "quote": "Obchodzi mnie tylko dobro Aretuzy i moich uczennic."
+  },
+  "nv_eibhear_hattori": {
+   "name": "Eibhear Hattori",
+   "quote": "Co może równać się z jego mieczami? Tylko jego pierogi."
+  },
+  "nv_novigrad": {
+   "name": "Novigrad",
+   "quote": "Novigrad zbyt łaskawie traktuje wszelkiej maści urwisów, szkoda doprawdy."
+  },
+  "nv_inquisitional_pyres": {
+   "name": "Stosy inkwizycji",
+   "quote": "Nie mogę, kurwa, oddychać! Nie mogą palić tych nieszczęśników gdzie indziej?"
+  },
+  "nv_field_marshal_duda": {
+   "name": "Duda",
+   "quote": "Zna sto słów – osiemdziesiąt to przekleństwa, reszta to spójniki."
+  },
+  "nv_iris": {
+   "name": "Iris von Everec",
+   "quote": "Miłość trwa i po drugiej stronie zasłony."
+  },
+  "nv_catanddog": {
+   "name": "Kot i pies",
+   "quote": "..."
+  },
+  "nv_corinne": {
+   "name": "Koryna",
+   "quote": "Wiesz, kiedy legenda staje się proroctwem? Gdy zyskuje wyznawców."
+  },
+  "nv_renegade_mage": {
+   "name": "Mag renegat",
+   "quote": "Mam nadzieję, że to skóra z buta się tak pali..."
+  },
+  "nv_cantarella": {
+   "name": "Cantarella",
+   "quote": "Mężczyzn trzeba nieustannie uwodzić. Tajemniczość i wyrafinowanie świetnie się do tego nadają."
+  },
+  "nv_hubert_rejk": {
+   "name": "Hubert Rejk",
+   "quote": "Koroner to spokojny, łagodny człowiek. Nawet ze zwłokami obchodzi się z największą delikatnością."
+  },
+  "nv_katakan": {
+   "name": "Katakan",
+   "quote": "Novigrad potrzebuje odnowy – odrodzenia!"
+  },
+  "nv_imke": {
+   "name": "Imke",
+   "quote": "Ledwie zwróciła na siebie uwagę Gudrun, a już postanowiła to wykorzystać."
+  },
+  "nv_dudu_biberveldt": {
+   "name": "Dudu Biberveldt",
+   "quote": "Mimik, a wśród wielu innych nazw dla jego rodzaju: podmieńcy, sobowtóry, wexlingi… czy dopplery."
+  },
+  "nv_doppler": {
+   "name": "Doppler",
+   "quote": "Ludzie tak nienawidzą dopplerów, że sama egzekucja to za mało; oblepiają ich gliną i pieką żywcem."
+  },
+  "nv_aphotecary": {
+   "name": "Ślepooki aptekarz",
+   "quote": "Po tym, jak jej mąż zginął w tragicznym wypadku powozu, całkowicie poświęciła się pracy."
+  },
+  "nv_caesar_bilzen": {
+   "name": "Caesar Bilzen",
+   "quote": "Zapalony wędkarz, skrupulatny kolekcjoner i niezły numer."
+  },
+  "nv_marquise_serenity": {
+   "name": "Madame Markiza Serenity",
+   "quote": "Jeśli szukasz czegoś innego, może partyjka gwinta?"
+  },
+  "nv_passiflora_1": {
+   "name": "Przebiegła uwodzicielka",
+   "quote": "Im słodsze jej słowa, tym dotkliwsze twoje straty."
+  },
+  "nv_passiflora_2": {
+   "name": "Brzoskwinki z Passiflory",
+   "quote": "Namieszają ci w głowie, złamią serce i opróżnią sakiewkę."
+  },
+  "nv_passiflora_3": {
+   "name": "Noc w Passiflorze",
+   "quote": "Więcej tu pielgrzymów niż w świątyni Wiecznego Ognia..."
+  },
+  "nv_ferko": {
+   "name": "Ferko Rzeźbiarz",
+   "quote": "Niektórzy nazywają to prostackim bandytyzmem. Ale ja uważam to za najwyższą formę sztuki."
+  },
+  "nv_zoltan": {
+   "name": "Zoltan Chivay",
+   "quote": "Życie bez starych kompanów i gorzały jest jak baba bez zadka."
+  },
+  "nv_sarah": {
+   "name": "Sara",
+   "quote": "Mała Sara chce się bawić!"
+  },
+  "nv_djinn": {
+   "name": "Dżinn",
+   "quote": "Dżinn, mili panowie, spełnia tylko trzy życzenia. Tak uwolniony, ucieka w nieznane wymiary."
+  },
+  "nv_kalkstein": {
+   "name": "Adalbertus Kalkstein",
+   "quote": "Nim Kalkstein opuścił ten świat, zostawił nam kilka mało pochlebnych słów o naszym łaskawym królu..."
+  },
+  "nv_salma": {
+   "name": "Salma",
+   "quote": "Nie kłamię. I nie zabijam bez powodu."
+  }
+ },
+ "abilities": {
+  "clear": {
+   "name": "Czyste niebo",
+   "description": "Usuwa efekty wszystkich kart pogody (Trzaskający mróz, Gęsta mgła i Ulewny deszcz)."
+  },
+  "frost": {
+   "name": "Trzaskający mróz",
+   "description": "Ustawia siłę wszystkich kart walki wręcz na 1 u obu graczy."
+  },
+  "white_frost": {
+   "name": "Biały Mróz",
+   "description": "Ustawia siłę wszystkich kart w 2 odpowiednich rzędach na 1 u obu graczy."
+  },
+  "fog": {
+   "name": "Gęsta mgła",
+   "description": "Ustawia siłę wszystkich kart walki dystansowej na 1 u obu graczy."
+  },
+  "fog_summoning": {
+   "name": "Przywołanie Gęstej mgły",
+   "description": "Gdy którykolwiek gracz zagra Gęstą mgłę, dobierz tę kartę z talii lub stosu kart odrzuconych i zagraj ją. Mgła nie działa na tę jednostkę."
+  },
+  "rain": {
+   "name": "Ulewny deszcz",
+   "description": "Ustawia siłę wszystkich kart machin oblężniczych na 1 u obu graczy."
+  },
+  "storm": {
+   "name": "Sztorm Skellige",
+   "description": "Zmniejsza do 1 siłę wszystkich jednostek w rzędach walki wręcz i dystansowej albo oblężniczym i dystansowym."
+  },
+  "sandstorm": {
+   "name": "Burza piaskowa",
+   "description": "Zmniejsza do 1 siłę wszystkich jednostek walki wręcz i dystansowej (tylko jednostki niebędące bohaterami)."
+  },
+  "sandstorm_immunity": {
+   "name": "Odporność na burzę piaskową",
+   "description": "Burza piaskowa nie działa na tę jednostkę."
+  },
+  "spider_web": {
+   "name": "Sieci olbrzymiego pająka",
+   "description": "Ustawia siłę wszystkich kart walki wręcz na 1 u obu graczy."
+  },
+  "tse_tse": {
+   "name": "Muchy tse-tse",
+   "description": "Ustawia siłę wszystkich kart walki dystansowej na 1 u obu graczy."
+  },
+  "dragon_wrath": {
+   "name": "Gniew smoka",
+   "description": "Ustawia siłę wszystkich kart machin oblężniczych na 1 u obu graczy."
+  },
+  "hero": {
+   "name": "Bohater",
+   "description": "Odporny na wszystkie karty specjalne i umiejętności."
+  },
+  "decoy": {
+   "name": "Manekin do ćwiczeń",
+   "description": "Zamień z kartą na polu bitwy, aby wróciła na twoją rękę."
+  },
+  "horn": {
+   "name": "Róg dowódcy",
+   "description": "Podwaja siłę wszystkich jednostek w danym rzędzie. Maksymalnie 1 na rząd."
+  },
+  "mardroeme": {
+   "name": "Mardroeme",
+   "description": "Wywołuje przemianę wszystkich berserkerów w tym samym rzędzie."
+  },
+  "berserker": {
+   "name": "Berserker",
+   "description": "Zmienia się w niedźwiedzia, gdy w jego rzędzie jest karta Mardroeme."
+  },
+  "scorch": {
+   "name": "Pożoga",
+   "description": "Odrzuć po zagraniu. Zabija najsilniejszą kartę (karty) na polu bitwy."
+  },
+  "scorch_c": {
+   "name": "Pożoga – walka wręcz",
+   "description": "Niszczy najsilniejszą jednostkę (jednostki) walki wręcz przeciwnika, jeśli łączna siła jego jednostek walki wręcz wynosi 10 lub więcej."
+  },
+  "scorch_r": {
+   "name": "Pożoga – walka dystansowa",
+   "description": "Niszczy najsilniejszą jednostkę (jednostki) walki dystansowej przeciwnika, jeśli łączna siła jego jednostek walki dystansowej wynosi 10 lub więcej."
+  },
+  "scorch_s": {
+   "name": "Pożoga – oblężenie",
+   "description": "Niszczy najsilniejszą jednostkę (jednostki) oblężniczą przeciwnika, jeśli łączna siła jego jednostek oblężniczych wynosi 10 lub więcej."
+  },
+  "cull": {
+   "name": "Odstrzał",
+   "description": "Zabija najsłabszą kartę (karty) na polu bitwy."
+  },
+  "agile": {
+   "name": "Zręczność",
+   "description": "Można ją umieścić w rzędzie walki wręcz albo walki dystansowej. Po umieszczeniu nie można jej przenieść."
+  },
+  "agile_cr": {
+   "name": "Zręczność: wręcz/dystans",
+   "description": "Można ją umieścić w rzędzie walki wręcz albo walki dystansowej. Po umieszczeniu nie można jej przenieść."
+  },
+  "agile_cs": {
+   "name": "Zręczność: wręcz/oblężenie",
+   "description": "Można ją umieścić w rzędzie walki wręcz albo oblężniczym. Po umieszczeniu nie można jej przenieść."
+  },
+  "agile_rs": {
+   "name": "Zręczność: dystans/oblężenie",
+   "description": "Można ją umieścić w rzędzie walki dystansowej albo oblężniczym. Po umieszczeniu nie można jej przenieść."
+  },
+  "agile_crs": {
+   "name": "Zręczność: wręcz/dystans/oblężenie",
+   "description": "Można ją umieścić w dowolnym rzędzie. Po umieszczeniu nie można jej przenieść."
+  },
+  "muster": {
+   "name": "Wezwanie",
+   "description": "Znajdź w talii wszystkie karty o tej samej nazwie i natychmiast je zagraj."
+  },
+  "spy": {
+   "name": "Szpieg",
+   "description": "Umieść na polu bitwy przeciwnika (wlicza się do jego sumy) i dobierz 2 karty ze swojej talii.",
+   "description_toussaint": "Umieść na polu bitwy przeciwnika. Dobierz 3 karty ze swojej talii. Zatrzymaj jedną na ręce, a pozostałe dwie wtasuj do talii."
+  },
+  "medic": {
+   "name": "Medyk",
+   "description": "Wybierz jedną kartę ze stosu kart odrzuconych i natychmiast ją zagraj (bez bohaterów i kart specjalnych)."
+  },
+  "morale": {
+   "name": "Wysokie morale",
+   "description": "Dodaje +1 wszystkim jednostkom w rzędzie (poza sobą)."
+  },
+  "bond": {
+   "name": "Więź",
+   "description": "Umieść obok karty o tej samej nazwie, aby podwoić siłę obu kart."
+  },
+  "avenger": {
+   "name": "Mściciel",
+   "description": "Gdy ta karta zostanie usunięta z pola bitwy, przywołuje na swoje miejsce nową, potężną jednostkę."
+  },
+  "cintra_slaughter": {
+   "name": "Rzeź Cintry",
+   "description": "Po zagraniu karty specjalnej Rzeź Cintry zniszcz wszystkie swoje jednostki z umiejętnością Rzeź Cintry, a potem dobierz tyle kart, ile jednostek zniszczono."
+  },
+  "foltest_king": {
+   "description": "Wybierz z talii kartę Gęsta mgła lub Ulewny deszcz i natychmiast ją zagraj."
+  },
+  "foltest_lord": {
+   "description": "Usuwa wszystkie efekty pogody (Trzaskający mróz, Ulewny deszcz, Gęsta mgła) w grze."
+  },
+  "foltest_siegemaster": {
+   "description": "Podwaja siłę wszystkich twoich jednostek oblężniczych (chyba że w tym rzędzie jest już Róg dowódcy)."
+  },
+  "foltest_steelforged": {
+   "description": "Niszczy najsilniejszą jednostkę (jednostki) oblężniczą przeciwnika, jeśli łączna siła jego jednostek oblężniczych wynosi 10 lub więcej."
+  },
+  "foltest_son": {
+   "description": "Niszczy najsilniejszą jednostkę (jednostki) walki dystansowej przeciwnika, jeśli łączna siła jego jednostek walki dystansowej wynosi 10 lub więcej."
+  },
+  "emhyr_imperial": {
+   "description": "Weź na rękę odrzuconą jednostkę przeciwnika (nie bohatera). Następnie połóż dowolną kartę z ręki na spód swojej talii."
+  },
+  "emhyr_emperor": {
+   "description": "Obejrzyj 4 losowe karty z ręki przeciwnika. Wybierz jedną. Przeciwnik musi ją zagrać w następnej turze (jeśli nie spasuje)."
+  },
+  "emhyr_whiteflame": {
+   "description": "Pasywna: używając szpiegów lub emisariuszy, możesz dobierać karty z talii przeciwnika zamiast własnej (maks. 3 karty na bitwę)."
+  },
+  "emhyr_relentless": {
+   "description": "Zniszcz jedną jednostkę lub bohatera na swoim polu bitwy. Następnie dobierz z talii na rękę dowolnego szpiega lub emisariusza."
+  },
+  "emhyr_invader": {
+   "description": "Zagraj jednostkę lub bohatera ze stosu kart odrzuconych każdego gracza na jego stronę pola."
+  },
+  "eredin_bringer_of_death": {
+   "name": "Eredin: Zwiastun Śmierci",
+   "description": "Przywróć na rękę jednostkę ze stosu kart odrzuconych."
+  },
+  "eredin_destroyer": {
+   "description": "Odrzuć 2 karty i dobierz z talii 1 wybraną kartę."
+  },
+  "eredin_king": {
+   "description": "Wybierz z talii dowolną kartę pogody i natychmiast ją zagraj."
+  },
+  "eredin_treacherous": {
+   "description": "Podwaja siłę wszystkich szpiegów (dotyczy obu graczy)."
+  },
+  "francesca_queen": {
+   "description": "Niszczy najsilniejszą jednostkę (jednostki) walki wręcz przeciwnika, jeśli łączna siła jego jednostek walki wręcz wynosi 10 lub więcej."
+  },
+  "francesca_beautiful": {
+   "description": "Podwaja siłę wszystkich twoich jednostek walki dystansowej (chyba że w tym rzędzie jest już Róg dowódcy)."
+  },
+  "francesca_daisy": {
+   "description": "Na początku gry dobierz 13 kart. Wybierz 2 i wtasuj je do talii, by zacząć z 11 kartami na ręce."
+  },
+  "francesca_pureblood": {
+   "description": "Wybierz do 3 jednostek lub bohaterów na polu bitwy przeciwnika. Przenieś je do dowolnego innego rzędu (rzędów) przeciwnika."
+  },
+  "francesca_hope": {
+   "description": "Wybierz do 4 jednostek lub bohaterów na swoim polu bitwy. Przenieś je do dowolnego innego swojego rzędu (rzędów)."
+  },
+  "crach_an_craite": {
+   "description": "Wtasuj wszystkie karty z cmentarzy obu graczy z powrotem do ich talii. Możesz zostawić jedną kartę na cmentarzu."
+  },
+  "king_bran": {
+   "description": "Raz na grę, na początku dowolnej rundy: dobierz z talii Sztorm Skellige. W tej rundzie efekty pogody na twoich kartach są o połowę słabsze."
+  },
+  "birna": {
+   "description": "Dobierz z talii dowolną kartę z umiejętnością Mardroeme lub Wilkołak. Jednostki są zagrywane natychmiast, karty specjalne trafiają na rękę."
+  },
+  "madman_lugos": {
+   "description": "Raz na grę, na początku dowolnej rundy, przeciwnik musi pokazać ci 2 losowe karty z ręki. Wybierz jedną i ją odrzuć."
+  },
+  "holger_blakhand": {
+   "description": "Ustaw siłę karty na maksymalnie 10. Resetuje się po rundzie (2 użycia na bitwę)."
+  },
+  "radovid_king_redania": {
+   "description": "Dobierz z talii trzy karty (bez kart specjalnych, szpiegów i wysłanników). Jedną zagraj natychmiast, a pozostałe dwie wtasuj z powrotem do talii."
+  },
+  "radovid_mad_king": {
+   "description": "Zniszcz najsilniejszą kartę na polu bitwy (musi to być jednostka lub bohater). Jeśli jest kilka najsilniejszych, wybierz i zniszcz tylko jedną."
+  },
+  "radovid_strategist": {
+   "description": "Wybierz bohatera na swoim polu bitwy. Weź go z powrotem na rękę."
+  },
+  "anna_henrietta_duchess": {
+   "description": "Wybierz bohatera z cmentarza i natychmiast go zagraj."
+  },
+  "anna_henrietta_ladyship": {
+   "description": "Wybierz potwora z Toussaint w drugiej postaci na polu bitwy, by zagrać jego słabszą postać. Później możesz go przemienić z powrotem."
+  },
+  "anna_henrietta_little_weasel": {
+   "description": "Wybierz bohatera przeciwnika i odbierz mu status bohatera."
+  },
+  "lady_wood_whispess": {
+   "description": "Weź na rękę ze stosu kart odrzuconych do 3 jednostek, które zginęły w bieżącej rundzie."
+  },
+  "lady_wood_brewess": {
+   "description": "Gdy aktywuje się umiejętność frakcji: dobierz 2 karty zamiast 1. Jedną zagraj, a drugą wtasuj z powrotem do talii."
+  },
+  "lady_wood_weavess": {
+   "description": "Dobierz z talii kartę Klątwa i natychmiast ją zagraj."
+  },
+  "ghost_tree": {
+   "description": "Zniszcz najsłabszą jednostkę na polu bitwy (dowolnego gracza). Jeśli jest ich kilka, wybierz jedną."
+  },
+  "eredin_commander": {
+   "description": "Wybierz na swoim polu bitwy do dwóch jednostek lub bohaterów i weź je na rękę."
+  },
+  "auberon_king": {
+   "description": "Dobierz z talii lub cmentarza dowolną liczbę Nawigatorów. Następnie wybierz tyle samo kart z ręki i włóż je w dowolne miejsce talii."
+  },
+  "winter_queen": {
+   "description": "Dobierz z talii dowolną kartę specjalną i natychmiast ją zagraj."
+  },
+  "caranthir_navigator": {
+   "description": "Możesz otworzyć jednocześnie dwoje Wrót wymiarów (ale tylko jeśli w każdym z tych 2 rzędów jest co najmniej jeden nawigator)."
+  },
+  "imlerith_general": {
+   "description": "Pasywna: Imlerith chroni Nawigatorów przed zniszczeniem."
+  },
+  "queen_calanthe": {
+   "description": "Zagraj jednostkę, a następnie dobierz kartę z talii."
+  },
+  "fake_ciri": {
+   "description": "Odrzuć kartę z ręki, a następnie dobierz dwie karty z talii."
+  },
+  "radovid_stern": {
+   "description": "Odrzuć 2 karty i dobierz z talii 1 wybraną kartę."
+  },
+  "radovid_ruthless": {
+   "description": "Anuluje Pożogę na jedną rundę."
+  },
+  "vilgefortz_magician_kovir": {
+   "description": "Zmniejsza o połowę siłę wszystkich szpiegów (dotyczy obu graczy)."
+  },
+  "cosimo_malaspina": {
+   "description": "Niszczy najsilniejszą jednostkę (jednostki) walki wręcz przeciwnika, jeśli łączna siła jego jednostek walki wręcz wynosi 10 lub więcej."
+  },
+  "resilience": {
+   "name": "Wytrwałość",
+   "description": "Zostaje na planszy w następnej rundzie, jeśli inna sojusznicza jednostka ma z nią wspólną umiejętność."
+  },
+  "witcher_wolf_school": {
+   "name": "Szkoła Wilka",
+   "description": "Wzmacnia każdą jednostkę tej szkoły o 2 za każdą kartę z tej samej szkoły."
+  },
+  "witcher_viper_school": {
+   "name": "Szkoła Żmii",
+   "description": "Wzmacnia każdą jednostkę tej szkoły o 2 za każdą kartę z tej samej szkoły."
+  },
+  "witcher_bear_school": {
+   "name": "Szkoła Niedźwiedzia",
+   "description": "Wzmacnia każdą jednostkę tej szkoły o 2 za każdą kartę z tej samej szkoły."
+  },
+  "witcher_cat_school": {
+   "name": "Szkoła Kota",
+   "description": "Wzmacnia każdą jednostkę tej szkoły o 2 za każdą kartę z tej samej szkoły."
+  },
+  "witcher_griffin_school": {
+   "name": "Szkoła Gryfa",
+   "description": "Wzmacnia każdą jednostkę tej szkoły o 2 za każdą kartę z tej samej szkoły."
+  },
+  "shield": {
+   "name": "Tarcza",
+   "description": "Chroni jednostki w rzędzie przed wszystkimi umiejętnościami poza efektami pogody."
+  },
+  "seize": {
+   "name": "Przejęcie",
+   "description": "Przenosi jednostkę (jednostki) walki wręcz o najmniejszej sile na twoją stronę planszy. Ich umiejętności przestają działać."
+  },
+  "lock": {
+   "name": "Blokada",
+   "description": "Blokuje/anuluje umiejętność następnej jednostki zagranej w tym rzędzie (pomija jednostki bez umiejętności i bohaterów)."
+  },
+  "knockback": {
+   "name": "Odepchnięcie",
+   "description": "Odpycha wszystkie jednostki z wybranego rzędu (walki wręcz lub dystansowej) w stronę rzędu oblężniczego, ignoruje tarcze."
+  },
+  "alzur_maker": {
+   "description": "Zniszcz jedną ze swoich jednostek na planszy i przywołaj Koszczeja."
+  },
+  "vilgefortz_sorcerer": {
+   "description": "Usuwa wszystkie efekty pogody w grze."
+  },
+  "toussaint_wine": {
+   "name": "Wino z Toussaint",
+   "description": "Umieszczone w rzędzie walki wręcz lub dystansowej wzmacnia wszystkie jednostki w tym rzędzie o dwa. Maksymalnie jedno na rząd."
+  },
+  "meve_princess": {
+   "description": "Jeśli przeciwnik ma w jednym rzędzie łącznie 10 lub więcej, zniszcz najsilniejszą kartę (karty) tego rzędu (dotyczy tylko strony przeciwnika)."
+  },
+  "shield_c": {
+   "name": "Tarcza – walka wręcz",
+   "description": "Chroni jednostki w rzędzie walki wręcz przed wszystkimi umiejętnościami poza efektami pogody."
+  },
+  "shield_r": {
+   "name": "Tarcza – walka dystansowa",
+   "description": "Chroni jednostki w rzędzie walki dystansowej przed wszystkimi umiejętnościami poza efektami pogody."
+  },
+  "shield_s": {
+   "name": "Tarcza – oblężenie",
+   "description": "Chroni jednostki w rzędzie oblężniczym przed wszystkimi umiejętnościami poza efektami pogody."
+  },
+  "meve_white_queen": {
+   "description": "Każdy medyk może wybrać dwie jednostki ze stosu kart odrzuconych (dotyczy obu graczy)."
+  },
+  "carlo_varese": {
+   "description": "Jeśli przeciwnik ma w jednym rzędzie łącznie 10 lub więcej, zniszcz najsilniejszą kartę (karty) tego rzędu (dotyczy tylko strony przeciwnika)."
+  },
+  "francis_bedlam": {
+   "description": "Odsyła wszystkich szpiegów na cmentarz strony, po której się znajdują."
+  },
+  "cyprian_wiley": {
+   "description": "Przejmuje jednostkę (jednostki) o najmniejszej sile z rzędu walki wręcz przeciwnika."
+  },
+  "gudrun_bjornsdottir": {
+   "description": "Przywołanie załogi Flyndra"
+  },
+  "cyrus_hemmelfart": {
+   "description": "Zagraj kartę Kajdany z dimerytu w dowolnym rzędzie przeciwnika."
+  },
+  "cyrus_hemmelfart1": {
+   "description": "Raz na grę: zagraj kartę Stosy inkwizycji w odpowiednim rzędzie."
+  },
+  "azar_javed": {
+   "description": "Zniszcz najsłabszego bohatera przeciwnika (maks. 1 karta)."
+  },
+  "bank": {
+   "name": "Bank",
+   "description": "Dobierz kartę z talii."
+  },
+  "witch_hunt": {
+   "name": "Polowanie na czarownice",
+   "description": "Zniszcz najsłabszą jednostkę w przeciwległym rzędzie. Jeśli jest ich kilka, wybierz jedną."
+  },
+  "zerrikanterment": {
+   "description": "Premia od czcicieli jest podwojona."
+  },
+  "baal_zebuth": {
+   "description": "Wybierz 2 karty ze stosu kart odrzuconych przeciwnika i wtasuj je z powrotem do jego talii."
+  },
+  "rarog": {
+   "description": "Weź na rękę losową kartę ze stosu kart odrzuconych (dowolną), a resztę wtasuj z powrotem do talii."
+  },
+  "whorshipper": {
+   "name": "Czciciel",
+   "description": "Wzmacnia o 1 wszystkie czczone jednostki po twojej stronie planszy."
+  },
+  "whorshipped": {
+   "name": "Czczony",
+   "description": "Wzmacniany o 1 przez każdego czciciela po twojej stronie planszy."
+  },
+  "inspire": {
+   "name": "Natchnienie",
+   "description": "Wszystkie jednostki z Natchnieniem przyjmują najwyższą siłę bazową spośród jednostek z Natchnieniem po twojej stronie. Pogoda nadal na nie działa."
+  },
+  "comrade": {
+   "name": "Towarzysz",
+   "description": "Raz na rundę ta karta może zapobiec zniszczeniu innej karty po swojej stronie planszy, w tym siebie."
+  },
+  "invoke": {
+   "name": "Przyzwanie",
+   "description": "Przyzywa z talii jedną z dostępnych powiązanych kart."
+  },
+  "emissary": {
+   "name": "Emisariusz",
+   "description": "Umieść na polu bitwy przeciwnika (wlicza się do jego sumy); dobierz jedną kartę albo obejrzyj 4 pierwsze i odłóż je w wybranej kolejności. Raz na rundę część z nich można położyć na spód."
+  },
+  "necrophage": {
+   "name": "Nekrofag",
+   "description": "Wybierz do 2 jednostek ze stosu kart odrzuconych i wtasuj je z powrotem do talii."
+  },
+  "goetia": {
+   "name": "Goecja",
+   "description": "Umieść na swoim polu bitwy i weź 1 kartę z talii na rękę, a potem wybierz dowolną 1 kartę z ręki i wtasuj ją do talii."
+  },
+  "ambush": {
+   "name": "Zasadzka",
+   "description": "Umieść w dowolnym rzędzie. Jeśli przeciwnik zagra w tym rzędzie jednostkę lub bohatera, dobierz 2 karty i odeślij tę kartę na stos kart odrzuconych."
+  },
+  "skellige_fleet": {
+   "name": "Flota Skellige",
+   "description": "Umieść na swoim polu bitwy i dobierz natychmiast 1 kartę z wierzchu talii ALBO 2 karty z wierzchu na koniec rundy. W jednej rundzie Flota Skellige pozwala dobrać nie więcej niż 3 karty."
+  },
+  "royal_decree": {
+   "name": "Królewski dekret",
+   "description": "Użyj umiejętności swojego dowódcy."
+  },
+  "summon_one_of": {
+   "name": "Przywołanie jednej z",
+   "description": "Przywołuje z dowolnego miejsca (talia, cmentarz lub ręka) jedną z wybranych powiązanych kart."
+  },
+  "immortal": {
+   "name": "Nieśmiertelny",
+   "description": "Karta zostaje na polu bitwy przez 2 rundy i nie może zostać zniszczona przez inną umiejętność."
+  },
+  "monster_toussaint": {
+   "name": "Potwór z Toussaint",
+   "description": "Od następnej tury możesz odrzucić tę kartę z planszy, aby natychmiast zagrać jej drugą najsilniejszą postać."
+  },
+  "aerondight": {
+   "name": "Aerondight",
+   "description": "Umieść tę kartę na planszy, a następnie przenieś jednostkę o najwyższej sile bazowej do rzędu oblężniczego. Dopóki tam jest, jej siła jest potrojona."
+  },
+  "bait": {
+   "name": "Przynęta",
+   "description": "Umieść na swoim polu bitwy i dobierz z talii jedną kartę z umiejętnością Więź. Zagraj ją natychmiast."
+  },
+  "soothsayer": {
+   "name": "Wieszczka",
+   "description": "Umieść na swoim polu bitwy. Za każdą wieszczkę po twojej stronie pola bitwy możesz dobrać jedną kartę więcej do wyboru."
+  },
+  "curse": {
+   "name": "Klątwa",
+   "description": "Umieść w dowolnym rzędzie na swoim polu bitwy lub przeciwnika. Następna jednostka (nie bohater) umieszczona w tym rzędzie zostanie zniszczona, a jej umiejętności nie zadziałają."
+  },
+  "door": {
+   "name": "Wrota wymiarów",
+   "description": "Dopóki wrota są aktywne, na koniec każdej swojej tury dobierasz jedną kartę z talii. Jeśli rząd karty pasuje do rzędu wrót, zagraj ją natychmiast, w przeciwnym razie odłóż ją do talii. Jeśli karta nie ma rzędu, możesz ją zagrać albo odłożyć do talii."
+  },
+  "door_o": {
+   "name": "Otwarcie Wrót wymiarów",
+   "description": "Otwiera wrota wymiarów w rzędzie, w którym się znajduje, jeśli żadne inne nie są otwarte."
+  },
+  "sage": {
+   "name": "Mędrzec",
+   "description": "Umieść na swoim polu bitwy i dobierz 4 karty z talii. Obejrzyj je i odłóż na wierzch lub spód talii w wybranej kolejności."
+  },
+  "zirael": {
+   "name": "Zireael",
+   "description": "Umieść na swoim polu bitwy. Odsłoń 5 kart z talii i wybierz do 2, które weźmiesz na rękę. Resztę wtasuj z powrotem do talii."
+  },
+  "naglfar": {
+   "name": "Naglfar",
+   "description": "Umieść na swoim polu bitwy i dobierz z talii do 2 kart ze słowem „Naglfar” w nazwie, a następnie natychmiast je zagraj."
+  },
+  "omen": {
+   "name": "Omen",
+   "description": "Utwórz kopię karty Kot i pies i dodaj ją do ręki."
+  },
+  "trade": {
+   "name": "Handel",
+   "description": "Wybierz 1 kartę z talii przeciwnika. W zamian przekaż 1 ze swoich run z talii na jego rękę."
+  },
+  "adaptive": {
+   "name": "Adaptacja",
+   "description": "Pod wpływem pogody siła bazowa tej jednostki wynosi 2 (zamiast 1)."
+  },
+  "morale_c": {
+   "name": "Wysokie morale – walka wręcz",
+   "description": "Daje wysokie morale rzędowi walki wręcz z pola specjalnego."
+  },
+  "morale_r": {
+   "name": "Wysokie morale – walka dystansowa",
+   "description": "Daje wysokie morale rzędowi walki dystansowej z pola specjalnego."
+  },
+  "morale_s": {
+   "name": "Wysokie morale – oblężenie",
+   "description": "Daje wysokie morale rzędowi oblężniczemu z pola specjalnego."
+  },
+  "ofiri_envoy": {
+   "name": "Ofirski wysłannik",
+   "description": "Umieść na polu przeciwnika. Dobierz 1 kartę z talii przeciwnika i 1 ze swojej albo 2 karty ze swojej talii."
+  },
+  "ofir_aamad": {
+   "name": "Aamad Mądry",
+   "description": "Za każdym razem, gdy dobierasz kartę, zyskujesz na stałe +1 do łącznej siły w tej rundzie (po zakończeniu rundy wraca do 0)."
+  },
+  "nibras": {
+   "description": "Dobierz z talii 3 karty (bez kart specjalnych, szpiegów i wysłanników). Jedną zagraj, a pozostałe 2 wtasuj z powrotem do talii."
+  },
+  "ofir_aamad_crown": {
+   "description": "Rozpoczyna grę z Ofirskim księciem na planszy."
+  },
+  "nibras_gale": {
+   "description": "Raz na grę możesz obejrzeć 3 wierzchnie karty talii przeciwnika. Jedną weź na rękę, a pozostałe odłóż na jego stos kart odrzuconych."
+  },
+  "chernobog": {
+   "name": "Czarnobóg",
+   "description": "Podwaja siłę dowolnej jednostki w twoim rzędzie walki wręcz. Odrzuć po zagraniu."
+  },
+  "perun": {
+   "name": "Perun",
+   "description": "Dodaje +5 siły dowolnej jednostce w twoim rzędzie walki dystansowej. Odrzuć po zagraniu."
+  },
+  "triglav": {
+   "name": "Osłabienie Trzygłowa",
+   "description": "Wybierz bohatera przeciwnika i osłab go, odbierając mu status bohatera. Odrzuć po zagraniu."
+  },
+  "veles": {
+   "name": "Weles",
+   "description": "Przenieś swoją najsilniejszą jednostkę do rzędu oblężniczego. Dopóki tam jest, jej siła jest podwojona. Odrzuć po zagraniu."
+  },
+  "morana": {
+   "name": "Marzanna",
+   "description": "Wybierz jednostkę przeciwnika w rzędzie walki wręcz i zmniejsz jej siłę do 1. Odrzuć po zagraniu."
+  },
+  "svarog": {
+   "name": "Swaróg",
+   "description": "Wybierz jednostkę przeciwnika w rzędzie oblężniczym i zmniejsz jej siłę do 1. Odrzuć po zagraniu."
+  },
+  "devana": {
+   "name": "Łowy Dziewanny",
+   "description": "Zmniejsza do 2 siłę wszystkich jednostek przeciwnika (nie bohaterów) w rzędzie walki dystansowej. Odrzuć po zagraniu."
+  },
+  "zoria": {
+   "name": "Mróz Zorii",
+   "description": "Zamraża rząd walki wręcz przeciwnika. Odrzuć po zagraniu."
+  },
+  "stribog": {
+   "name": "Strzybóg",
+   "description": "Przenieś jednostkę (jednostki) walki dystansowej przeciwnika o najmniejszej sile na swoją stronę planszy. Odrzuć po zagraniu."
+  },
+  "rune_call": {
+   "name": "Runotwórstwo",
+   "description": "Wybierz kartę runy z talii i dodaj ją do ręki."
+  },
+  "clairvoyance": {
+   "name": "Jasnowidzenie",
+   "description": "Wybierz: obejrzyj 3 wierzchnie karty swojej talii ALBO 3 losowe karty z ręki przeciwnika."
+  },
+  "wish1": {
+   "name": "Złośliwe życzenie 1",
+   "description": "Wybierz 1 z 3 losowych kart z ręki przeciwnika. Koszt: zniszcz swoją najsilniejszą jednostkę niebędącą bohaterem (siła ≥ 6)."
+  },
+  "wish2": {
+   "name": "Złośliwe życzenie 2",
+   "description": "Wybierz 1 z 3 wierzchnich kart swojej talii. Koszt: zniszcz swoją najsilniejszą jednostkę niebędącą bohaterem (siła ≥ 6). Ta karta jest odporna."
+  },
+  "wish3": {
+   "name": "Złośliwe życzenie 3",
+   "description": "Zniszcz 1 jednostkę przeciwnika niebędącą bohaterem. Koszt: zniszcz swoją najsilniejszą jednostkę niebędącą bohaterem (siła ≥ 7). Ta karta jest odporna."
+  },
+  "doppler": {
+   "name": "Doppler",
+   "description": "Wybierz jednostkę przeciwnika (nie bohatera ani kartę specjalną) z przeciwległego rzędu i zmień się w jej podstawową kopię (tylko statystyki, bez umiejętności)."
+  },
+  "decoration": {
+   "name": "Odznaczenie",
+   "description": "Awansuje sojuszniczą jednostkę do statusu bohatera."
+  },
+  "novigrad_sigismund": {
+   "name": "Zygfryd Dijkstra",
+   "description": "Raz na grę zapobiega pierwszej śmierci sojuszniczej jednostki."
+  },
+  "novigrad_sigismund2": {
+   "name": "Zygfryd Dijkstra",
+   "description": "Jeśli przeciwnik zagra przeciwko tobie szpiega, dobierz 1 kartę."
+  }
+ },
+ "factions": {
+  "realms": {
+   "name": "Królestwa Północy",
+   "description": "Dobierz kartę z talii za każdym razem, gdy przegrasz rundę."
+  },
+  "nilfgaard": {
+   "name": "Cesarstwo Nilfgaardu",
+   "description": "Wygrywa każdą rundę zakończoną remisem."
+  },
+  "monsters": {
+   "name": "Potwory",
+   "description": "Raz na bitwę, na koniec rundy, możesz zabrać jedną kartę z powrotem na rękę."
+  },
+  "scoiatael": {
+   "name": "Scoia'tael",
+   "description": "Decyduje, kto zaczyna każdą rundę."
+  },
+  "skellige": {
+   "name": "Skellige",
+   "description": "Na początku trzeciej rundy zagrywa losowo 2 karty z cmentarza na pole bitwy."
+  },
+  "witcher_universe": {
+   "name": "Uniwersum Wiedźmina",
+   "description": "Może pominąć turę raz na rundę."
+  },
+  "toussaint": {
+   "name": "Toussaint",
+   "description": "Początek gry: wymień 3 karty zamiast 2. Twoja tura: zamiast zagrywać kartę, możesz przemienić potwora z Toussaint w jego następną postać."
+  },
+  "lyria_rivia": {
+   "name": "Lyria i Rivia",
+   "description": "Daje efekt Wysokiego morale w wybranym rzędzie (wzmacnia wszystkie jednostki o 1 w tej turze)."
+  },
+  "syndicate": {
+   "name": "Syndykat",
+   "description": "Rozpoczyna grę z bohaterem Sigim Reuvenem na planszy."
+  },
+  "zerrikania": {
+   "name": "Zerrikania",
+   "description": "Przywróć wybraną jednostkę za każdym razem, gdy przegrasz rundę."
+  },
+  "redania": {
+   "name": "Redania",
+   "description": "Może pominąć turę raz na grę."
+  },
+  "velen": {
+   "name": "Velen",
+   "description": "Gdy jednostka zostanie zniszczona, dobierz kartę na koniec tury. Każda aktywna Wieszczka dodaje +1 dobranie."
+  },
+  "wild_hunt": {
+   "name": "Dziki Gon",
+   "description": "Zaczynasz grę z 11 kartami na ręce zamiast 10. Na początku każdej rundy wybierz nową kartę dowódcy, by użyć jego umiejętności."
+  },
+  "novigrad": {
+   "name": "Wolne Miasto Novigrad",
+   "description": "Po dobraniu ręki startowej możesz wymienić 1 dodatkową kartę."
+  },
+  "ofir": {
+   "name": "Ofir",
+   "description": "Raz na grę możesz poszukać w talii karty pogody i ją zagrać."
+  }
+ },
+ "ui": {
+  "LET'S PLAY": "GRAJMY",
+  "Opponent": "Przeciwnik",
+  "Passed": "Spasował",
+  "Board arrangement enabled": "Przestawianie planszy włączone",
+  "Moves left:": "Pozostałe ruchy:",
+  "End rearrangement": "Zakończ przestawianie",
+  "Pass": "Spasuj",
+  "Give up": "Poddaj się",
+  "Reorder cards in deck": "Zmień kolejność kart w talii",
+  "Bank": "Bank",
+  "Deck top": "Wierzch talii",
+  "Deck bottom": "Spód talii",
+  "This is a test message.": "To jest wiadomość testowa.",
+  "Round 1": "Runda 1",
+  "Round 2": "Runda 2",
+  "Round 3": "Runda 3",
+  "You": "Ty",
+  "The battle cannot end in a draw. You can play a rematch using the same decks or surrender.": "Bitwa nie może zakończyć się remisem. Możesz rozegrać rewanż tymi samymi taliami albo się poddać.",
+  "Customize": "Dostosuj",
+  "Replay": "Zagraj ponownie",
+  "Rules of Gwent": "Zasady gwinta",
+  "Releases": "Wydania",
+  "Vibration Toggle": "Wibracje",
+  "ON": "WŁ.",
+  "OFF": "WYŁ.",
+  "Select Board": "Wybierz planszę",
+  "Select Own Deck": "Wybierz swoją talię",
+  "Change Faction": "Zmień frakcję",
+  "Select Opponent Deck": "Wybierz talię przeciwnika",
+  "Random deck": "Losowa talia",
+  "Manage Deck": "Zarządzaj talią",
+  "Import": "Importuj",
+  "Export": "Eksportuj",
+  "Save": "Zapisz",
+  "Load": "Wczytaj",
+  "Load Enemy": "Wczytaj wroga",
+  "Card Collection": "Kolekcja kart",
+  "Cards in Deck": "Karty w talii",
+  "Leader": "Dowódca",
+  "Total cards in deck": "Łącznie kart w talii",
+  "Number of Unit Cards": "Liczba jednostek",
+  "Special Cards": "Karty specjalne",
+  "Total Unit Card Strength": "Łączna siła jednostek",
+  "Hero Cards": "Karty bohaterów",
+  "Start game": "Rozpocznij grę",
+  "Start AI game": "Graj z komputerem",
+  "Start PvP game": "Graj z człowiekiem",
+  "Play Game": "Graj",
+  "Rules": "Zasady",
+  "Decks": "Talie",
+  "Cards": "Karty",
+  "Abilities": "Umiejętności",
+  "Factions": "Frakcje",
+  "Setup": "Przygotowanie",
+  "Go": "Start",
+  "All vs All": "Każdy z każdym",
+  "TOTAL": "SUMA",
+  "Done": "Gotowe",
+  "DONE": "GOTOWE",
+  "Close": "Zamknij",
+  "Delete": "Usuń",
+  "Leader Ability": "Umiejętność dowódcy",
+  "Faction ability": "Umiejętność frakcji",
+  "Agile": "Zręczność",
+  "Hero": "Bohater",
+  "Load Saved Deck": "Wczytaj zapisaną talię",
+  "Select Enemy Deck": "Wybierz talię wroga",
+  "No Decks Found": "Nie znaleziono talii",
+  "You haven't saved any custom decks internally yet.": "Nie masz jeszcze zapisanych własnych talii.",
+  "Deck Saved!": "Talia zapisana!",
+  "Saved as:": "Zapisano jako:",
+  "Invalid Deck!": "Nieprawidłowa talia!",
+  "Deck copied to clipboard!": "Talia skopiowana do schowka!",
+  "Paste into any notepad app and save as a .json file.": "Wklej do dowolnego notatnika i zapisz jako plik .json.",
+  "Uploaded deck is not formatted correctly!": "Wczytana talia ma nieprawidłowy format!",
+  "Uploaded deck is not parsable!": "Nie można odczytać wczytanej talii!",
+  "Changing factions will clear the current deck. Continue?": "Zmiana frakcji wyczyści bieżącą talię. Kontynuować?",
+  "Continue importing deck?": "Kontynuować import talii?",
+  "A random deck from the pool that will change every game.": "Losowa talia z puli, zmieniana w każdej grze.",
+  "Agile Close / Ranged": "Zręczność: wręcz / dystans",
+  "Agile Close / Siege": "Zręczność: wręcz / oblężenie",
+  "Agile Ranged / Siege": "Zręczność: dystans / oblężenie",
+  "Agile Close / Ranged / Siege": "Zręczność: wręcz / dystans / oblężenie",
+  "Play card [E]": "Zagraj kartę [E]",
+  "Play card or pass?": "Zagrać kartę czy spasować?",
+  "You are forced to play this card or pass for this round, which option do you choose?": "Musisz zagrać tę kartę albo spasować w tej rundzie. Co wybierasz?",
+  "Use faction ability [E]": "Użyj umiejętności frakcji [E]",
+  "Would you like to use your faction ability?": "Czy chcesz użyć umiejętności frakcji?",
+  "Nilfgaard wins draws": "Nilfgaard wygrywa remisy",
+  "The opponent's leader cancel your opponent's Leader Ability": "Dowódca przeciwnika anuluje umiejętność twojego dowódcy",
+  "Opponent uses leader": "Przeciwnik używa dowódcy",
+  "You will go first": "Zaczynasz",
+  "Your opponent will go first": "Przeciwnik zaczyna",
+  "Round Start": "Początek rundy",
+  "Round passed": "Runda spasowana",
+  "Your opponent has passed": "Przeciwnik spasował",
+  "You won the round!": "Wygrałeś rundę!",
+  "Your opponent won the round": "Przeciwnik wygrał rundę",
+  "The round ended in a draw": "Runda zakończyła się remisem",
+  "Your turn!": "Twoja tura!",
+  "Northern Realms faction ability triggered - North draws an additional card.": "Umiejętność Królestw Północy – Północ dobiera dodatkową kartę.",
+  "Monsters faction ability triggered - monsters retake one card to their hand": "Umiejętność Potworów – potwory biorą jedną kartę z powrotem na rękę",
+  "Opponent used the Scoia'tael faction perk to go first.": "Przeciwnik użył umiejętności Scoia'tael, by zacząć.",
+  "Opponent Skellige Ability Triggered!": "Umiejętność Skellige przeciwnika aktywowana!",
+  "Skellige Ability Triggered!": "Umiejętność Skellige aktywowana!",
+  "Witcher Universe used its faction ability and skipped a turn": "Uniwersum Wiedźmina użyło umiejętności frakcji i pominęło turę",
+  "Toussaint faction ability triggered - Toussaint draws an additional card.": "Umiejętność Toussaint – Toussaint dobiera dodatkową kartę.",
+  "Toussaint Leader ability used - Decoy ability cancelled for the rest of the round.": "Użyto umiejętności dowódcy Toussaint – Manekin anulowany do końca rundy.",
+  "Lyria & Rivia ability used - Morale Boost effect applied to a row.": "Użyto umiejętności Lyrii i Rivii – rząd otrzymał Wysokie morale.",
+  "Lyria & Rivia leader allows both players to restore 2 units when using the medic ability.": "Dowódca Lyrii i Rivii pozwala obu graczom przywrócić 2 jednostki umiejętnością medyka.",
+  "Northern Realms Leader ability used - Scorch ability cancelled for the rest of the round.": "Użyto umiejętności dowódcy Królestw Północy – Pożoga anulowana do końca rundy.",
+  "Zerrikania ability used - Unit restored from discard pile.": "Użyto umiejętności Zerrikanii – jednostka przywrócona ze stosu kart odrzuconych.",
+  "Ofir faction ability used - Weather card played from deck.": "Użyto umiejętności Ofiru – zagrano kartę pogody z talii.",
+  "Sigismund Dijkstra prevented the death of a friendly unit.": "Zygfryd Dijkstra zapobiegł śmierci sojuszniczej jednostki.",
+  "Redania used its faction ability and skipped a turn": "Redania użyła umiejętności frakcji i pominęła turę",
+  "Velen ability triggered: Player will draw a card": "Umiejętność Velen: gracz dobierze kartę",
+  "Action not allowed": "Ruch niedozwolony",
+  "Select a card on your side of the board.": "Wybierz kartę po swojej stronie planszy.",
+  "Select a new base power": "Wybierz nową siłę bazową",
+  "Wild Hunt 1": "Dziki Gon 1",
+  "Wild Hunt 2": "Dziki Gon 2",
+  "Not yet [Q]": "Jeszcze nie [Q]",
+  "Would you like to retake one of your cards?": "Czy chcesz zabrać jedną ze swoich kart z powrotem?",
+  "Once per battle, you may retake any of your cards from the board to your hand.": "Raz na bitwę możesz zabrać dowolną swoją kartę z planszy na rękę.",
+  "Which card to retake?": "Którą kartę zabrać?",
+  "Let Opponent Start [Q]": "Niech zacznie przeciwnik [Q]",
+  "Would you like to go first?": "Czy chcesz zacząć?",
+  "The Scoia'tael faction perk allows you to decide each round who will get to go first.": "Umiejętność Scoia'tael pozwala w każdej rundzie zdecydować, kto zaczyna.",
+  "Who should go first?": "Kto ma zacząć?",
+  "Choose which monster to transform.": "Wybierz potwora do przemiany.",
+  "Extracción de última carta controlada.": "Dobrano ostatnią kartę.",
+  "Card drawn cannot be played on a row with an opened door.": "Dobranej karty nie można zagrać w rzędzie z otwartymi wrotami.",
+  "Play the card?": "Zagrać kartę?",
+  "Do you want to play this special card or put it back in the deck?": "Chcesz zagrać tę kartę specjalną czy odłożyć ją do talii?",
+  "Select the next leader to start the round with": "Wybierz dowódcę na początek rundy",
+  "Choose a weather card to play": "Wybierz kartę pogody do zagrania",
+  "Which rows to target": "Które rzędy zaatakować",
+  "Skellige Storm can either target Close/Ranged rows or Ranged/Siege rows, which one to target?": "Sztorm Skellige może uderzyć w rzędy wręcz/dystans albo dystans/oblężenie. Które wybierasz?",
+  "Choose the card to draw and keep": "Wybierz kartę do dobrania i zatrzymania",
+  "Own deck [E]": "Własna talia [E]",
+  "Opponent's deck [Q]": "Talia przeciwnika [Q]",
+  "Choose deck to draw from": "Wybierz talię do dobierania",
+  "Impenetrable Fog [E]": "Gęsta mgła [E]",
+  "Torrential Rain [Q]": "Ulewny deszcz [Q]",
+  "Which weather card to play? Impenetrable Fog or Torrential Rain?": "Którą kartę pogody zagrać? Gęstą mgłę czy Ulewny deszcz?",
+  "Which card to draw?": "Którą kartę dobrać?",
+  "Which card to put back into the deck?": "Którą kartę odłożyć do talii?",
+  "Which card should your opponent play on the next round?": "Którą kartę przeciwnik ma zagrać w następnej turze?",
+  "Which card to destroy?": "Którą kartę zniszczyć?",
+  "Which Spy/Emissary card to draw?": "Którego szpiega/emisariusza dobrać?",
+  "Which opponent card to restore from the grave?": "Którą kartę przeciwnika przywrócić z cmentarza?",
+  "Which card to restore from your grave?": "Którą kartę przywrócić ze swojego cmentarza?",
+  "Shuffle them all [Q]": "Wtasuj wszystkie [Q]",
+  "Keep a card [E]": "Zostaw kartę [E]",
+  "Keep one card in the grave?": "Zostawić jedną kartę na cmentarzu?",
+  "Would you like to select a card to keep in your graveyard?": "Czy chcesz wybrać kartę, która zostanie na cmentarzu?",
+  "Bring the Storm [E]": "Sprowadź sztorm [E]",
+  "Maybe later [Q]": "Może później [Q]",
+  "Bring the Skellige Storm?": "Sprowadzić Sztorm Skellige?",
+  "Would you like to draw a Skellige Storm card from your deck and halve weather effects over your units?": "Czy chcesz dobrać z talii Sztorm Skellige i zmniejszyć o połowę efekty pogody na swoich jednostkach?",
+  "Discard a card [E]": "Odrzuć kartę [E]",
+  "Discard a card from the hand of the opponent?": "Odrzucić kartę z ręki przeciwnika?",
+  "Would you like to see 2 random cards from the hand of your opponent and discard one of them?": "Czy chcesz zobaczyć 2 losowe karty z ręki przeciwnika i odrzucić jedną z nich?",
+  "Which card to discard?": "Którą kartę odrzucić?",
+  "Change a card's strength [E]": "Zmień siłę karty [E]",
+  "Change the strength of a card?": "Zmienić siłę karty?",
+  "Would you like to change the strength of a card? It will be reset at the end of the round before scoring. (Max 2 uses per battle. Max strength: 10).": "Czy chcesz zmienić siłę karty? Zostanie zresetowana na koniec rundy przed liczeniem punktów. (Maks. 2 użycia na bitwę. Maks. siła: 10).",
+  "Choose a unit to play immediately": "Wybierz jednostkę do natychmiastowego zagrania",
+  "Choose the card to destroy": "Wybierz kartę do zniszczenia",
+  "Choose the hero to take back into your hand": "Wybierz bohatera, którego weźmiesz z powrotem na rękę",
+  "Choose the hero to play": "Wybierz bohatera do zagrania",
+  "Choose the monster to revert to its primal form.": "Wybierz potwora, który wróci do pierwotnej postaci.",
+  "Choose the enemy hero to demote.": "Wybierz bohatera przeciwnika do zdegradowania.",
+  "Choose which enemy card to destroy": "Wybierz kartę przeciwnika do zniszczenia",
+  "You have no cards in hand to exchange!": "Nie masz kart na ręce do wymiany!",
+  "Choose a special card to play immediatly.": "Wybierz kartę specjalną do natychmiastowego zagrania.",
+  "Choose a card to protect with Comrade.": "Wybierz kartę, którą ochroni Towarzysz.",
+  "Save it [E]": "Uratuj [E]",
+  "Let it die [Q]": "Niech zginie [Q]",
+  "Do you want to save Comrade too?": "Chcesz uratować też Towarzysza?",
+  "Draw 1 card [E]": "Dobierz 1 kartę [E]",
+  "Look first 4 cards [Q]": "Obejrzyj 4 pierwsze karty [Q]",
+  "Choose the effect of the emissary": "Wybierz efekt emisariusza",
+  "Either draw the first card of the deck or look the first 4 and order them back as you wish at the top or bottom of the deck.": "Dobierz pierwszą kartę z talii albo obejrzyj 4 pierwsze i ułóż je z powrotem w dowolnej kolejności na wierzchu lub spodzie talii.",
+  "Re-order the cards back into the deck": "Ułóż karty z powrotem w talii",
+  "Put unit cards from grave back to deck?": "Odłożyć jednostki z cmentarza do talii?",
+  "Do you want to put up to 2 cards from your grave back to your deck?": "Czy chcesz odłożyć do 2 kart z cmentarza z powrotem do talii?",
+  "Choose up to 2 cards to take from your grave back to your deck.": "Wybierz do 2 kart, które wrócą z cmentarza do talii.",
+  "Choose a card to draw from your deck.": "Wybierz kartę do dobrania z talii.",
+  "Which card to put back into your deck?": "Którą kartę odłożyć do talii?",
+  "Draw 1 now [E]": "Dobierz 1 teraz [E]",
+  "Draw 2 later [Q]": "Dobierz 2 później [Q]",
+  "Draw now or more later?": "Dobrać teraz czy więcej później?",
+  "Either draw the first card of the deck now or first 2 at the end of the round.": "Dobierz teraz pierwszą kartę z talii albo 2 pierwsze na koniec rundy.",
+  "Choose one card to play.": "Wybierz jedną kartę do zagrania.",
+  "Choose which card to equip with Aerondight.": "Wybierz kartę, która otrzyma Aerondight.",
+  "Choose up to 2 cards to draw and keep in your hand": "Wybierz do 2 kart, które dobierzesz i zatrzymasz na ręce",
+  "Choose up to 2 cards to play right away.": "Wybierz do 2 kart do natychmiastowego zagrania.",
+  "Cat and Dog card data not found for omen ability.": "Nie znaleziono danych karty Kot i pies dla umiejętności Omen.",
+  "Select a card from the opponent's deck to buy.": "Wybierz kartę z talii przeciwnika do kupienia.",
+  "From which deck to draw the next card? (Ofiri Envoy can draw from opponent's deck only once)": "Z której talii dobrać następną kartę? (Ofirski wysłannik może dobrać z talii przeciwnika tylko raz)",
+  "Choose a card to add to your hand (others will be discarded)": "Wybierz kartę, którą dodasz do ręki (pozostałe zostaną odrzucone)",
+  "Choose which unit to double with Chernobog runestone": "Wybierz jednostkę, której siłę podwoi Runa Czarnoboga",
+  "Choose which unit to grant +5 strength with Perun runestone": "Wybierz jednostkę, która otrzyma +5 siły od Runy Peruna",
+  "Choose the enemy hero to weaken.": "Wybierz bohatera przeciwnika do osłabienia.",
+  "Choose which unit to channel the Veles magic onto.": "Wybierz jednostkę, na którą spłynie magia Welesa.",
+  "Choose which enemy close unit to reduce to 1 with Morana.": "Wybierz jednostkę walki wręcz przeciwnika, której siłę Marzanna zmniejszy do 1.",
+  "Choose which enemy siege unit to reduce to 1 with Svarog.": "Wybierz jednostkę oblężniczą przeciwnika, której siłę Swaróg zmniejszy do 1.",
+  "Choose 1 runestone from your deck to add to your hand.": "Wybierz 1 runę z talii i dodaj ją do ręki.",
+  "View Deck [E]": "Obejrzyj talię [E]",
+  "Spy Enemy [Q]": "Podejrzyj wroga [Q]",
+  "Clairvoyance Options": "Jasnowidzenie – opcje",
+  "Do you want to see the top 3 cards of your deck or 3 random cards in your opponent's hand?": "Chcesz zobaczyć 3 wierzchnie karty swojej talii czy 3 losowe karty z ręki przeciwnika?",
+  "Clairvoyance: Top 3 cards of your deck (click to close)": "Jasnowidzenie: 3 wierzchnie karty twojej talii (kliknij, by zamknąć)",
+  "Clairvoyance: 3 random cards of enemy hand (click to close)": "Jasnowidzenie: 3 losowe karty z ręki wroga (kliknij, by zamknąć)",
+  "The Djinn grants your wish: Choose 1 enemy card to steal.": "Dżinn spełnia twoje życzenie: wybierz 1 kartę wroga do ukradzenia.",
+  "The Djinn grants your second wish: Choose 1 card from your deck to draw.": "Dżinn spełnia twoje drugie życzenie: wybierz 1 kartę z talii do dobrania.",
+  "The Djinn grants your third wish: Choose 1 enemy unit to destroy.": "Dżinn spełnia twoje trzecie życzenie: wybierz 1 jednostkę wroga do zniszczenia.",
+  "Choose an enemy unit from the opposite row to transform Doppler into.": "Wybierz jednostkę wroga z przeciwległego rzędu, w którą zmieni się Doppler.",
+  "Promote a friendly unit to Hero status": "Awansuj sojuszniczą jednostkę do statusu bohatera",
+  "Choose a unit to promote to Hero.": "Wybierz jednostkę do awansu na bohatera.",
+  "Cancel [Q]": "Anuluj [Q]",
+  "Close + Ranged [E]": "Wręcz + dystans [E]",
+  "Ranged + Siege [Q]": "Dystans + oblężenie [Q]",
+  "Discard [Q]": "Odrzuć [Q]",
+  "Go First [E]": "Zacznij [E]",
+  "No [Q]": "Nie [Q]",
+  "Yes [E]": "Tak [E]",
+  "Pass [Q]": "Spasuj [Q]",
+  "Play [E]": "Zagraj [E]",
+  "Player 1 first [E]": "Gracz 1 zaczyna [E]",
+  "Player 2 first [Q]": "Gracz 2 zaczyna [Q]",
+  "Retake a card [E]": "Zabierz kartę [E]",
+  "Northern Realms": "Królestwa Północy",
+  "Nilfgaard Empire": "Cesarstwo Nilfgaardu",
+  "Nilfgaardian Empire": "Cesarstwo Nilfgaardu",
+  "Monsters": "Potwory",
+  "Scoia'Tael": "Scoia'tael",
+  "Witcher Universe": "Uniwersum Wiedźmina",
+  "Lyria & Rivia": "Lyria i Rivia",
+  "Syndicate": "Syndykat",
+  "Wild Hunt": "Dziki Gon",
+  "Free City of Novigrad": "Wolne Miasto Novigrad",
+  "Nibras deck": "Talia Nibrasa",
+  "Deck relying mostly on Tight Bonds units and Spies": "Talia oparta głównie na Więzi i szpiegach",
+  "Deck relying mostly on Spies, Emissaries, some Tight Bond and strong ranged units": "Talia oparta głównie na szpiegach, emisariuszach, trochę Więzi i silnych jednostkach dystansowych",
+  "Deck relying on a lot of muster units": "Talia oparta na wielu jednostkach z Wezwaniem",
+  "Deck relying on agile units and muster": "Talia oparta na zręcznych jednostkach i Wezwaniu",
+  "Deck relying mostly on berserker units": "Talia oparta głównie na berserkerach",
+  "Witcher Universe deck focusing on witcher schools - Playstyle: Witcher Schools, Resilience, Scorch": "Talia Uniwersum Wiedźmina skupiona na szkołach wiedźminów – styl gry: szkoły wiedźminów, Wytrwałość, Pożoga",
+  "Deck relying mostly on witch hunters": "Talia oparta głównie na łowcach czarownic",
+  "Deck relying mostly Toussaint monsters, spies and muster": "Talia oparta głównie na potworach z Toussaint, szpiegach i Wezwaniu",
+  "Lyria & Rivia deck focusing on cards of the first line (Melee/Ranged) - Playstyle: Muster, Medic": "Talia Lyrii i Rivii skupiona na pierwszej linii (wręcz/dystans) – styl gry: Wezwanie, Medyk",
+  "Syndicate deck focusing on cards of the Eternal Fire - Playstyle: Witch Hunt, Muster, Dimeritium": "Talia Syndykatu skupiona na Wiecznym Ogniu – styl gry: Polowanie na czarownice, Wezwanie, dimeryt",
+  "Zerrikania deck focusing on dragons and their whorshippers - Playstyle: Worshipper / Whorshipped": "Talia Zerrikanii skupiona na smokach i ich czcicielach – styl gry: Czciciel / Czczony",
+  "Deck relying mostly on bond, scorch and drawing cards": "Talia oparta głównie na Więzi, Pożodze i dobieraniu kart",
+  "Deck relying mostly on bond door mechanic": "Talia oparta głównie na mechanice wrót",
+  "Focus on sandstorms and overcoming elements": "Nacisk na burze piaskowe i przezwyciężanie żywiołów",
+  "Focus on trade and adaptive abilities": "Nacisk na handel i umiejętności adaptacyjne",
+  "Language": "Język",
+  "Deck weight:": "Waga talii:",
+  "Play style:": "Styl gry:",
+  "Leader:": "Dowódca:",
+  "Siege": "Oblężenie",
+  "Melee": "Walka wręcz",
+  "Ranged": "Walka dystansowa",
+  "Deck leader": "Dowódca talii",
+  "Nilfgaard": "Nilfgaard",
+  "Revolves around Tight Bond, Spy and siege cards.": "Opiera się na Więzi, szpiegach i kartach oblężniczych.",
+  "Revolves around Tight Bond, Morale Boost and siege cards.": "Opiera się na Więzi, Wysokim morale i kartach oblężniczych.",
+  "Revolves around Muster, Slaughter of Cintra and Summon Avenger.": "Opiera się na Wezwaniu, Rzezi Cintry i Mścicielu.",
+  "Revolves around Spies, Medic and Tall units.": "Opiera się na szpiegach, medykach i silnych jednostkach.",
+  "Revolves around Spies, Medic, Commander's Horn and some Tight Bond.": "Opiera się na szpiegach, medykach, Rogu dowódcy i trochę na Więzi.",
+  "Revolves around Spies and Tight Bond.": "Opiera się na szpiegach i Więzi.",
+  "Revolves around Muster, Scorch, Medic and Spies.": "Opiera się na Wezwaniu, Pożodze, medykach i szpiegach.",
+  "Revolves around Muster and tall units.": "Opiera się na Wezwaniu i silnych jednostkach.",
+  "Revolves around a lot of Muster units.": "Opiera się na wielu jednostkach z Wezwaniem.",
+  "Revolves around Muster and Medic units.": "Opiera się na Wezwaniu i medykach.",
+  "Revolves around Muster and Morale Boost units.": "Opiera się na Wezwaniu i Wysokim morale.",
+  "Revolves around Berserker, Muster and Tight Bond units.": "Opiera się na berserkerach, Wezwaniu i Więzi.",
+  "Revolves around Muster, Tight Bond and Medic units.": "Opiera się na Wezwaniu, Więzi i medykach.",
+  "Revolves around Witcher Schools, Resilience and Scorch.": "Opiera się na szkołach wiedźminów, Wytrwałości i Pożodze.",
+  "Revolves around Muster, Scorch and Spy units.": "Opiera się na Wezwaniu, Pożodze i szpiegach.",
+  "Revolves around Summon Avenger and Medic units.": "Opiera się na Mścicielu i medykach.",
+  "Revolves around Tight Bond, Muster and tall units.": "Opiera się na Więzi, Wezwaniu i silnych jednostkach.",
+  "Revolves around Scorch, Spy and Medic units.": "Opiera się na Pożodze, szpiegach i medykach.",
+  "Revolves around Witch Hunt, Muster and Dimeritium.": "Opiera się na Polowaniu na czarownice, Wezwaniu i dimerycie.",
+  "Revolves around Muster, Scorch and Summon Avenger.": "Opiera się na Wezwaniu, Pożodze i Mścicielu.",
+  "Revolves around Spy, Tight Bond and Muster.": "Opiera się na szpiegach, Więzi i Wezwaniu.",
+  "Revolves around Whorshipper and Whorshipped units along with Medic.": "Opiera się na czcicielach i czczonych jednostkach oraz medykach.",
+  "Revolves around Inspire, Scorch and a various selection of abilities.": "Opiera się na Natchnieniu, Pożodze i różnorodnych umiejętnościach.",
+  "Gwent": "Gwint",
+  "Loading...": "Wczytywanie...",
+  "WEN": "WIN"
+ },
+ "blocks": {
+  "b0": "Minigra z Wiedźmina 3 przeniesiona do przeglądarki i rozwinięta",
+  "b1": "Czym jest gwint?",
+  "b2": "<b>Gwint</b> (<i>znany też jako Gwynt</i>) był minigrą w grze <b>Wiedźmin 3</b> stworzonej przez CD Projekt. Zaprojektowano go jako kolekcjonerską grę karcianą, w której grało się przeciwko komputerowi. Zaczynało się od podstawowej talii, którą można było ulepszać równolegle z fabułą i zadaniami, kupując karty tu i ówdzie lub pokonując postacie w grze.",
+  "b3": "Nigdy nie miała to być gra zbalansowana. Postacie niezależne nie narzekają, więc chodziło o zbudowanie talii z najsilniejszych możliwych kart, by zawsze wygrywać. Przystosowanie gwinta do gry wieloosobowej nie jest więc łatwe. Co więcej, gra mogła się nudzić, bo istnieją oczywiste optymalne talie i optymalne sposoby gry. Gracze zwykle robili w kółko to samo. Na szczęście nie przeszkadza to, by gra była bardzo ciekawa i pełna potencjału — dlatego chcieliśmy rozwinąć ją jeszcze bardziej, zwłaszcza że uniwersum Wiedźmina jest tak ogromne.",
+  "b4": "Ale jak się w to gra?",
+  "b5": "W gwinta grają 2 osoby. Zaczynają z tą samą liczbą kart i na zmianę zagrywają je po jednej, dopóki obaj gracze nie spasują albo nie skończą im się karty. Na koniec każdej rundy sumuje się siłę kart każdego gracza, co daje jego wynik. Gracz z najwyższym wynikiem wygrywa rundę. <b>Kto pierwszy wygra dwie rundy, wygrywa grę.</b>",
+  "b6": "Gwint bywa porównywany do pokera, bo ważną rolę odgrywa blef. Zwykle chcesz wygrać rundę jak najmniejszą liczbą kart, ale skoro każdy może przegrać jakąś rundę, warto przekonać przeciwnika, że walczysz o zwycięstwo, i zmusić go do wyłożenia najlepszych kart, oszczędzając własne. Karty są w grze ograniczonym zasobem, więc wygrana wymaga lepszego ich wykorzystania.",
+  "b7": "Układ planszy",
+  "b8": "W gwincie plansza to pole bitwy podzielone na dwie części — strony obu graczy. Każda strona składa się z trzech osobnych rzędów:",
+  "b9": "<b>Walka wręcz</b> (bliski dystans)",
+  "b10": "<b>Walka dystansowa</b>",
+  "b11": "Większość kart można zagrać tylko w jednym z tych rzędów. Niektóre karty specjalne działają tylko na jeden rząd naraz. Skupienie kart w jednym rzędzie lub przeciwnie — rozłożenie ich po całej swojej stronie pola bitwy — to ważne decyzje strategiczne.",
+  "b12": "Podział planszy na trzy rzędy i efekty, które na nie działają, to ważny element wyjątkowości i elegancji gwinta. Dla wielu graczy właśnie tego brakuje w nowszej, samodzielnej oficjalnej wersji gry.",
+  "b13": "Czym więc są te karty?",
+  "b14": "W gwincie są 3 główne rodzaje kart:",
+  "b15": "<b>Karty dowódców</b>",
+  "b16": "<b>Karty jednostek</b>",
+  "b17": "<b>Karty specjalne</b>",
+  "b18": "Każdy gracz ma jedną i tylko jedną kartę dowódcy, wybieraną przed rozpoczęciem gry. Nie należy ona do talii. Tej karty nie zagrywa się na pole bitwy — leży odkryta z boku do końca gry. Nie ma wartości siły, ale ma potężną umiejętność, która może wpłynąć na planszę i karty.",
+  "b19": "To główna kategoria kart — mają wartość siły i pozwalają zwiększać wynik gracza w rundzie. Niektóre jednostki mają umiejętność (niektóre nawet dwie), dzięki której wpływają na planszę lub łączą się z innymi kartami, by jeszcze bardziej zwiększyć (albo zmniejszyć) wyniki graczy. Umiejętności te pozwalają wzmacniać część jednostek, przywoływać kolejne karty lub usuwać inne karty z planszy. Umiejętności jednostek to zapewne najważniejsza część gry, bo to one dają różnorodność i nieprzewidywalność, zmuszając graczy do odczytywania strategii i stylu przeciwnika i odpowiedniego reagowania.",
+  "b20": "Niewielka część tych jednostek to <b>bohaterowie</b> — ich wygląd nieco różni się od pozostałych. Na bohaterów nie działa żadna umiejętność, ani twoja, ani przeciwnika. Oznacza to, że tych kart nie da się usunąć przed końcem rundy, a ich siły nie można zmienić. Wyjątki od tej reguły są bardzo, bardzo rzadkie.",
+  "b21": "Karty jednostek zwykle można zagrać tylko w jednym z trzech rzędów, co jest zaznaczone na karcie. Niektóre można umieścić w jednym z dwóch rzędów.",
+  "b22": "Karty specjalne nie mają siły, ale mają potężną umiejętność, która może znacząco wpłynąć na planszę. Zwykle działają na konkretny rząd albo na całą planszę.",
+  "b23": "Niektóre karty specjalne działają natychmiast i są odrzucane zaraz po użyciu. Inne dają trwały efekt na rzędzie do końca rundy albo dopóki inna umiejętność go nie usunie. Tych kart nie zagrywa się na pole bitwy, lecz na przeznaczone dla nich pole z boku.",
+  "b24": "Jedna kategoria kart specjalnych zasługuje na osobną wzmiankę — to <b>karty pogody</b>. Nakładają karę na konkretny rząd, ale obu graczom jednocześnie (siła wszystkich jednostek spada do 1). To potężne narzędzie, które może odmienić przebieg gry. Na szczęście jest karta specjalna, która anuluje efekty pogody — o ile akurat masz ją na ręce.",
+  "b25": "Te karty odgrywają ważną rolę w strategii gwinta i jego elegancji. Są proste, ale zabójcze — trzeba przewidywać, że przeciwnik może je zagrać.",
+  "b26": "Jak czytać karty",
+  "b27": "<b>1:</b> Siła karty, która wlicza się do wyniku gracza. Wartość wydrukowana na karcie to „siła bazowa”, bo siłę jednostek mogą zwiększać i zmniejszać inne karty. <b>Karty specjalne</b> mają tu zamiast siły oznaczenie swojej umiejętności.",
+  "b28": "<b>2:</b> Rząd karty. Ta ikona pokazuje, w którym rzędzie (rzędach) można umieścić kartę. Miecz oznacza walkę wręcz, łuk — walkę dystansową, a katapulta — rząd oblężniczy. Czasem ikona zawiera 2 elementy, co oznacza, że kartę można umieścić w kilku rzędach, do wyboru.",
+  "b29": "<b>3:</b> Umiejętność karty, jeśli ją ma. Czasem karta ma dwie umiejętności — druga jest wtedy umieszczona poniżej. Umiejętności są opisane w innym miejscu.",
+  "b30": "<b>4:</b> Ikona i kolorowa wstęga wskazują frakcję, do której należy karta. Frakcje opisano dalej. Jeśli nie ma takiej ikony/wstęgi, karta jest neutralna i pasuje do każdej frakcji.",
+  "b31": "<b>5:</b> Nazwa karty. Większość kart ma też pod nazwą własny cytat związany z postacią, jednostką lub efektem.",
+  "b32": "Ta gra karciana w dużej mierze obraca się wokół zestawu umiejętności — pozwalają one budować strategie i dostosowywać się do przeciwnika. Piękno gwinta polega na tym, że umiejętności jest stosunkowo niewiele i łatwo je zrozumieć. W przeciwieństwie do nowoczesnego oficjalnego gwinta, w którym każda karta ma unikalny efekt, w oryginale wiele kart ma tę samą umiejętność. Dzięki temu dużo łatwiej zrozumieć, co robi karta (zwykle wystarczy na nią zerknąć) i co potrafi talia.",
+  "b33": "Dostępne umiejętności",
+  "b34": "Gra oryginalna",
+  "b35": "Ta umiejętność jest dość prosta: niszczy (usuwa z planszy i odsyła na cmentarz/stos kart odrzuconych) wszystkie jednostki (nie bohaterów) o najwyższej sile. Działa na całą planszę, u obu graczy, więc możesz zniszczyć również własne karty.",
+  "b36": "Najlepiej użyć jej, gdy przeciwnik ma kilka jednostek o tej samej wartości (i żadna inna jednostka na planszy nie jest silniejsza) albo gdy jedna jednostka stanowi dużą część łącznej siły gracza.",
+  "b37": "Gdy ta umiejętność pochodzi z karty jednostki, sama karta jest wyłączona z efektu — nie może zniszczyć samej siebie i nie liczy się przy ustalaniu najsilniejszych jednostek.",
+  "b38": "Pożoga rzędu",
+  "b39": "To lekka odmiana Pożogi. Zamiast całej planszy u obu graczy działa tylko na jeden rząd przeciwnika. Jeśli łączna siła w tym rzędzie wynosi 10 lub więcej (z bohaterami), niszczy najsilniejsze jednostki rzędu (ale nie bohaterów).",
+  "b40": "Pierwotnie celem był rząd naprzeciwko tego, w którym zagrano kartę. Zmieniliśmy to jednak tak, by zawsze celował w rząd walki wręcz — dzięki temu umiejętność jest nieco bardziej użyteczna, skuteczna i przewidywalna, bo większość frakcji ma dużo więcej jednostek walki wręcz niż w innych rzędach. Uważamy też, że działanie tylko na pierwszą linię wroga jest bardziej „realistyczne”.",
+  "b41": "Gdy na planszę trafia karta z umiejętnością Wezwanie, przywołuje też wszystkie inne karty o tej samej nazwie z twojej talii i ręki. W praktyce nie zawsze mają identyczną nazwę, ale mają wspólny, łatwo rozpoznawalny element.",
+  "b42": "Siła tej umiejętności polega na tym, że szybko dokłada na planszę kilka kart i podnosi twój wynik. Jej słabość: karty często mają tę samą siłę, więc przy nieostrożnej grze można je zniszczyć wszystkie naraz. Pamiętaj też, że jeśli masz na ręce kilka kart Wezwania z tej samej rodziny, zagranie jednej wyłoży wszystkie kopie z ręki, co stawia cię w gorszej sytuacji.",
+  "b43": "Więź działa w pewnym sensie podobnie do Wezwania. Te karty należą do „rodziny” i razem są silniejsze. Dla każdej karty z tej samej rodziny (ta sama lub podobna nazwa) z umiejętnością Więź siła bazowa karty jest mnożona przez liczbę kopii w tym samym rzędzie. Jeśli więc zagrasz 3 kopie, każda karta ma potrojoną wartość. Łącznie suma jest 9 razy wyższa niż bez tej umiejętności.",
+  "b44": "Siła tej umiejętności polega na tym, że możesz osiągnąć w rzędzie bardzo wysoką siłę — tak wysoką, że przeciwnikowi trudno będzie ją wyrównać (3 karty dają siłę 9 kart). Jednak ta sama siła jest też jej główną słabością. Ponieważ to kopie, mają tę samą siłę i zwykle są najsilniejszymi kartami na planszy — łatwy cel dla Pożogi. Pojedyncza kopia takiej karty nie jest zbyt silna; najważniejsze jest zebranie kilku kopii.",
+  "b45": "Przejdźmy do wzmacniania rzędów. Wysokie morale zwiększa siłę bazową wszystkich jednostek w rzędzie o 1, z wyjątkiem samej siebie. Oczywiście działa lepiej, gdy masz dużo jednostek skupionych w jednym rzędzie.",
+  "b46": "Róg dowódcy",
+  "b47": "Teraz mocniejsze wzmocnienie. Róg dowódcy podwaja siłę wszystkich jednostek (czyli nie bohaterów) w rzędzie. Działa na końcu, więc dobrze łączy się z innymi wzmocnieniami. Tu również jest skuteczniejszy w rzędzie z wieloma kartami, ale liczba kart nie jest tak ważna jak przy Wysokim morale. Kilka kart z Więzią może mieć większy potencjał niż 5 słabych kart. Choć ta umiejętność ma ogromny potencjał, czyni cię też bardzo podatnym na Pożogę.",
+  "b48": "Gdy tę umiejętność ma jednostka, nie wzmacnia ona samej siebie. Ponadto w jednym rzędzie może działać naraz tylko jeden Róg dowódcy. Jeśli ma go kilka kart w rzędzie, zadziała tylko raz.",
+  "b49": "Gdy karta zostaje usunięta z planszy (zniszczona albo na koniec rundy), trafia na cmentarz (czyli stos kart odrzuconych). Umiejętność Medyk pozwala przywrócić z cmentarza jednostkę (nie bohatera). Gdy karta wraca na planszę, jej umiejętności działają ponownie.",
+  "b50": "Ta umiejętność jest bardzo potężna, bo w dłuższej perspektywie daje ci dodatkową kartę. Pozwala też ponownie użyć ważnych umiejętności, co bywa decydujące. Ta karta jest jak wino — im starsza, tym lepsza. Im później ją zagrasz, tym więcej kart masz do wyboru. Jeśli cmentarz jest pusty, ta umiejętność niewiele daje. Medyk może nawet przywrócić innego medyka, a ten — kolejną kartę.",
+  "b51": "Zapewne najbardziej osławiona umiejętność w grze. Mówiliśmy, że karty są najważniejszym zasobem gry — i o to chodzi w tej umiejętności: daje przewagę kart (czyli więcej kart niż ma przeciwnik). Zagrana karta trafia na stronę przeciwnika i zwiększa jego łączny wynik. W zamian dobierasz dwie karty ze swojej talii. W efekcie dałeś kartę przeciwnikowi, ale masz o jedną kartę więcej niż wcześniej i 2 nowe możliwości na później.",
+  "b52": "Poza przewagą kart dobranie większej liczby kart daje więcej opcji i większe szanse na dobre kombinacje. Uważaj jednak: po stronie przeciwnika szpieg jest pod jego kontrolą i może zostać zagrany z powrotem przeciwko tobie.",
+  "b53": "Tę umiejętność często opisuje się jako kontrę na szpiegów. Pozwala zamienić tę kartę z jednostką na planszy (innymi słowy: wziąć wybraną kartę z powrotem na rękę).",
+  "b54": "Manekin ma wiele zalet. Oczywiście świetnie kontruje szpiegów, bo możesz przywrócić równowagę, zagrywając szpiega z powrotem i również dobierając karty. Można go też użyć na innych kartach z ważnymi umiejętnościami, jak Pożoga czy Medyk. Pamiętaj też, że zagranie Manekina to praktycznie pominięcie tury, bo liczba kart na ręce się nie zmniejsza — często się to lekceważy.",
+  "b55": "Ta umiejętność rzadko jest wykorzystywana, więc po zagraniu karty rzadko widać jej efekt. W praktyce chodzi o karty, które można zagrać w rzędzie walki wręcz lub dystansowej (to najbardziej przydatna część). W pewnych ograniczonych sytuacjach zręczne karty można później w rundzie przenieść do korzystniejszego rzędu.",
+  "b56": "Mściciel",
+  "b57": "Podobnie jak Medyk, Mściciel potrzebuje czasu, by pokazać efekt. Gdy karta z tą umiejętnością zostanie usunięta z planszy (zniszczona albo na koniec rundy), zastępuje ją inna, silniejsza karta. Najczęściej ta druga karta wkracza do walki na początku następnej rundy.",
+  "b58": "Zwykle jednostka z Mścicielem jest bardzo słaba. Zagranie jej to inwestycja w przyszłość, bo pozwoli zacząć następną rundę z przewagą (o ile karta nie zostanie zniszczona przed końcem rundy). Ta umiejętność świetnie łączy się z Medykiem. Jeśli przywoływana karta jest na twojej ręce lub w talii, zostanie wzięta stamtąd. W przeciwnym razie zostanie „stworzona”, ale po usunięciu nie trafi na twój cmentarz.",
+  "b59": "Berserker / Mardroeme",
+  "b60": "Te dwie umiejętności trzeba przedstawić razem. Są typowe dla frakcji Skellige. Jednostki z umiejętnością Berserker można przemienić w ich dziksze wcielenie, gdy w ich rzędzie zostanie zagrana karta z umiejętnością Mardroeme.",
+  "b61": "Berserkerzy początkowo nie są zbyt silni, więc bez Mardroeme niewiele są warci. Ich przemienione wersje są za to bardzo silne, ale też bardzo podatne na Pożogę. Dobre wykorzystanie tej umiejętności nie jest łatwe.",
+  "b62": "Gra oryginalna – karty pogody",
+  "b63": "Jak wspomniano, karty pogody to szczególny rodzaj kart specjalnych (a więc wyjątkowy również wśród umiejętności). Ich efekt jest bardziej globalny i dotyczy obu graczy. W rzadkich przypadkach jednostka może mieć umiejętność pogodową, ale to wyjątki.",
+  "b64": "Zmniejsza do 1 siłę bazową wszystkich jednostek (nie bohaterów) w rzędzie walki wręcz, u obu graczy. Działa przed wszystkimi innymi umiejętnościami i efektami.",
+  "b65": "Zmniejsza do 1 siłę bazową wszystkich jednostek (nie bohaterów) w rzędzie walki dystansowej, u obu graczy. Działa przed wszystkimi innymi umiejętnościami i efektami.",
+  "b66": "Zmniejsza do 1 siłę bazową wszystkich jednostek (nie bohaterów) w rzędzie oblężniczym, u obu graczy. Działa przed wszystkimi innymi umiejętnościami i efektami.",
+  "b67": "Zmniejsza do 1 siłę bazową wszystkich jednostek (nie bohaterów) w rzędach walki dystansowej i oblężniczym, u obu graczy. Działa przed wszystkimi innymi umiejętnościami i efektami.",
+  "b68": "Usuwa wszystkie inne efekty pogody działające na planszy, u wszystkich graczy.",
+  "b69": "Nowe, autorskie umiejętności",
+  "b70": "Aby rozszerzyć grę o nowe karty i frakcje, dodano kolejne umiejętności. Inaczej większość talii wyglądałaby i grała podobnie. Gra może przez to być nieco bardziej złożona, bo trzeba przyswoić więcej pojęć, ale umiejętności zaprojektowano tak, by zachować ducha oryginału i pozostać prostymi.",
+  "b71": "Jak sugeruje nazwa, umiejętność Rzeź Cintry dotyczy niektórych cintryjskich jednostek. Jednostki z tą umiejętnością są naznaczone na rzeź. Gdy zostanie zagrana odpowiednia karta specjalna, wszystkie twoje naznaczone karty na planszy zostają zniszczone i trafiają na stos kart odrzuconych. W zamian dobierasz z talii kartę za każdą usuniętą kartę. Daje to potencjalną przewagę kart.",
+  "b72": "Sztuczka polega na tym, że nie musisz używać karty specjalnej — naznaczone jednostki mogą zostać na planszy, a ich siła liczy się do twojego wyniku. Przeciwnik nie wie więc, czy planujesz oddać rundę dla przewagi kart, czy zatrzymasz jednostki.",
+  "b73": "Wino z Toussaint to coś pomiędzy Rogiem dowódcy a Wysokim morale. Karta zostaje w rzędzie i wzmacnia wszystkie jednostki (nie bohaterów) o 2 (zamiast o 1 jak Wysokie morale).",
+  "b74": "Bank jest dość prosty. Zagrywasz go i dobierasz kartę z talii. Bez komplikacji. To trochę jak pominięcie tury (zachowujesz liczbę kart na ręce), tyle że nie wiesz, jaką kartę dostaniesz.",
+  "b75": "Tę umiejętność ma kilka kart specjalnych. Kartę zagrywa się w jednym z rzędów przeciwnika. Jeśli zagra on w tym rzędzie jednostkę (nie bohatera) z umiejętnością, karta zostanie zablokowana, a ta karta specjalna trafi na cmentarz. Zablokowana karta nie może używać umiejętności, dopóki nie zostanie usunięta z planszy.",
+  "b76": "Ta umiejętność wymaga dobrej znajomości talii przeciwnika i przewidywania jego kart. Świetnie powstrzymuje Wezwanie i Więź przed zadziałaniem. Uważaj tylko, by nie zagrać swojego szpiega w tym rzędzie, gdy czeka tam blokada.",
+  "b77": "Ta umiejętność jest dość prosta. Zagrywa się ją w rzędzie walki wręcz albo dystansowej wroga. Wszystkie jednostki (nie bohaterowie) przesuwają się o 1 rząd w tył, w stronę rzędu oblężniczego.",
+  "b78": "Służy głównie do rozbijania skutecznych premii rzędów (jak Róg dowódcy) albo do wpychania jednostek w złą pogodę.",
+  "b79": "Ta umiejętność przejmuje kontrolę nad jednostkami o najmniejszej sile w rzędzie walki wręcz wroga. Jeśli jest ich kilka, przejmujesz wszystkie.",
+  "b80": "Bywa bardzo silna przeciw jednostkom z Wezwaniem albo gdy w rzędzie walki wręcz wroga panuje zła pogoda. Liczy się jednak wyczucie czasu. Dobre cele w tej rundzie mogą zniknąć w następnej, bo przeciwnik zagra słabszą kartę.",
+  "b81": "Ta umiejętność chroni cały rząd przed wszystkimi umiejętnościami przeciwnika poza pogodą, do końca rundy. Głównie chodzi o ochronę przed Pożogą. W efekcie karty w tym rzędzie nie liczą się przy ustalaniu najwyższej siły na planszy.",
+  "b82": "To lustrzane odbicie Pożogi rzędu — niszczy najsłabsze jednostki (nie bohaterów) w rzędzie naprzeciwko tego, w którym zagrano kartę. To bardzo skuteczna kontra na Wezwanie.",
+  "b83": "Szkoły wiedźminów",
+  "b84": "Umiejętność Szkoły Wiedźminów to w rzeczywistości 5 identycznych umiejętności — po jednej dla każdej szkoły (Wilka, Żmii, Kota, Niedźwiedzia i Gryfa). Gdy na planszy jest więcej niż jedna jednostka z tej samej szkoły, każda z nich zyskuje +2 za każdego innego członka szkoły (np. 3 karty Szkoły Wilka — każda jednostka +4).",
+  "b85": "Ta umiejętność wydaje się trudna do wykorzystania, ale działa w połączeniu z inną umiejętnością.",
+  "b86": "Jeśli na koniec rundy masz na planszy kartę z Wytrwałością, która dzieli drugą umiejętność z inną kartą na planszy, karta z Wytrwałością zostaje na planszy na następną rundę.",
+  "b87": "Na razie Wytrwałość mają warownie wiedźminów. Zostają na planszy, jeśli był na niej wiedźmin z odpowiedniej szkoły. Taka karta pomaga też wzmacniać wiedźminów tej samej szkoły.",
+  "b88": "Czciciel / Czczony",
+  "b89": "Czczone jednostki są wzmacniane o liczbę czcicieli na planszy.",
+  "b90": "Ta umiejętność wymaga połączenia dwóch rodzajów kart, by osiągnąć potężny efekt. Medycy pomagają przedłużyć tę kombinację na kolejne rundy. Uważaj, bo czczone jednostki są wtedy bardzo narażone na Pożogę.",
+  "b91": "Jeśli masz na planszy kilka jednostek z Natchnieniem, wszystkie wyrównują do najwyższej siły bazowej spośród nich (siła bazowa, czyli przed jakimkolwiek efektem, dodatnim czy ujemnym). Zagranie późno silniejszej jednostki z Natchnieniem wzmocni więc wszystkie pozostałe na planszy, co może być przykrą i nieoczekiwaną niespodzianką dla przeciwnika. Pamiętaj jednak, że skoro wszystkie jednostki z Natchnieniem mają tę samą siłę (przed efektami), są podatne na Pożogę i mogą zginąć jednocześnie. Wzmocnienie części z nich pomaga temu zaradzić.",
+  "b92": "Uniwersum Wiedźmina jest ogromne, więc dla większej różnorodności i zabawy gra jest podzielona na kilka frakcji. Frakcje zwykle reprezentują królestwo albo grupę ludzi. Każda frakcja ma własny zestaw kart, umiejętność frakcji, a więc i własny styl gry. Umiejętność frakcji — zwykle pasywna (uruchamiana w określonym momencie gry), czasem aktywna (używana według uznania gracza) — znacząco wpływa na sposób gry, bo trzeba się do niej dostosować, by najlepiej ją wykorzystać.",
+  "b93": "Przed rozpoczęciem gry gracz musi wybrać frakcję, która określa zestaw dowódców i jednostek do budowy talii. Niektóre jednostki i karty specjalne są <b>neutralne</b>, czyli można je zagrać w każdej frakcji.",
+  "b94": "Dostępne frakcje",
+  "b95": "<b>Umiejętność frakcji:</b> dobierz kartę z talii, gdy wygrasz rundę.",
+  "b96": "Ta frakcja opiera się głównie na Więzi, szpiegach i jednostkach oblężniczych.",
+  "b97": "Nilfgaard",
+  "b98": "<b>Umiejętność frakcji:</b> jeśli runda kończy się remisem, wygrywa ją Nilfgaard.",
+  "b99": "Ta frakcja opiera się głównie na Więzi, szpiegach, medykach i silnych kartach.",
+  "b100": "<b>Umiejętność frakcji:</b> na koniec każdej rundy losowa jednostka zostaje na planszy.",
+  "b101": "Ta frakcja mocno opiera się na Wezwaniu — potrafi szybko zalać planszę.",
+  "b102": "<b>Umiejętność frakcji:</b> przed rozpoczęciem gry ta frakcja decyduje, kto zaczyna.",
+  "b103": "Ta frakcja opiera się głównie na Wezwaniu, medykach i trochę na Wysokim morale.",
+  "b104": "<b>Umiejętność frakcji:</b> w trzeciej rundzie przywraca z cmentarza dwie losowe jednostki.",
+  "b105": "Ta frakcja łączy Więź, Wezwanie i medyków, ale jej wyróżnikiem jest kombinacja Berserker/Mardroeme.",
+  "b106": "Nowe, autorskie frakcje",
+  "b107": "<b>Umiejętność frakcji:</b> raz na rundę gracz może pominąć turę.",
+  "b108": "Ta frakcja ma różnorodne karty wszelkiego rodzaju, ale jej wyróżnikiem są wiedźmini oraz ich umiejętności i znaki.",
+  "b109": "<b>Umiejętność frakcji:</b> dobierz kartę z talii za każdym razem, gdy przegrasz rundę.",
+  "b110": "Ta frakcja łączy Więź, Wezwanie i Pożogę oraz ma wiele silnych kart.",
+  "b111": "<b>Umiejętność frakcji:</b> raz na grę daj Wysokie morale wybranemu rzędowi.",
+  "b112": "Ta frakcja opiera się głównie na Wezwaniu i medykach, ale wyróżnia się też jednostkami-manekinami i specjalnymi kartami tarcz.",
+  "b113": "<b>Umiejętność frakcji:</b> zaczynasz grę z bohaterem Sigim Reuvenem na planszy.",
+  "b114": "Ta frakcja opiera się głównie na szpiegach, Wezwaniu i Więzi, ale wyróżnia się też kartą specjalną Bank i jednostkami z Polowaniem na czarownice.",
+  "b115": "<b>Umiejętność frakcji:</b> przywróć wybraną jednostkę za każdym razem, gdy przegrasz rundę.",
+  "b116": "Ta frakcja wprowadza nowe umiejętności. Z jednej strony kult smoka łączy czcicieli i czczone jednostki. Z drugiej Wolni Wojownicy mają Natchnienie, dzięki któremu przyjmują siłę najsilniejszego z nich na planszy.",
+  "b117": "Budowanie talii",
+  "b118": "Aby zagrać, każdy gracz musi wybrać frakcję, dowódcę oraz wybrać lub przygotować talię tej frakcji. Przygotowaliśmy zestaw talii, które naszym zdaniem są ciekawe i rozsądnie zbalansowane. Możesz jednak zbudować własną — obowiązują tylko te zasady:",
+  "b119": "<b>Minimum 22 jednostki</b> (z bohaterami) z wybranej frakcji lub neutralne.",
+  "b120": "<b>Maksymalnie 10 kart specjalnych</b>",
+  "b121": "<b>Wskazówki:</b>",
+  "b122": "Im więcej kart w talii, tym mniejsza szansa na dobranie najlepszych kart i zadziałanie kombinacji. Wybieraj mądrze — tu mniej znaczy więcej.",
+  "b123": "Bohaterowie mogą na początku wyglądać potężnie, ale ostatecznie są nudni i to nie oni wygrywają gry, bo większość ma ograniczony wpływ. Nie bierz ich więc za dużo.",
+  "b124": "Początek",
+  "b125": "Rzut monetą decyduje, kto zaczyna. Każdy gracz tasuje talię i dobiera 10 kart. Przed rozpoczęciem gry każdy może odrzucić do 2 kart i dobrać zamienniki (tzw. mulligan). Pozostałe 10 kart to ręka startowa gracza i najpewniej wszystkie karty, jakie będzie miał w tej grze.",
+  "b126": "Rundy",
+  "b127": "Gracze na zmianę zagrywają kartę albo używają aktywnej umiejętności dowódcy lub frakcji (jeśli jest dostępna). Gracz może zamiast tego spasować i przeczekać resztę rundy (nie zagrywać już żadnej karty), a drugi może dalej zagrywać karty. Gdy obaj spasują albo nie mogą zagrać kolejnej karty, runda się kończy. Gracz z niższą łączną siłą przegrywa rundę i traci punkt życia. Każdy zaczyna z 2 punktami życia, więc przegrywa grę po przegraniu 2 rund.",
+  "b128": "W przypadku remisu obaj gracze mają najniższą siłę i obaj tracą punkt życia. Chyba że grasz Nilfgaardem (wygrywa remisy) — w przeciwnym razie to niepożądana sytuacja.",
+  "b129": "<b>Gracz, który wygrał rundę, zaczyna następną.</b>",
+  "b130": "Liczenie wyniku bywa bardzo uciążliwe — dobrze, że tutaj robi to za nas komputer. Warto jednak rozumieć, jak to działa, by przewidywać zmiany po zagraniu określonych kart. Oto zasady liczenia punktów.",
+  "b131": "Dla każdego rzędu:",
+  "b132": "Efekty pogody zawsze działają jako pierwsze, przed wszystkim innym. Zmieniają siłę bazową jednostek.",
+  "b133": "Nieliczne umiejętności frakcji/dowódców też zmieniają siłę bazową. Pogoda ma nad nimi pierwszeństwo, ale jeśli żaden efekt pogody nie działa, te zmiany stosuje się najpierw.",
+  "b134": "Od tego momentu siłę liczy się od najbardziej szczegółowej umiejętności karty do efektów najbardziej ogólnych.",
+  "b135": "Najpierw stosujemy efekty Więzi.",
+  "b136": "Potem różne wzmocnienia (Wysokie morale, Szkoła wiedźminów, Wino z Toussaint itd.), które się po prostu sumują — kolejność nie ma znaczenia.",
+  "b137": "Na końcu, zawsze na końcu, stosujemy mnożnik rzędu, czyli Róg dowódcy.",
+  "b138": "To wszystko — teraz wiesz wszystko, czego potrzebujesz, by rozegrać rundę gwinta!",
+  "b139": "Budowanie talii w gwincie",
+  "b140": "Gwint był początkowo grą o budowaniu talii. Główną trudnością, by gwint był ciekawy i grywalny dla 2 ludzi, jest... budowanie talii. Bez żartów.",
+  "b141": "W Wiedźminie 3 chodziło o zbudowanie najsilniejszej i najbardziej niezbalansowanej talii. Oczywiście gracze chcieli wygrywać, a komputer nie narzeka, że zawsze przegrywa. W efekcie istniały oczywiste wybory talii dające największe szanse na zwycięstwo: Nilfgaard lub Królestwa Północy z mnóstwem szpiegów, medyków i manekinów. Takie talie są nudne, zwłaszcza w grze wieloosobowej, więc chcemy wyjść z tego ślepego zaułka i zrobić z istniejącej gry coś ciekawszego.",
+  "b142": "Najpierw trzeba przyjąć jedno: by gry były przyjemniejsze, talie muszą być słabsze. Muszą zawierać mniej przegiętych kart, by zostawić więcej miejsca na prawdziwą strategię. Celem nie jest już wygrywanie 100% gier, tylko czerpanie radości z każdej.",
+  "b143": "Nie ma jeszcze zgody co do najlepszej metody budowania zbalansowanej i przyjemnej talii. W internecie można znaleźć różne dyskusje, ale większość proponuje metodę dobierania, w różnych wariantach. W skrócie chodzi o to:",
+  "b144": "Wybierz frakcję (losowo, jeśli wolisz)",
+  "b145": "Wybierz dowódcę (losowo, jeśli wolisz)",
+  "b146": "<b>Teraz zbuduj talię w następujący sposób (lub według własnego wariantu):</b>",
+  "b147": "Potasuj talię",
+  "b148": "Dobierz 3 karty. Zatrzymaj 1, a 2 pozostałe odrzuć (wariant: możesz zatrzymać dwie, ale tylko ograniczoną liczbę razy)",
+  "b149": "Powtarzaj, aż będziesz mieć co najmniej 22 jednostki i maksymalnie 10 kart specjalnych.",
+  "b150": "Dla lepszego balansu zaleca się dodatkowe ograniczenia, np.:",
+  "b151": "Maks. 5 bohaterów w talii.",
+  "b152": "Maks. 2 szpiegów w talii.",
+  "b153": "Nasze podejście",
+  "b154": "Powyższa metoda ma tę zaletę, że dodaje różnorodności, bo budowanie talii zawiera element niepewności. Mniej prawdopodobne jest wielokrotne trafienie na tę samą talię. Widzimy jednak kilka dużych wad, które nam się nie podobają:",
+  "b155": "Budowanie talii raz za razem jest powolne. Jeśli nie bawi cię stopniowe budowanie nowej talii od zera, to strata czasu.",
+  "b156": "Mniej prawdopodobne jest zbudowanie skutecznej talii o określonym stylu gry.",
+  "b157": "Wynikiem będzie raczej przypadkowa mieszanka kart, słabo związana z uniwersum Wiedźmina.",
+  "b158": "<b>Dlatego zbudowaliśmy zestaw talii według następującej metody i podejścia:</b>",
+  "b159": "Talia musi być spójna z jakąś częścią uniwersum Wiedźmina.",
+  "b160": "Talia musi mieć styl gry, w miarę możliwości unikalny, a przynajmniej inny niż większość talii.",
+  "b161": "Najlepiej, by talia miała 5 bohaterów, plus minus 1.",
+  "b162": "Najlepiej, by talia miała od 22 do 30 jednostek (z bohaterami).",
+  "b163": "Najlepiej, by talia miała od 5 do 10 kart specjalnych, zwykle około 7.",
+  "b164": "Waga talii powinna być zbalansowana względem wagi innych talii (w naszej metodzie zwykle od 270 do 300).",
+  "b165": "Postać powinna najlepiej występować tylko w jednej talii.",
+  "b166": "Chwila, powiedziałeś „waga”?",
+  "b167": "No tak — nasza główna metoda balansowania talii przypomina nowoczesnego gwinta. Staramy się obliczyć wagę każdej karty (poza specjalnymi), porównywalną z wartością „rekrutacji” w nowoczesnym gwincie.",
+  "b168": "Bez obaw! Tak jak klasyczny gwint 3.0 jest prostszy i ma mniej umiejętności, tak i wagi kart nie trzeba precyzyjnie dostrajać. Chodzi o statystyczne oszacowanie potencjału siły karty na podstawie jej umiejętności. Nie jest to łatwe dla każdej umiejętności, ale staraliśmy się dobrze to oszacować. Oto główne założenia:",
+  "b169": "Podstawowa jednostka o sile 7 ma wagę 7. Proste: zagrywamy ją, dodaje 7 punktów do wyniku. Oczywiście można to zmienić, na dobre lub złe, ale nie o to chodzi.",
+  "b170": "Z kolei bohater o sile 10 też doda 10 punktów, ale tej wartości nie da się zmienić. Postanowiliśmy zastosować mnożnik 2, więc waga takiego bohatera wynosi 20. To najtrudniejsza część ważenia — to, czy umiejętności mogą na kartę działać, czy nie. Ponieważ jednak większość bohaterów ma podobną siłę (około 10), a każda talia ma mniej więcej tylu samo bohaterów, ten mnożnik nie ma w praktyce dużego znaczenia dla balansu i łącznej wagi.",
+  "b171": "Zanim omówimy wagę pozostałych umiejętności, musimy przeskoczyć na koniec, by uzasadnić pewne wybory. Ogólnie średnia waga karty wynosi około 10, z bohaterami. Bez bohaterów spada do około 8. Daje to pojęcie o przeciętnej wartości i potencjale karty.",
+  "b172": "Zacznijmy od osławionego szpiega. Daje 2 karty, ale oddaje wrogowi trochę siły, więc jego waga to <code> (2*10) - siła_szpiega</code> (10 to średnia waga karty).",
+  "b173": "Podobnie medyk przywraca jednostkę (nie bohatera) o średniej wadze 8. Część takich jednostek nie użyje jednak swojej umiejętności (np. Wezwania), więc przyjęliśmy wagę <code>7 + siła_medyka</code>.",
+  "b174": "Wezwanie i Więź: tu jest trochę trudniej, bo działają w grupach. Masz kilka kopii tej samej karty, ale ich potencjał mocno się zmienia, gdy użyje się ich dobrze. Rzeczywisty potencjał zależy też od liczby dostępnych kopii. W skrócie: dla obu przyjęliśmy mnożnik 2. To upraszcza ich działanie, ale analiza prawdopodobieństwa wykazała, że w porównaniu ze zwykłą kartą efekt tych umiejętności mniej więcej podwaja potencjał.",
+  "b175": "Nie będziemy omawiać szczegółowo każdej z pozostałych umiejętności, bo to jeszcze większe szacunki (bardzo zależne od sytuacji). Większość z nich dodaje wagę 5 (do siły jednostki), np. Pożoga, Wysokie morale czy Mściciel. Głównym wyjątkiem jest Róg dowódcy, który dodaje 10. Postanowiliśmy też dodawać wagę 2 kartom zręcznym, które można zagrać w 2 rzędach.",
+  "b176": "Na razie wszyscy dowódcy mają domyślnie wagę 20. Nie zajęliśmy się jeszcze dostrajaniem ich wagi.",
+  "b177": "Bądźmy realistami: to nie nauka ścisła i nie jest to idealne. Ale spróbuj sam — zobaczysz, że to wystarcza, by wskazać, kiedy talia jest dużo silniejsza (wrzuć do talii mnóstwo kart z Więzią) albo bardzo słaba. Uważamy, że metoda spełnia swoje zadanie na tyle dobrze, by powstały talie o porównywalnym potencjale. Testy dały dobre wyniki.",
+  "b178": "Mając to wszystko na uwadze, przygotowaliśmy zestaw talii, które naszym zdaniem pozostają wierne uniwersum Wiedźmina, a przy tym są ciekawe w grze.",
+  "b179": "Proponowane talie",
+  "b180": "Szczegóły zawartości tych talii znajdziesz w grze — uruchom ją i obejrzyj je!",
+  "b181": "Królestwa Północy – Temeria",
+  "b182": "Waga talii:",
+  "b183": "Styl gry:",
+  "b184": "Ta talia skupia się głównie na jednostkach i postaciach z Temerii, w tym oddziałach Niebieskich Pasów. Szpiedzy zwiększają szanse na zebranie razem jednostek z Więzią. Masz też solidny wybór jednostek oblężniczych.",
+  "b185": "Królestwa Północy – Aedirn i Kaedwen",
+  "b186": "Ta talia skupia się głównie na jednostkach i postaciach z Aedirn i Kaedwen. Ma świetny wybór jednostek oblężniczych (kilka z Więzią), które można wzmacniać kilkoma kartami Wysokiego morale w rzędzie oblężniczym.",
+  "b187": "Królestwa Północy – Cintra",
+  "b188": "Ta talia skupia się głównie na jednostkach i postaciach z Cintry i kilku pomniejszych sąsiednich królestw, jak Kerack czy Cidaris. Dzięki Eistowi Tuirseachowi wnosi też potęgę floty Skellige. Pomysłem na talię jest podkreślenie rzezi Cintry i jej odrodzenia — stąd taki dobór umiejętności.",
+  "b189": "Królestwa Północy – Redania",
+  "b190": "Ta talia skupia się głównie na jednostkach i postaciach z Redanii. Wiele silnych jednostek dobrze współgra ze szpiegami i medykami. Możesz też spróbować połączyć Rębaczy z Crinfrid.",
+  "b191": "Cesarstwo Nilfgaardu – Armia",
+  "b192": "Ta talia skupia się głównie na oddziałach armii Cesarstwa Nilfgaardu. Ma oddawać masę nilfgaardzkiej armii, stąd większa liczba kart. Wielu medyków i kilku szpiegów pozwala wprowadzać na planszę więcej jednostek, co można wzmocnić dostępnymi Rogami dowódcy. Ma więcej bohaterów niż zwykle, ale część z nich to słabi bohaterowie.",
+  "b193": "Cesarstwo Nilfgaardu – Szlachta",
+  "b194": "Ta talia skupia się głównie na szlachcie i arystokracji Cesarstwa Nilfgaardu. Ma oddawać cesarski dwór i jego intrygi. Liczni szpiedzy pozwalają świetnie wykorzystać brygadę Impera.",
+  "b195": "Cesarstwo Nilfgaardu – Druga armia",
+  "b196": "Ta talia skupia się na innych oddziałach armii Cesarstwa Nilfgaardu. W przeciwieństwie do drugiej talii armii ma trochę Wezwania i Pożogi i mniej opiera się na masie.",
+  "b197": "Potwory – Dziki Gon i olbrzymy",
+  "b198": "Ta talia skupia się na kartach związanych z Dzikim Gonem oraz innych olbrzymich potworach. Choć jej głównym motywem jest Wezwanie jednostek walki wręcz, ma też przyzwoity wybór jednostek oblężniczych.",
+  "b199": "Potwory – Bestie i stwory",
+  "b200": "Ta talia skupia się na ogromnej różnorodności potworów z uniwersum Wiedźmina — tych mniejszych, ale liczniejszych. Mocno opiera się na Wezwaniu, głównie w rzędzie walki wręcz. Dlatego ma więcej kart niż zwykle. Potrafi szybko zalać przeciwnika, ale karty trzeba zagrywać ostrożnie, bo łatwo szybko wyczerpać wezwania.",
+  "b201": "Scoia'tael – Komandosi",
+  "b202": "Ta talia skupia się na nieludzkich partyzantach Scoia'tael. Opiera się głównie na Wezwaniu w połączeniu z dużą liczbą medyków.",
+  "b203": "Scoia'tael – Niezależne królestwa",
+  "b204": "Ta talia skupia się na bardziej pokojowych królestwach nieludzi, takich jak Brokilon, Dol Blathanna i Mahakam. Opiera się na połączeniu Wezwania i Wysokiego morale.",
+  "b205": "Skellige – Ard Skellig i Svalblod",
+  "b206": "Ta talia skupia się na głównej wyspie Skellige, Ard Skellig, i dwóch klanach z niej (an Craite i Drummond) oraz kulcie Svalbloda. Opiera się na umiejętnościach Berserker/Mardroeme, a także trochę na Więzi i jednym bardzo potężnym Wezwaniu.",
+  "b207": "Skellige – Małe wyspy",
+  "b208": "Ta talia skupia się na pozostałych, mniejszych wyspach Skellige i zamieszkujących je klanach. Opiera się na dobrym połączeniu Więzi i Wezwania, wspartym przyzwoitą liczbą medyków.",
+  "b209": "Uniwersum Wiedźmina – Wojownicy i magowie",
+  "b210": "Ta talia skupia się na słynnych wojownikach i magach z uniwersum Wiedźmina, niezwiązanych mocno z żadnym królestwem. Opiera się głównie na Wezwaniu i medykach.",
+  "b211": "Uniwersum Wiedźmina – Wiedźmini",
+  "b212": "Ta talia skupia się na samych wiedźminach i ich szkołach. Używa specjalnego zestawu umiejętności, które zachęcają do grania wiedźminami z tej samej szkoły razem z ich warownią. Zamiast zwykłych kart specjalnych dostępne są znaki z unikalnymi umiejętnościami.",
+  "b213": "Uniwersum Wiedźmina – Demony i stwory",
+  "b214": "Ta talia skupia się na rzadkich stworach i demonach z uniwersum Wiedźmina, w tym postaciach z Serc z kamienia. Opiera się głównie na Wezwaniu i Pożodze, wspieranych przez kilku szpiegów i ogólnie silne jednostki.",
+  "b215": "Uniwersum Wiedźmina – Geralt i przyjaciele",
+  "b216": "Ta talia skupia się na Geralcie z Rivii, jego bliskich przyjaciołach i różnych sojusznikach z uniwersum Wiedźmina. Ważną rolę odgrywa Mściciel — Płotka i Kelpie przywołują Geralta i Ciri. W połączeniu z medykami talia może stać się bardzo potężna.",
+  "b217": "Toussaint – Rycerze i szlachta",
+  "b218": "Ta talia skupia się na rycerzach i szlachcie Toussaint. Składa się głównie z silnych jednostek, niektórych z Więzią, które pozostawione bez kontroli mogą być bardzo groźne.",
+  "b219": "Toussaint – Potwory i wampiry",
+  "b220": "Ta talia skupia się na potworach i wampirach Toussaint. Składa się głównie z silnych jednostek oraz kilku z Wezwaniem. To dość odporna mieszanka.",
+  "b221": "Lyria i Rivia – Pierwsza linia",
+  "b222": "Ta talia skupia się na pierwszej linii armii Lyrii i Rivii (mieszanka jednostek walki wręcz i dystansowej). Ma dobry zestaw jednostek z Wezwaniem, wspieranych przez medyków. Specjalne karty tarcz dają duży potencjał skupionym jednostkom z Wezwaniem.",
+  "b223": "Lyria i Rivia – Straż tylna",
+  "b224": "Syndykat – Kościół Wiecznego Ognia",
+  "b225": "Ta talia skupia się na kulcie Wiecznego Ognia i Zakonie Płonącej Róży. Z natury ma unikalną umiejętność Polowanie na czarownice, połączoną z Wezwaniem i specjalnymi kartami Kajdany z dimerytu. Liczebnie wygląda słabo, ale jest dość agresywna.",
+  "b226": "Syndykat – Salamandra",
+  "b227": "Ta talia skupia się na gangu Salamandry. Opiera się głównie na wielu jednostkach z Pożogą oraz trochę na Wezwaniu i Mścicielu, co czyni ją również agresywną.",
+  "b228": "Syndykat – Gangi Novigradu",
+  "b229": "Ta talia skupia się na gangach Novigradu (trzonie Syndykatu). Mocno opiera się na wielu szpiegach, by zadziałały liczne jednostki z Więzią.",
+  "b230": "Zerrikania – Kult smoka",
+  "b231": "Ta talia skupia się na kulcie smoków w Zerrikanii. Wymaga połączenia na planszy smoków i Wiernych, by wykorzystać potężne wzmocnienie. Smoki i tak są dość silne, więc możesz zagrać wszystko w jednej potężnej rundzie albo rozłożyć je na kilka rund. Medycy pozwolą później przywrócić smoki.",
+  "b232": "Zerrikania – Armia",
+  "b233": "Ta talia skupia się na walczących jednostkach i stworach Zerrikanii. Główną rolę grają Wolni Wojownicy, którzy wzajemnie się wzmacniają. Talia ma też zrównoważony zestaw większości umiejętności, zwłaszcza Pożogi i medyków."
+ },
+ "css": {
+  "#notif-nilfgaard-wins-draws::after": "Nilfgaard wygrywa remisy",
+  "#notif-op-leader::after": "Przeciwnik używa dowódcy",
+  "#notif-op-white-flame::after": "Dowódca przeciwnika anuluje \\A umiejętność twojego dowódcy",
+  "#notif-meve_white_queen::after": "Dowódca Lyrii i Rivii pozwala obu graczom przywrócić \\A 2 jednostki umiejętnością medyka.",
+  "#notif-me-first::after": "Zaczynasz",
+  "#notif-op-first::after": "Przeciwnik zaczyna",
+  "#notif-me-coin::after": "Zaczynasz",
+  "#notif-op-coin::after": "Przeciwnik zaczyna",
+  "#notif-round-start::after": "Początek rundy",
+  "#notif-me-pass::after": "Spasowano",
+  "#notif-op-pass::after": "Przeciwnik spasował",
+  "#notif-win-round::after": "Wygrałeś rundę!",
+  "#notif-lose-round::after": "Przeciwnik wygrał rundę",
+  "#notif-draw-round::after": "Runda zakończyła się remisem",
+  "#notif-me-turn::after": "Twoja tura!",
+  "#notif-op-turn::after": "Tura przeciwnika",
+  "#notif-north::after": "Umiejętność Królestw Północy: \\A Północ dobiera dodatkową kartę.",
+  "#notif-north-scorch-cancelled::after": "Umiejętność dowódcy Królestw Północy: \\A Pożoga anulowana do końca rundy.",
+  "#notif-monsters::after": "Umiejętność Potworów: \\A potwory biorą jedną kartę z powrotem na rękę",
+  "#notif-scoiatael::after": "Przeciwnik użył umiejętności Scoia'tael, by zacząć.",
+  "#notif-skellige-op::after": "Umiejętność Skellige przeciwnika aktywowana!",
+  "#notif-skellige-me::after": "Umiejętność Skellige aktywowana!",
+  "#notif-witcher_universe::after": "Umiejętność Uniwersum Wiedźmina: \\A tura pominięta.",
+  "#notif-toussaint::after": "Umiejętność Toussaint: \\A Toussaint dobiera dodatkową kartę.",
+  "#notif-toussaint-decoy-cancelled::after": "Umiejętność dowódcy Toussaint: \\A Manekin anulowany do końca rundy.",
+  "#notif-lyria_rivia::after": "Umiejętność Lyrii i Rivii: \\A rząd otrzymał Wysokie morale.",
+  "#notif-zerrikania::after": "Umiejętność Zerrikanii: \\A przywrócono jednostkę ze stosu kart odrzuconych.",
+  "#notif-redania::after": "Umiejętność Redanii: \\A tura pominięta.",
+  "#notif-velen::after": "Umiejętność Velen: \\A gracz dobiera kartę.",
+  "#notif-ofir::after": "Umiejętność Ofiru: \\A zagrano kartę pogody z talii.",
+  "#notif-novigrad-sigismund::after": "Umiejętność dowódcy Novigradu: \\A Dijkstra zapobiegł śmierci sojuszniczej jednostki."
+ },
+ "patterns": [
+  [
+   "^Player ([12])$",
+   "Gracz {1}"
+  ],
+  [
+   "^with strength (-?\\d+) and abilities (.+)$",
+   "z siłą {1} i umiejętnościami: {l2}"
+  ],
+  [
+   "^\\(str: (-?\\d+)\\)$",
+   "(siła: {1})"
+  ],
+  [
+   "^\\(str: (-?\\d+)\\), (\\d+) \\*$",
+   "(siła: {1}), {2} *"
+  ],
+  [
+   "^Round (\\d+)$",
+   "Runda {1}"
+  ],
+  [
+   "^Player ([12]) - Choose up to (\\d+) cards to redraw\\.$",
+   "Gracz {1} – wybierz do {2} kart do wymiany."
+  ],
+  [
+   "^Choose up to (\\d+) cards to redraw\\.$",
+   "Wybierz do {1} kart do wymiany."
+  ],
+  [
+   "^Choose up to (\\d+) to bring back to your hand\\.$",
+   "Wybierz do {1} kart, które wrócą na rękę."
+  ],
+  [
+   "^Choose up to (\\d+) cards to take back into your hand\\.$",
+   "Wybierz do {1} kart, które weźmiesz z powrotem na rękę."
+  ],
+  [
+   "^Choose up to (\\d+) cards to draw\\. You must put back an equal amount from your hand\\.$",
+   "Wybierz do {1} kart do dobrania. Musisz odłożyć tyle samo kart z ręki."
+  ],
+  [
+   "^Faction ability: (.+)$",
+   "Umiejętność frakcji: {t1}"
+  ],
+  [
+   "^From which deck to draw the next card, your own or the opponent's deck \\((\\d+) left in this battle\\)\\?$",
+   "Z której talii dobrać następną kartę: swojej czy przeciwnika? (w tej bitwie zostało: {1})"
+  ],
+  [
+   "^Select the new base power \\(before other effects\\) for the selected card\\. Currently: (-?\\d+)$",
+   "Wybierz nową siłę bazową (przed innymi efektami) dla wybranej karty. Obecnie: {1}"
+  ],
+  [
+   "^You protected (.+)\\. Do you also want to use the ability to save this Comrade card \\((.+)\\) from going to grave\\?$",
+   "Ochroniono: {t1}. Czy chcesz też użyć umiejętności, by ta karta Towarzysza ({t2}) nie trafiła na cmentarz?"
+  ],
+  [
+   "^Summons$",
+   "Przywołuje"
+  ],
+  [
+   "^Invokes$",
+   "Przyzywa"
+  ],
+  [
+   "^Turns into$",
+   "Zmienia się w"
+  ],
+  [
+   "^with strength (-?\\d+)$",
+   "z siłą {1}"
+  ],
+  [
+   "^(.+) \\((.+)\\):$",
+   "{t1} ({t2}):"
+  ],
+  [
+   "^(\\d+) \\((\\d+) cards\\)$",
+   "{1} ({2} kart)"
+  ],
+  [
+   "^Deck contains (\\d+)/(\\d+) available (.+) cards$",
+   "Talia zawiera {1}/{2} dostępnych kart: {t3}"
+  ],
+  [
+   "^'(.+)' is cannot be used as a leader$",
+   "„{t1}” nie może być dowódcą"
+  ],
+  [
+   "^Leader '(.+)' doesn't match deck faction '(.+)'\\.$",
+   "Dowódca „{t1}” nie pasuje do frakcji talii „{t2}”."
+  ],
+  [
+   "^'(.+)' cannot be used in a deck of faction type '(.+)'$",
+   "„{t1}” nie może być użyta w talii frakcji „{t2}”"
+  ],
+  [
+   "^Your deck must have at least 22 unit cards\\.$",
+   "Talia musi mieć co najmniej 22 jednostki."
+  ],
+  [
+   "^Your deck must have no more than 10 special cards\\.$",
+   "Talia może mieć najwyżej 10 kart specjalnych."
+  ],
+  [
+   "^\\\\?Continue importing deck\\?$",
+   "Kontynuować import talii?"
+  ],
+  [
+   "^Card '(.+)' played in (.+) row\\.$",
+   "Karta „{t1}” zagrana w rzędzie {2}."
+  ],
+  [
+   "^(.+) - (.+)$",
+   "{t1} – {t2}"
+  ]
+ ]
+};

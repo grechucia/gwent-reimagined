@@ -1,0 +1,92 @@
+{
+ "realms": {
+  "name": "Northern Realms",
+  "activeAbility": false,
+  "abilityUses": 0,
+  "description": "Draw a card from your deck whenever you lose a round."
+ },
+ "nilfgaard": {
+  "name": "Nilfgaardian Empire",
+  "description": "Wins any round that ends in a draw.",
+  "activeAbility": false,
+  "abilityUses": 0
+ },
+ "monsters": {
+  "name": "Monsters",
+  "description": "Once per battle, at the end of the round, you may take one card back to your hand.",
+  "activeAbility": false,
+  "abilityUses": 0
+ },
+ "scoiatael": {
+  "name": "Scoia'tael",
+  "description": "Decides who takes first turn on each round.",
+  "activeAbility": false,
+  "abilityUses": 0
+ },
+ "skellige": {
+  "name": "Skellige",
+  "description": "At the start of round three, randomly play 2 cards from the graveyard onto the battlefield.",
+  "activeAbility": false,
+  "abilityUses": 0
+ },
+ "witcher_universe": {
+  "name": "Witcher Universe",
+  "description": "Can skip a turn once every round.",
+  "activeAbility": true,
+  "abilityUses": 1
+ },
+ "toussaint": {
+  "name": "Toussaint",
+  "activeAbility": true,
+  "abilityUses": 0,
+  "description": "Game Start: Redraw 3 cards instead of 2. Your turn: Transform a Toussaint Monster into its next form instead of playing a card."
+ },
+ "lyria_rivia": {
+  "name": "Lyria & Rivia",
+  "activeAbility": true,
+  "abilityUses": 1,
+  "description": "Apply a Morale Boost effect in the selected row (boost all units by 1 in this turn)."
+ },
+ "syndicate": {
+  "name": "Syndicate",
+  "activeAbility": false,
+  "abilityUses": 0,
+  "description": "Starts the game with the Hero card Sigi Reuven on the board."
+ },
+ "zerrikania": {
+  "name": "Zerrikania",
+  "activeAbility": false,
+  "abilityUses": 0,
+  "description": "Restore a unit card of your choice whenever you lose a round."
+ },
+ "redania": {
+  "name": "Redania",
+  "description": "Can skip a turn once per game.",
+  "activeAbility": true,
+  "abilityUses": 1
+ },
+ "velen": {
+  "name": "Velen",
+  "description": "When a unit is destroyed draw a card at the turn's end. Each active Soothsayer adds +1 draw.",
+  "activeAbility": false,
+  "abilityUses": 0
+ },
+ "wild_hunt": {
+  "name": "Wild Hunt",
+  "description": "Start the game with an 11-card hand instead of 10. At the start of each round, choose a new Leader card to use its ability.",
+  "activeAbility": false,
+  "abilityUses": 0
+ },
+ "novigrad": {
+  "name": "Free City of Novigrad",
+  "activeAbility": false,
+  "abilityUses": 0,
+  "description": "After drawing your opening hand, you may redraw 1 extra card."
+ },
+ "ofir": {
+  "name": "Ofir",
+  "activeAbility": true,
+  "abilityUses": 1,
+  "description": "Once per game, you may search your deck for a weather card and play it."
+ }
+}

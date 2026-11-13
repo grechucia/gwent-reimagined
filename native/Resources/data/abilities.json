@@ -1,0 +1,590 @@
+{
+ "clear": {
+  "name": "Clear Weather",
+  "description": "Removes all Weather Cards (Biting Frost, Impenetrable Fog and Torrential Rain) effects. "
+ },
+ "frost": {
+  "name": "Biting Frost",
+  "description": "Sets the strength of all Close Combat cards to 1 for both players. "
+ },
+ "white_frost": {
+  "name": "White Frost",
+  "description": "Sets the strength of all cards on the 2 corresponding rows to 1 for both players."
+ },
+ "fog": {
+  "name": "Impenetrable Fog",
+  "description": "Sets the strength of all Ranged Combat cards to 1 for both players. "
+ },
+ "fog_summoning": {
+  "name": "Impenetrable Fog Summoning",
+  "description": "When Impenetrable Fog is played by any player, draw this card from your deck or discard pile and play it. Fog does not affect this unit."
+ },
+ "rain": {
+  "name": "Torrential Rain",
+  "description": "Sets the strength of all Siege Combat cards to 1 for both players. "
+ },
+ "storm": {
+  "name": "Skellige Storm",
+  "description": "Reduces to 1 the strength of all units either in Close/Ranged rows, or Siege/Ranged rows."
+ },
+ "sandstorm": {
+  "name": "Sandstorm",
+  "description": "Reduces the Strength of all Close Combat and Ranged Combat Units to 1 (non-Hero units only). "
+ },
+ "sandstorm_immunity": {
+  "name": "Sandstorm Inmunity",
+  "description": "Sandstorm does not affect this unit."
+ },
+ "spider_web": {
+  "name": "Giant Spider Webs",
+  "description": "Sets the strength of all Close Combat cards to 1 for both players. "
+ },
+ "tse_tse": {
+  "name": "Tse Tse Flies",
+  "description": "Sets the strength of all Ranged Combat cards to 1 for both players. "
+ },
+ "dragon_wrath": {
+  "name": "Dragon Wrath",
+  "description": "Sets the strength of all Siege Combat cards to 1 for both players. "
+ },
+ "hero": {
+  "name": "Hero",
+  "description": "Not affected by any Special Cards or abilities. "
+ },
+ "decoy": {
+  "name": "Decoy",
+  "description": "Swap with a card on the battlefield to return it to your hand. "
+ },
+ "horn": {
+  "name": "Commander's Horn",
+  "description": "Doubles the strength of all unit cards in that row. Limited to 1 per row. ",
+  "effectAfterMove": true
+ },
+ "mardroeme": {
+  "name": "Mardroeme",
+  "description": "Triggers transformation of all Berserker cards on the same row. "
+ },
+ "berserker": {
+  "name": "Berserker",
+  "description": "Transforms into a bear when a Mardroeme card is on its row. "
+ },
+ "scorch": {
+  "name": "Scorch",
+  "description": "Discard after playing. Kills the strongest card(s) on the battlefield. "
+ },
+ "scorch_c": {
+  "name": "Scorch Close",
+  "description": "Destroy your enemy's strongest Close Combat unit(s) if the combined strength of all his or her Close Combat units is 10 or more. "
+ },
+ "scorch_r": {
+  "name": "Scorch Ranged",
+  "description": "Destroy your enemy's strongest Ranged Combat unit(s) if the combined strength of all his or her Ranged Combat units is 10 or more. "
+ },
+ "scorch_s": {
+  "name": "Scorch Siege",
+  "description": "Destroys your enemy's strongest Siege Combat unit(s) if the combined strength of all his or her Siege Combat units is 10 or more. "
+ },
+ "cull": {
+  "name": "Cull",
+  "description": "Kills the weakest card(s) on the battlefield."
+ },
+ "agile": {
+  "name": "Agile",
+  "description": "Can be placed in either the Close Combat or the Ranged Combat row. Cannot be moved once placed. "
+ },
+ "agile_cr": {
+  "name": "Agile Close/Ranged",
+  "description": "Can be placed in either the Close Combat or the Ranged Combat row. Cannot be moved once placed. "
+ },
+ "agile_cs": {
+  "name": "Agile Close/Siege",
+  "description": "Can be placed in either the Close Combat or the Siege Combat row. Cannot be moved once placed. "
+ },
+ "agile_rs": {
+  "name": "Agile Ranged/Siege",
+  "description": "Can be placed in either the Ranged Combat or the Siege Combat row. Cannot be moved once placed. "
+ },
+ "agile_crs": {
+  "name": "Agile Close/Ranged/Siege",
+  "description": "Can be placed in any combat row. Cannot be moved once placed. "
+ },
+ "muster": {
+  "name": "Muster",
+  "description": "Find any cards with the same name in your deck and play them instantly. "
+ },
+ "spy": {
+  "name": "Spy",
+  "description": "Place on your opponent's battlefield (counts towards your opponent's total) and draw 2 cards from your deck.",
+  "description_toussaint": "Place on your opponent's battlefield. Draw 3 cards from your deck. Keep one of them in your hand and shuffle the other two into the deck."
+ },
+ "medic": {
+  "name": "Medic",
+  "description": "Choose one card from your discard pile and play it instantly (no Heroes or Special Cards). "
+ },
+ "morale": {
+  "name": "Morale Boost",
+  "description": "Adds +1 to all units in the row (excluding itself). ",
+  "effectAfterMove": true
+ },
+ "bond": {
+  "name": "Tight Bond",
+  "description": "Place next to a card with the same name to double the strength of both cards. ",
+  "effectAfterMove": true
+ },
+ "avenger": {
+  "name": "Avenger",
+  "description": "When this card is removed from the battlefield, it summons a powerful new Unit Card to take its place. "
+ },
+ "cintra_slaughter": {
+  "name": "Slaughter of Cintra",
+  "description": "When using the Slaugther of Cintra special card, destroy all units on your side of the board having the Slaughter of Cintra ability then draw as many cards as units destroyed."
+ },
+ "foltest_king": {
+  "description": "Pick an Impenetrable Fog or Torrential Rain card from your deck and play it instantly."
+ },
+ "foltest_lord": {
+  "description": "Clear any weather effects (resulting from Biting Frost, Torrential Rain or Impenetrable Fog cards) in play."
+ },
+ "foltest_siegemaster": {
+  "description": "Doubles the strength of all your Siege units (unless a Commander's Horn is also present on that row)."
+ },
+ "foltest_steelforged": {
+  "description": "Destroy your enemy's strongest Siege unit(s) if the combined strength of all his or her Siege units is 10 or more."
+ },
+ "foltest_son": {
+  "description": "Destroy your enemy's strongest Ranged Combat unit(s) if the combined strength of all his or her Ranged Combat units is 10 or more."
+ },
+ "emhyr_imperial": {
+  "description": "Draw an opponent's discarded non-hero unit into your hand. Then put any card from your hand on the bottom of your deck."
+ },
+ "emhyr_emperor": {
+  "description": "Look at 4 random cards in your opponent's hand. Choose one. Opponent must play this card on his next turn (if he does not fold)."
+ },
+ "emhyr_whiteflame": {
+  "description": "Passive: When using Spies or Emissaries, you may draw cards from your opponent's deck instead of your own (max 3 cards per battle)."
+ },
+ "emhyr_relentless": {
+  "description": "Destroy one unit or hero card on your battlefield. Then draw any one Spy or Emissary card from your deck into your hand."
+ },
+ "emhyr_invader": {
+  "description": "Play a unit or hero card from each player's discard pile onto their respective side of the field."
+ },
+ "eredin_bringer_of_death": {
+  "name": "Eredin : Bringer of Death",
+  "description": "Restore a unit card from your discard pile to your hand."
+ },
+ "eredin_destroyer": {
+  "description": "Discard 2 cards and draw 1 card of your choice from your deck."
+ },
+ "eredin_king": {
+  "description": "Pick any weather card from your deck and play it instantly."
+ },
+ "eredin_treacherous": {
+  "description": "Doubles the strength of all spy cards (affects both players)."
+ },
+ "francesca_queen": {
+  "description": "Destroy your enemy's strongest Close Combat unit(s) if the combined strength of all his or her Close Combat units is 10 or more."
+ },
+ "francesca_beautiful": {
+  "description": "Doubles the strength of all your Ranged Combat units (unless a Commander's Horn is also present on that row)."
+ },
+ "francesca_daisy": {
+  "description": "At the start of the game, draw 13 cards. Choose 2 and shuffle them into your deck to start with an 11-card hand."
+ },
+ "francesca_pureblood": {
+  "description": "Choose 3 or less unit and/or hero cards, which lie on the opponent's battlefield. Move these cards to any other opponent's row (rows)."
+ },
+ "francesca_hope": {
+  "description": "Choose 4 or less unit and/or hero cards, which lie on your battlefield. Move these cards to your any other row (rows)."
+ },
+ "crach_an_craite": {
+  "description": "Shuffle all cards from each player's graveyard back into their decks. You can keep one of the cards in the graveyard."
+ },
+ "king_bran": {
+  "description": "Once per game, at the start of any round: draw a Skellige Storm from your deck. This round, halve all weather effects on your cards."
+ },
+ "birna": {
+  "description": "Draw from your deck any card with Mardroeme or Werewolf ability. Units are played immediately, specials are added to your hand."
+ },
+ "madman_lugos": {
+  "description": "Once per game at the beginning of any round your opponent must show you 2 random cards in his hand. Pick one of them and discard it."
+ },
+ "holger_blakhand": {
+  "description": "Set a card's strength up to 10. Resets after round. (2 uses/battle)."
+ },
+ "radovid_king_redania": {
+  "description": "Draw three cards from your deck (excluding special cards, spies, and envoys). Play one of them immediately, shuffle the other two back into the deck."
+ },
+ "radovid_mad_king": {
+  "description": "Destroy the strongest card on the battlefield (it must be a unit or a hero). If there are several strongest cards, choose and destroy only one of them."
+ },
+ "radovid_strategist": {
+  "description": "Choose one hero card on your battlefield. Take it back to your hand."
+ },
+ "anna_henrietta_duchess": {
+  "description": "Pick one hero card from your grave and play it immediately."
+ },
+ "anna_henrietta_ladyship": {
+  "description": "Choose a second-form Toussaint Monster on the battlefield to play its weaker form. You can transform it back later."
+ },
+ "anna_henrietta_little_weasel": {
+  "description": "Choose an enemy hero card and remove its Hero status."
+ },
+ "lady_wood_whispess": {
+  "description": "Take from your discard pile in your hand 3 or less unit cards, that died in the current round."
+ },
+ "lady_wood_brewess": {
+  "description": "When your faction ability triggers: draw 2 cards instead of 1. Play one and shuffle the other back into your deck."
+ },
+ "lady_wood_weavess": {
+  "description": "Draw a Curse card from your deck and play it immediatly."
+ },
+ "ghost_tree": {
+  "description": "Destroy the weakest unit card on the battlefield (any player). If there are several, choose one."
+ },
+ "eredin_commander": {
+  "description": "Choose on your battlefield two or less unit and/or hero cards and take them into your hand."
+ },
+ "auberon_king": {
+  "description": "Draw from your deck or graveyard any number of Navigator cards. Then choose in your hand the same number of cards and put them back in any place of the deck."
+ },
+ "winter_queen": {
+  "description": "Draw any special card from your deck and play it immediatly."
+ },
+ "caranthir_navigator": {
+  "description": "You can open two Dimensional Doors at the same time (but only if there is at least one navigator in each of these 2 rows)."
+ },
+ "imlerith_general": {
+  "description": "Passive: Imlerith will shield Navigators from destruction."
+ },
+ "queen_calanthe": {
+  "description": "Play a unit then draw a card from you deck."
+ },
+ "fake_ciri": {
+  "description": "Discard a card from your hand and then draw two cards from your deck."
+ },
+ "radovid_stern": {
+  "description": "Discard 2 cards and draw 1 card of your choice from your deck."
+ },
+ "radovid_ruthless": {
+  "description": "Cancel the scorch ability for one round"
+ },
+ "vilgefortz_magician_kovir": {
+  "description": "Halves the strength of all spy cards (affects both players)."
+ },
+ "cosimo_malaspina": {
+  "description": "Destroy your enemy's strongest Melee unit(s) if the combined strength of all his or her Melee units is 10 or more."
+ },
+ "resilience": {
+  "name": "Resilience",
+  "description": "Stays on the board next round if another allied unit has an ability in common."
+ },
+ "witcher_wolf_school": {
+  "name": "Wolf School",
+  "description": "Boost each unit of this school by 2 for each card of the same school."
+ },
+ "witcher_viper_school": {
+  "name": "Viper School",
+  "description": "Boost each unit of this school by 2 for each card of the same school."
+ },
+ "witcher_bear_school": {
+  "name": "Bear School",
+  "description": "Boost each unit of this school by 2 for each card of the same school."
+ },
+ "witcher_cat_school": {
+  "name": "Cat School",
+  "description": "Boost each unit of this school by 2 for each card of the same school."
+ },
+ "witcher_griffin_school": {
+  "name": "Griffin School",
+  "description": "Boost each unit of this school by 2 for each card of the same school."
+ },
+ "shield": {
+  "name": "Shield",
+  "description": "Protects units in the row from all abilities except weather effects."
+ },
+ "seize": {
+  "name": "Seize",
+  "description": "Move the Melee unit(s) with the lowest strength on your side of the board/ Their abilities won't work anymore."
+ },
+ "lock": {
+  "name": "Lock",
+  "description": "Lock/cancels the ability of the next unit played in that row (ignores units without abilities and heroes)."
+ },
+ "knockback": {
+  "name": "Knockback",
+  "description": "Pushes all units of the selected row (Melee or Ranged) or row back towards the Siege row, ignores shields."
+ },
+ "alzur_maker": {
+  "description": "Destroy one of your units on the board and summon a Koshchey.",
+  "target": "wu_koshchey"
+ },
+ "vilgefortz_sorcerer": {
+  "description": "Clear all weather effects in play."
+ },
+ "toussaint_wine": {
+  "name": "Toussaint Wine",
+  "description": "Placed on Melee or Ranged row, boosts all units of the selected row by two. Limited to one per row."
+ },
+ "meve_princess": {
+  "description": "If the opponent has a total of 10 or higher on one row, destroy that row's strongest card(s) (affects only the opponent's side of the battle field)."
+ },
+ "shield_c": {
+  "name": "Melee Shield",
+  "description": "Protects units in the Melee row from all abilities except weather effects."
+ },
+ "shield_r": {
+  "name": "Ranged Shield",
+  "description": "Protects units in the Ranged row from all abilities except weather effects."
+ },
+ "shield_s": {
+  "name": "Siege Shield",
+  "description": "Protects units in the Siege row from all abilities except weather effects."
+ },
+ "meve_white_queen": {
+  "description": "All medic cards can choose two unit cards from the discard pile (affects both players)."
+ },
+ "carlo_varese": {
+  "description": "If the opponent has a total of 10 or higher on one row, destroy that row's strongest card(s) (affects only the opponent's side of the battle field)."
+ },
+ "francis_bedlam": {
+  "description": "Send all spy unit cards to the grave of the side they are on."
+ },
+ "cyprian_wiley": {
+  "description": "Seize the unit(s) with the lowest strength of the opponents melee row."
+ },
+ "gudrun_bjornsdottir": {
+  "description": "Summon Flyndr's Crew"
+ },
+ "cyrus_hemmelfart": {
+  "description": "Play a Dimeritum Shackles card in any of the opponent's row."
+ },
+ "cyrus_hemmelfart1": {
+  "description": "Once per game: Play an Inquisitional Pyres card on the appropriate row."
+ },
+ "azar_javed": {
+  "description": "Destroy the enemy's weakest hero card (max 1 card)."
+ },
+ "bank": {
+  "name": "Bank",
+  "description": "Draw a card from your deck."
+ },
+ "witch_hunt": {
+  "name": "Witch Hunt",
+  "description": "Destroy the weakest unit on the opposite row. If there are several, choose one."
+ },
+ "zerrikanterment": {
+  "description": "Amount of worshippers boost is doubled."
+ },
+ "baal_zebuth": {
+  "description": "Select 2 cards from your opponent's discard pile and shuffle them back into his/her deck."
+ },
+ "rarog": {
+  "description": "Draw a random card from the discard pile to your hand (any card) and then shuffle the rest back into the deck."
+ },
+ "whorshipper": {
+  "name": "Whorshipper",
+  "description": "Boost by 1 all whorshipped units on your side of the board."
+ },
+ "whorshipped": {
+  "name": "Whorshipped",
+  "description": "Boosted by 1 by all whorshippers present on your side of the board."
+ },
+ "inspire": {
+  "name": "Inspire",
+  "description": "All units with Inspire ability take the highest base strength of the Inspire units on your side of the board. Still affected by weather."
+ },
+ "comrade": {
+  "name": "Comrade",
+  "description": "Once per round, this card can prevent the destruction of another card on its side of the board, including itself."
+ },
+ "invoke": {
+  "name": "Invoke",
+  "description": "Invokes one of the available associated cards from the deck."
+ },
+ "emissary": {
+  "name": "Emissary",
+  "description": "Place on your opponent's battlefield (counts towards your opponent's total), either draw one card or look first 4 and put them back in order of choice, Once per round, some of these can be placed at the bottom."
+ },
+ "necrophage": {
+  "name": "Necrophage",
+  "description": "Choose up to 2 unit cards from your discard pile and shuffle them back into your deck."
+ },
+ "goetia": {
+  "name": "Goetia",
+  "description": "Place on your battlefield and take 1 card from your deck to your hand, then choose any 1 card from your hand and shuffle it into your deck."
+ },
+ "ambush": {
+  "name": "Ambush",
+  "description": "Place on any row. If the opponent plays a unit or hero on this row, draw 2 cards and send this card to the discard pile"
+ },
+ "skellige_fleet": {
+  "name": "Skellige Fleet",
+  "description": "Place on your battlefield and either draw from your deck 1 top card instantly OR draw 2 top cards at the end of this round. In one round you can draw by Skellige Fleet no more than 3 cards."
+ },
+ "royal_decree": {
+  "name": "Royal Decree",
+  "description": "Use your leader's ability"
+ },
+ "summon_one_of": {
+  "name": "Summon One Of",
+  "description": "Summons from anywhere (deck, grave or hand) one of the associated card of choice"
+ },
+ "immortal": {
+  "name": "Immortal",
+  "description": "Card stays on the battlefield for 2 rounds and cannot be destroyed by another ability"
+ },
+ "monster_toussaint": {
+  "name": "Monster of Toussaint",
+  "description": "From the next turn onward you can discard this card from the board to instantly play its second strongest form."
+ },
+ "aerondight": {
+  "name": "Aerondight",
+  "description": "Place this card on the board, then move the unit with the highest original strength to the siege row. While there, triple its strength."
+ },
+ "bait": {
+  "name": "Bait",
+  "description": "Place on your battlefield and draw from your deck one card with Tight Bond ability. Play it immediatly."
+ },
+ "soothsayer": {
+  "name": "Soothsayer",
+  "description": "Place on your battlefield. For each soothsayer card on your side of the battlefield, you can draw one more card to choose from."
+ },
+ "curse": {
+  "name": "Curse",
+  "description": "Place on your or opponent's battlefield on any row. Next unit card (not hero) that will be placed on this row will be destroyed and it's abilities will not work"
+ },
+ "door": {
+  "name": "Dimensional Door",
+  "description": "While the door is active, at the end of each of your turns you should draw one card from your deck. If the row of the card matches the row of the door, play it immediatly, otherwise put it back into the deck. If it does not have a row, you can play it or put it back into the deck."
+ },
+ "door_o": {
+  "name": "Dimensional Door Opening",
+  "description": "Opens the dimensional door of the row it is in, if none other is opened"
+ },
+ "sage": {
+  "name": "Sage",
+  "description": "Place on your battlefield and draw 4 cards from your deck. Look at them and put them back at the top or bottom of the deck in the order of your choice."
+ },
+ "zirael": {
+  "name": "Zirael",
+  "description": "Place on your battlefield. Reveal 5 cards from your deck and choose up to 2 to add to your hand. Shuffle the rest back into the deck."
+ },
+ "naglfar": {
+  "name": "Naglfar",
+  "description": "Place on your battlefield and draw 2 cards or less from your deck with the word 'Naglfar' in their name and play them immediatly."
+ },
+ "omen": {
+  "name": "Omen",
+  "description": "Create a copy of Cat and Dog and add it to your hand."
+ },
+ "trade": {
+  "name": "Trade",
+  "description": "Choose 1 card from the enemy's deck. Trade 1 of your runes from your deck to their hand."
+ },
+ "adaptive": {
+  "name": "Adaptive",
+  "description": "When affected by Weather, this unit's base Strength is 2 (not 1)."
+ },
+ "morale_c": {
+  "name": "Close Combat Morale Boost",
+  "description": "Grants a morale boost to the Close Combat row from the special slot."
+ },
+ "morale_r": {
+  "name": "Ranged Combat Morale Boost",
+  "description": "Grants a morale boost to the Ranged Combat row from the special slot."
+ },
+ "morale_s": {
+  "name": "Siege Combat Morale Boost",
+  "description": "Grants a morale boost to the Siege row from the special slot."
+ },
+ "ofiri_envoy": {
+  "name": "Ofiri Envoy",
+  "description": "Place on the opponent's field. Draw 1 card from the opponent's deck and 1 from yours, or draw 2 cards from your deck."
+ },
+ "ofir_aamad": {
+  "name": "Aamad, the Wise",
+  "description": "Whenever you draw a card, you gain +1 total power for this round permanently (resets upon round completion back to 0)."
+ },
+ "nibras": {
+  "description": "Draw 3 cards from your deck, except special cards, spies, or envoys. Play one and shuffle the other 2 back into your deck."
+ },
+ "ofir_aamad_crown": {
+  "description": "Starts the game with Ofieri Prince on the board."
+ },
+ "nibras_gale": {
+  "description": "Once per game, you may look at the top 3 cards of your opponent's deck. Add one to your hand and put the remaining cards into their discard pile."
+ },
+ "chernobog": {
+  "name": "Chernobog",
+  "description": "Double the strength of any unit card in your Close combat row. Discard after playing."
+ },
+ "perun": {
+  "name": "Perun",
+  "description": "Add +5 strength to any unit card in your Ranged row. Discard after playing."
+ },
+ "triglav": {
+  "name": "Triglav's Weaken",
+  "description": "Choose an enemy hero card and weaken it by removing its Hero status. Discard after playing."
+ },
+ "veles": {
+  "name": "Veles",
+  "description": "Move your strongest unit card to the Siege row. While there, its strength is doubled. Discard after playing."
+ },
+ "morana": {
+  "name": "Morana",
+  "description": "Choose an enemy unit in the Close row and reduce its strength to 1. Discard after playing."
+ },
+ "svarog": {
+  "name": "Svarog",
+  "description": "Choose an enemy unit in the Siege row and reduce its strength to 1. Discard after playing."
+ },
+ "devana": {
+  "name": "Devana's Hunt",
+  "description": "Reduce the strength of all non-hero enemy units in the Ranged row to 2. Discard after playing."
+ },
+ "zoria": {
+  "name": "Zoria's Frost",
+  "description": "Freeze the opponent's Close combat row. Discard after playing."
+ },
+ "stribog": {
+  "name": "Stribog",
+  "description": "Move the enemy Ranged unit(s) with the lowest strength to your side of the board. Discard after playing."
+ },
+ "rune_call": {
+  "name": "Rune Crafting",
+  "description": "Choose and add a Rune card from your deck to your hand."
+ },
+ "clairvoyance": {
+  "name": "Clairvoyance",
+  "description": "Choose to either look at the top 3 cards of your deck OR look at 3 random cards in your opponent's hand."
+ },
+ "wish1": {
+  "name": "Malicious Wish 1",
+  "description": "Choose 1 of 3 random cards from the enemy hand. Cost: Destroy your strongest non-hero unit (Strength ≥ 6)."
+ },
+ "wish2": {
+  "name": "Malicious Wish 2",
+  "description": "Choose 1 of the top 3 cards from your deck. Cost: Destroy your strongest non-hero unit (Strength ≥ 6). This card is immune."
+ },
+ "wish3": {
+  "name": "Malicious Wish 3",
+  "description": "Destroy 1 non-hero enemy unit. Cost: Destroy your strongest non-hero unit (Strength ≥ 7). This card is immune."
+ },
+ "doppler": {
+  "name": "Doppler",
+  "description": "Choose an enemy unit (not hero or special) from the opposite row and transform into a basic copy of it (stats only, no abilities)."
+ },
+ "decoration": {
+  "name": "Decoration",
+  "description": "Promote a friendly unit to Hero status"
+ },
+ "novigrad_sigismund": {
+  "name": "Sigismund Dijkstra",
+  "description": "Once per game, prevent the first death of a friendly unit."
+ },
+ "novigrad_sigismund2": {
+  "name": "Sigismund Dijkstra",
+  "description": "If an opponent plays a spy on you, draw 1 card."
+ }
+}
