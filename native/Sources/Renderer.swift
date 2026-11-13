@@ -300,7 +300,7 @@ final class Renderer {
         var gl = glints; while gl.count < 2 { gl.append(.zero) }
         var cd = candles; while cd.count < 3 { cd.append(SIMD2(-1, -1)) }
         e.setFragmentBytes(&p, length: MemoryLayout<BgParams>.stride, index: 0)
-        e.setFragmentBytes(&regs, length: MemoryLayout<BgRegion>.stride * 32, index: 1)
+        e.setFragmentBytes(&regs, length: MemoryLayout<BgRegion>.stride * 48, index: 1)
         e.setFragmentBytes(&gl, length: MemoryLayout<SIMD2<Float>>.stride * 2, index: 2)
         e.setFragmentBytes(&cd, length: MemoryLayout<SIMD2<Float>>.stride * 3, index: 3)
         e.setFragmentTexture(t, index: 0)
