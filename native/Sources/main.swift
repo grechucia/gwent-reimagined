@@ -49,20 +49,20 @@ final class GameView: MTKView {
         super.updateTrackingAreas()
     }
     /// Converts a mouse event to the virtual 1920x1080 space.
-    func virtualPoint(_ e: NSEvent) -> SIMD2<Float> {
-        let p = convert(e.locationInWindow, from: nil)
+    func virtualPoint(_ event: NSEvent) -> SIMD2<Float> {
+        let p = convert(event.locationInWindow, from: nil)
         guard let r = app?.renderer else { return .zero }
         let px = Float(p.x / bounds.width) * Float(drawableSize.width)
         let py = Float((bounds.height - p.y) / bounds.height) * Float(drawableSize.height)
         let vp = r.viewportPx
         return SIMD2((px - vp.x) / vp.w * virtualWidth, (py - vp.y) / vp.h * virtualHeight)
     }
-    override func mouseMoved(with e: NSEvent) { app?.scene?.padCursor = false; app?.scene?.mouseMoved(virtualPoint(e)) }
-    override func mouseDragged(with e: NSEvent) { app?.scene?.mouseMoved(virtualPoint(e)) }
-    override func mouseDown(with e: NSEvent) { window?.makeFirstResponder(self); app?.scene?.padCursor = false; app?.scene?.click(virtualPoint(e)) }
-    override func rightMouseDown(with e: NSEvent) { app?.scene?.rightClick() }
-    override func keyDown(with e: NSEvent) { app?.scene?.keyDown(e.keyCode) }
-    override func scrollWheel(with e: NSEvent) { app?.scene?.scroll(Float(e.scrollingDeltaY) * (e.hasPreciseScrollingDeltas ? 1 : 12)) }
+    override func mouseMoved(with event: NSEvent) { app?.scene?.padCursor = false; app?.scene?.mouseMoved(virtualPoint(event)) }
+    override func mouseDragged(with event: NSEvent) { app?.scene?.mouseMoved(virtualPoint(event)) }
+    override func mouseDown(with event: NSEvent) { window?.makeFirstResponder(self); app?.scene?.padCursor = false; app?.scene?.click(virtualPoint(event)) }
+    override func rightMouseDown(with event: NSEvent) { app?.scene?.rightClick() }
+    override func keyDown(with event: NSEvent) { app?.scene?.keyDown(event.keyCode) }
+    override func scrollWheel(with event: NSEvent) { app?.scene?.scroll(Float(event.scrollingDeltaY) * (event.hasPreciseScrollingDeltas ? 1 : 12)) }
 }
 
 /// macOS application delegate: window, renderer, audio, scene, menus and settings.
@@ -81,9 +81,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, MTKViewDelegate, NSMen
     lazy var logURL = URL(fileURLWithPath: env["GWENT_LOG"] ?? (NSHomeDirectory() + "/Library/Logs/GwentReimagined.log"))
     private var fpsFrames = 0, fpsT: Double = 0, worst: Double = 0
     /// Appends a line to the test log.
-    func log(_ s: String) {
+    func log(_ text: String) {
         guard autotest else { return }
-        let line = s + "\n"
+        let line = text + "\n"
         if let h = try? FileHandle(forWritingTo: logURL) { h.seekToEndOfFile(); h.write(line.data(using: .utf8)!); try? h.close() }
         else { try? line.write(to: logURL, atomically: true, encoding: .utf8) }
     }
@@ -181,20 +181,20 @@ final class AppDelegate: NSObject, NSApplicationDelegate, MTKViewDelegate, NSMen
     func applicationShouldTerminateAfterLastWindowClosed(_ s: NSApplication) -> Bool { true }
 
     /// Not used: the drawable size is managed manually.
-    func mtkView(_ v: MTKView, drawableSizeWillChange size: CGSize) {}
+    func mtkView(_ metalView: MTKView, drawableSizeWillChange size: CGSize) {}
     /// Renders one frame.
-    func draw(in v: MTKView) {
+    func draw(in metalView: MTKView) {
         let now = CACurrentMediaTime()
         let dt = Float(min(0.1, now - last)); last = now
         if autotest {
             fpsT += Double(dt); worst = max(worst, Double(dt))
-            if fpsT >= 5 { log(String(format: "FPS %.1f, longest frame %.0f ms, buffer %dx%d", Double(fpsFrames) / fpsT, worst * 1000, Int(v.drawableSize.width), Int(v.drawableSize.height))); fpsFrames = 0; fpsT = 0; worst = 0 }
+            if fpsT >= 5 { log(String(format: "FPS %.1f, longest frame %.0f ms, buffer %dx%d", Double(fpsFrames) / fpsT, worst * 1000, Int(metalView.drawableSize.width), Int(metalView.drawableSize.height))); fpsFrames = 0; fpsT = 0; worst = 0 }
         }
-        guard let cb = renderer.begin(view: v) else { return }
+        guard let cb = renderer.begin(view: metalView) else { return }
         fpsFrames += 1
         gamepad.update(dt)
         scene?.frame(dt: dt)
-        renderer.end(cb, view: v)
+        renderer.end(cb, view: metalView)
     }
 
     /// Builds the minimal menu bar (app and window menus).
@@ -204,10 +204,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, MTKViewDelegate, NSMen
             let it = NSMenuItem(); let m = menu ?? NSMenu(title: title); m.title = title
             items.forEach { m.addItem($0) }; it.submenu = m; main.addItem(it)
         }
-        func item(_ t: String, _ a: Selector?, _ k: String = "", _ mods: NSEvent.ModifierFlags = .command) -> NSMenuItem {
-            let i = NSMenuItem(title: t, action: a, keyEquivalent: k); i.keyEquivalentModifierMask = mods; return i
+        func item(_ text: String, _ a: Selector?, _ key: String = "", _ mods: NSEvent.ModifierFlags = .command) -> NSMenuItem {
+            let i = NSMenuItem(title: text, action: a, keyEquivalent: key); i.keyEquivalentModifierMask = mods; return i
         }
-        func submenuItem(_ t: String, _ m: NSMenu) -> NSMenuItem { let i = NSMenuItem(title: t, action: nil, keyEquivalent: ""); i.submenu = m; return i }
+        func submenuItem(_ text: String, _ m: NSMenu) -> NSMenuItem { let i = NSMenuItem(title: text, action: nil, keyEquivalent: ""); i.submenu = m; return i }
         sub("GwentReimagined", [item(L("About") + " GwentReimagined", #selector(showAbout)), item(L("Licenses") + "…", #selector(showCredits)), .separator(),
                       item(L("Hide") + " GwentReimagined", #selector(NSApplication.hide(_:)), "h"),
                       item(L("Quit") + " GwentReimagined", #selector(NSApplication.terminate(_:)), "q")])
@@ -231,9 +231,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, MTKViewDelegate, NSMen
     /// Disables frame limits the screen cannot show.
     func validateMenuItem(_ m: NSMenuItem) -> Bool { m.menu === fpsMenu ? m.tag <= screenFPS : true }
     /// Changes the render resolution.
-    func setRenderRes(_ px: Int) { renderRes = px; view.renderHeight = px; refreshMenus() }
+    func setRenderRes(_ height: Int) { renderRes = height; view.renderHeight = height; refreshMenus() }
     /// Changes the frame limit.
-    func setFrameLimit(_ f: Int) { frameLimit = f; applyFrameRate(); refreshMenus() }
+    func setFrameLimit(_ limit: Int) { frameLimit = limit; applyFrameRate(); refreshMenus() }
     var availableFrameLimits: [Int] { let hz = screenFPS; let l = frameLimits.filter { $0 <= hz && hz % $0 == 0 }; return l.isEmpty ? [hz] : l }
     var effectiveFrameLimit: Int { let a = availableFrameLimits; return a.contains(frameLimit) ? frameLimit : (a.last { $0 <= frameLimit } ?? a.last!) }
     private var link: CADisplayLink?
@@ -247,23 +247,23 @@ final class AppDelegate: NSObject, NSApplicationDelegate, MTKViewDelegate, NSMen
         l.add(to: .main, forMode: .common); link = l
     }
     /// Called by the display link: renders a frame.
-    @objc func tick(_ l: CADisplayLink) { view.draw() }
+    @objc func tick(_ link: CADisplayLink) { view.draw() }
     var isFullScreen: Bool { window.styleMask.contains(.fullScreen) }
     /// Enters or leaves full screen.
     func setFullScreen(_ on: Bool) { if on != isFullScreen { window.toggleFullScreen(nil) } }
-    @objc func pickResolution(_ s: NSMenuItem) { renderRes = s.tag; view.renderHeight = s.tag; refreshMenus() }
-    @objc func pickFrameLimit(_ s: NSMenuItem) { setFrameLimit(s.tag) }
-    @objc func pickLang(_ s: NSMenuItem) { if let c = s.representedObject as? String { scene?.setLanguage(c) } }
-    @objc func toggleMusic(_ s: NSMenuItem) { audio.musicOn.toggle(); refreshMenus() }
+    @objc func pickResolution(_ sender: NSMenuItem) { renderRes = sender.tag; view.renderHeight = sender.tag; refreshMenus() }
+    @objc func pickFrameLimit(_ sender: NSMenuItem) { setFrameLimit(sender.tag) }
+    @objc func pickLang(_ sender: NSMenuItem) { if let c = sender.representedObject as? String { scene?.setLanguage(c) } }
+    @objc func toggleMusic(_ sender: NSMenuItem) { audio.musicOn.toggle(); refreshMenus() }
     @objc func nextTrack() { audio.skipTrack() }
-    @objc func toggleMute(_ s: NSMenuItem) { audio.muted.toggle(); s.state = audio.muted ? .on : .off; if audio.muted { audio.musicOn = false } }
+    @objc func toggleMute(_ sender: NSMenuItem) { audio.muted.toggle(); sender.state = audio.muted ? .on : .off; if audio.muted { audio.musicOn = false } }
     @objc func showRules() { scene?.openRules() }
     @objc func showCredits() { scene?.creditsOpen = true; scene?.game?.paused = true }
     @objc func goTitle() { scene?.game = nil; scene?.screen = .title }
     @objc func newGame() { scene?.screen = .decks }
     /// Shows the About panel.
     @objc func showAbout() {
-        NSApp.orderFrontStandardAboutPanel(options: [.applicationName: "GwentReimagined", .applicationVersion: "1.0", .version: "",
+        NSApp.orderFrontStandardAboutPanel(options: [.applicationName: "GwentReimagined", .applicationVersion: "1.0.1", .version: "",
                                                      .credits: NSAttributedString(string: "All characters, the Witcher universe and Gwent © CD PROJEKT S.A. / CD PROJEKT RED.\nUnofficial fan project — a fork of Gwent Classic v5.0 (github.com/ia2904/gwent-classic-v5.0), MIT + Commons Clause.\nReimagined / ported by grechucia — github.com/grechucia/gwent-reimagined")])
     }
 }

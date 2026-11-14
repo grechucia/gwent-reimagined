@@ -30,7 +30,7 @@ final class Scene {
     var padNoFocus: [R] = []
     var padNoAuto: [R] = []
     var padPrimary: R?
-    var appVersion: String { (Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String) ?? "1.0" }
+    var appVersion: String { (Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String) ?? "1.0.1" }
     var onLanguageChange: ((String) -> Void)?
     var autotest = false
     var log: (String) -> Void = { _ in }
@@ -121,11 +121,11 @@ final class Scene {
     }
 
     /// Updates the pointer position (virtual coordinates).
-    func mouseMoved(_ p: SIMD2<Float>) { mouse = p; mouseNorm = SIMD2((p.x / virtualWidth - 0.5) * 2, (p.y / virtualHeight - 0.5) * 2) }
+    func mouseMoved(_ point: SIMD2<Float>) { mouse = point; mouseNorm = SIMD2((point.x / virtualWidth - 0.5) * 2, (point.y / virtualHeight - 0.5) * 2) }
     /// Runs the topmost button under the point.
-    func click(_ p: SIMD2<Float>) {
-        mouse = p
-        for (rect, action) in hits.reversed() where rect.contains(p) { action(); return }
+    func click(_ point: SIMD2<Float>) {
+        mouse = point
+        for (rect, action) in hits.reversed() where rect.contains(point) { action(); return }
     }
     /// Right click / long press: card details or cancel.
     func rightClick() { selected = nil }
@@ -141,7 +141,7 @@ final class Scene {
         if code == 53 && optionsOpen { optionsOpen = false; game?.paused = false; return }
         if screen == .decks && (code == 51 || code == 53) && previewDeck != nil { previewDeck = nil; deckSwitchT = 0; return }
         if screen == .decks && code == 51 && deckStage >= 0 { deckStage -= 1; deckSwitchT = 0; return }
-        if code == 53 { selected = nil; if let g = game, let ch = g.choice, ch.canCancel { multiSel = []; g.resolveChoice(nil) } }
+        if code == 53 { selected = nil; if let match = game, let ch = match.choice, ch.canCancel { multiSel = []; match.resolveChoice(nil) } }
     }
 
     /// Draws one frame of the current screen and overlays.
@@ -239,22 +239,22 @@ final class Scene {
         let x1 = 1880 - lw
         renderer.text(plain, f, x: x1 - pw, y: y, color: RGBA(r: 0.91, g: 0.86, b: 0.74, a: 0.9))
         let b = R(x1, y, lw, 26)
-        let hov = b.contains(mouse)
-        renderer.text(linkText, fb, x: x1, y: y, color: hov ? .white : RGBA.gold)
-        renderer.rect(R(x1, y + 23, lw, 1), RGBA.gold.alpha(hov ? 1 : 0.5))
+        let hovered = b.contains(mouse)
+        renderer.text(linkText, fb, x: x1, y: y, color: hovered ? .white : RGBA.gold)
+        renderer.rect(R(x1, y + 23, lw, 1), RGBA.gold.alpha(hovered ? 1 : 0.5))
         padNoFocus.append(b)
         button(b) { if let u = URL(string: url) { Platform.openURL(u) } }
     }
     /// Main gold-framed button.
-    func goldButton(_ b: R, _ title: String, font: Renderer.Font = .serif(26, bold: true), enabled: Bool = true, _ action: @escaping () -> Void) {
-        let hov = b.contains(mouse) && enabled
-        renderer.gradient(b, RGBA(r: 0.19, g: 0.13, b: 0.05, a: 0.95), RGBA(r: 0.05, g: 0.04, b: 0.02, a: 0.96), steps: 12)
-        if hov { renderer.rect(b.inset(-6), RGBA(r: 1, g: 0.75, b: 0.3, a: 0.10)) }
-        renderer.frame(b, RGBA.goldDark.alpha(enabled ? 1 : 0.4), 2)
-        renderer.frame(b.inset(5), RGBA.goldDark.alpha(hov ? 0.95 : 0.55), 1)
-        let th = renderer.measure(title, font).h
-        renderer.text(title, font, x: b.mid.x, y: b.mid.y - th / 2 + 1, color: enabled ? (hov ? RGBA(r: 1, g: 0.96, b: 0.8, a: 1) : RGBA(r: 0.96, g: 0.86, b: 0.56, a: 1)) : .gray(0.5), align: .center)
-        if enabled { button(b, action) }
+    func goldButton(_ box: R, _ title: String, font: Renderer.Font = .serif(26, bold: true), enabled: Bool = true, _ action: @escaping () -> Void) {
+        let hovered = box.contains(mouse) && enabled
+        renderer.gradient(box, RGBA(r: 0.19, g: 0.13, b: 0.05, a: 0.95), RGBA(r: 0.05, g: 0.04, b: 0.02, a: 0.96), steps: 12)
+        if hovered { renderer.rect(box.inset(-6), RGBA(r: 1, g: 0.75, b: 0.3, a: 0.10)) }
+        renderer.frame(box, RGBA.goldDark.alpha(enabled ? 1 : 0.4), 2)
+        renderer.frame(box.inset(5), RGBA.goldDark.alpha(hovered ? 0.95 : 0.55), 1)
+        let textHeight = renderer.measure(title, font).h
+        renderer.text(title, font, x: box.mid.x, y: box.mid.y - textHeight / 2 + 1, color: enabled ? (hovered ? RGBA(r: 1, g: 0.96, b: 0.8, a: 1) : RGBA(r: 0.96, g: 0.86, b: 0.56, a: 1)) : .gray(0.5), align: .center)
+        if enabled { button(box, action) }
     }
     /// Language dropdown on the title screen.
     func languageToggle(y: Float) {
@@ -263,9 +263,9 @@ final class Scene {
         let cur = GameData.languageName(gameData.language)
         renderer.rect(box.inset(-4), RGBA(r: 0.04, g: 0.03, b: 0.01, a: 0.78))
         renderer.frame(box.inset(-4), RGBA.goldDark.alpha(langMenuOpen || box.contains(mouse) ? 0.95 : 0.55), 1.5)
-        let th = renderer.measure(cur, .serif(20, bold: true)).h
-        renderer.text(cur, .serif(20, bold: true), x: box.x + 18, y: box.mid.y - th / 2, color: RGBA.gold)
-        renderer.text(langMenuOpen ? "▴" : "▾", .ui(20, bold: true), x: box.x + box.w - 18, y: box.mid.y - th / 2, color: RGBA.gold, align: .right)
+        let textHeight = renderer.measure(cur, .serif(20, bold: true)).h
+        renderer.text(cur, .serif(20, bold: true), x: box.x + 18, y: box.mid.y - textHeight / 2, color: RGBA.gold)
+        renderer.text(langMenuOpen ? "▴" : "▾", .ui(20, bold: true), x: box.x + box.w - 18, y: box.mid.y - textHeight / 2, color: RGBA.gold, align: .right)
         if !langMenuOpen { button(box) { [weak self] in self?.langMenuOpen = true }; return }
         button(R(0, 0, virtualWidth, virtualHeight)) { [weak self] in self?.langMenuOpen = false }
         let ih: Float = 36
@@ -355,7 +355,7 @@ final class Scene {
         game?.autoHuman = autotest
         game?.showChoices = ProcessInfo.processInfo.environment["GWENT_SHOWCHOICES"] == "1"
         /// Total unit strength and card count of a deck (used in test logs).
-        func power(_ d: DeckData) -> (Int, Int) { d.cards.reduce((0, 0)) { acc, e in let c = gameData.cards[e.0]; return (acc.0 + (c?.strength ?? 0) * e.1, acc.1 + e.1) } }
+        func power(_ deck: DeckData) -> (Int, Int) { deck.cards.reduce((0, 0)) { acc, e in let c = gameData.cards[e.0]; return (acc.0 + (c?.strength ?? 0) * e.1, acc.1 + e.1) } }
         let pm = power(mine), po = power(theirs)
         log("GAME \(gamesPlayed + 1): \(mine.faction) power \(pm.0) / \(pm.1) cards vs \(theirs.faction) power \(po.0) / \(po.1) cards, AI level \(game?.aiLevel ?? -1)")
         selected = nil; notes = []; noteT = 0; aiT = 0
@@ -364,145 +364,145 @@ final class Scene {
     }
 
     /// Board background.
-    private func drawModernBoard(_ g: Game) {
+    private func drawModernBoard(_ match: Game) {
         renderer.image("img/board.jpg", R(0, 0, virtualWidth, virtualHeight))
         renderer.gradient(R(0, virtualHeight - 120, virtualWidth, 120), RGBA.black.alpha(0), RGBA.black.alpha(0.35), steps: 8)
     }
 
     /// Screen rectangle of a player's row.
-    private func rowRect(_ p: Player, _ t: RowType) -> R {
-        let mine = p === game?.human
-        let y: Float = mine ? [422, 555, 688][t.rawValue] : [271, 138, 5][t.rawValue]
+    private func rowRect(_ player: Player, _ rowType: RowType) -> R {
+        let mine = player === game?.human
+        let y: Float = mine ? [422, 555, 688][rowType.rawValue] : [271, 138, 5][rowType.rawValue]
         return R(710, y, 803, 133)
     }
     /// Special card slot of a row.
-    private func specialRect(_ p: Player, _ t: RowType) -> R { let rr = rowRect(p, t); return R(579, rr.y + 9, cardWidth, cardHeight) }
+    private func specialRect(_ player: Player, _ rowType: RowType) -> R { let rowArea = rowRect(player, rowType); return R(579, rowArea.y + 9, cardWidth, cardHeight) }
     private let handRect = R(580, 843, 932, 128)
     private let weatherRect = R(141, 448, 279, 138)
     /// Position of a player's deck.
-    private func deckRect(_ p: Player) -> R { p === game?.human ? R(1735, 836, cardWidth, 128) : R(1735, 80, cardWidth, 128) }
+    private func deckRect(_ player: Player) -> R { player === game?.human ? R(1735, 836, cardWidth, 128) : R(1735, 80, cardWidth, 128) }
     /// Position of a player's graveyard.
-    private func graveRect(_ p: Player) -> R { p === game?.human ? R(1556, 836, cardWidth, cardHeight) : R(1556, 80, cardWidth, cardHeight) }
+    private func graveRect(_ player: Player) -> R { player === game?.human ? R(1556, 836, cardWidth, cardHeight) : R(1556, 80, cardWidth, cardHeight) }
     /// Position of a player's leader card.
-    private func leaderRect(_ p: Player) -> R { p === game?.human ? R(142, 835, 96, 132) : R(142, 83, 96, 132) }
+    private func leaderRect(_ player: Player) -> R { player === game?.human ? R(142, 835, 96, 132) : R(142, 83, 96, 132) }
 
     /// Positions for `n` cards spread across an area.
-    private func layout(_ n: Int, in area: R, w: Float = cardWidth, gap: Float = 4) -> [SIMD2<Float>] {
-        guard n > 0 else { return [] }
-        let full = Float(n) * w + Float(n - 1) * gap
-        var step = w + gap
-        if full > area.w { step = (area.w - w) / Float(max(1, n - 1)) }
-        let used = step * Float(n - 1) + w
+    private func layout(_ count: Int, in area: R, w width: Float = cardWidth, gap: Float = 4) -> [SIMD2<Float>] {
+        guard count > 0 else { return [] }
+        let full = Float(count) * width + Float(count - 1) * gap
+        var step = width + gap
+        if full > area.w { step = (area.w - width) / Float(max(1, count - 1)) }
+        let used = step * Float(count - 1) + width
         let x0 = area.x + (area.w - used) / 2
-        return (0..<n).map { SIMD2(x0 + Float($0) * step, area.y) }
+        return (0..<count).map { SIMD2(x0 + Float($0) * step, area.y) }
     }
     /// Animates a card towards its target position.
-    private func move(_ c: Card, to p: SIMD2<Float>, from spawn: SIMD2<Float>, dt: Float) {
-        if !c.hasPos { c.pos = spawn; c.hasPos = true }
-        c.pos += (p - c.pos) * min(1, dt * 11)
-        c.flash = max(0, c.flash - dt * 1.6)
+    private func move(_ card: Card, to point: SIMD2<Float>, from spawn: SIMD2<Float>, dt: Float) {
+        if !card.hasPos { card.pos = spawn; card.hasPos = true }
+        card.pos += (point - card.pos) * min(1, dt * 11)
+        card.flash = max(0, card.flash - dt * 1.6)
     }
 
     /// Overlay image for the weather on a row.
-    private func weatherOverlay(_ w: Set<String>) -> String? {
-        if w.contains("frost") || w.contains("white_frost") { return "overlay_frost" }
-        if w.contains("spider_web") { return "overlay_spider_web" }
-        if w.contains("fog") { return "overlay_fog" }
-        if w.contains("tse_tse") { return "overlay_tse_tse" }
-        if w.contains("sandstorm") { return "overlay_sandstorm" }
-        if w.contains("dragon_wrath") { return "overlay_dragon_wrath" }
-        if w.contains("rain") || w.contains("storm") { return "overlay_rain" }
+    private func weatherOverlay(_ weather: Set<String>) -> String? {
+        if weather.contains("frost") || weather.contains("white_frost") { return "overlay_frost" }
+        if weather.contains("spider_web") { return "overlay_spider_web" }
+        if weather.contains("fog") { return "overlay_fog" }
+        if weather.contains("tse_tse") { return "overlay_tse_tse" }
+        if weather.contains("sandstorm") { return "overlay_sandstorm" }
+        if weather.contains("dragon_wrath") { return "overlay_dragon_wrath" }
+        if weather.contains("rain") || weather.contains("storm") { return "overlay_rain" }
         return nil
     }
     /// Whether a special card needs no target.
-    private func isFreeSpecial(_ c: Card) -> Bool {
-        if c.data.isWeather { return true }
-        guard c.data.isSpecial else { return false }
-        return !["horn", "mardroeme", "morale", "toussaint_wine", "shield", "shield_c", "shield_r", "shield_s", "door", "decoy", "lock", "knockback", "curse"].contains(c.specialKind ?? "")
+    private func isFreeSpecial(_ card: Card) -> Bool {
+        if card.data.isWeather { return true }
+        guard card.data.isSpecial else { return false }
+        return !["horn", "mardroeme", "morale", "toussaint_wine", "shield", "shield_c", "shield_r", "shield_s", "door", "decoy", "lock", "knockback", "curse"].contains(card.specialKind ?? "")
     }
     /// Game board: rows, hand, player panels, buttons and choices.
     private func drawGame(_ dt: Float) {
-        guard let g = game else { return }
-        processEvents(g, dt)
-        drawModernBoard(g)
+        guard let match = game else { return }
+        processEvents(match, dt)
+        drawModernBoard(match)
         hover = nil
-        let canAct = g.phase == .play && g.current === g.human && !g.busy && g.choice == nil
-        if !canAct && g.choice == nil { selected = nil }
-        for p in [g.computer, g.human] {
-            let band = p === g.human ? R(0, 666, 450, 135) : R(0, 263, 450, 135)
-            if g.current === p && g.phase == .play {
+        let canAct = match.phase == .play && match.current === match.human && !match.busy && match.choice == nil
+        if !canAct && match.choice == nil { selected = nil }
+        for player in [match.computer, match.human] {
+            let band = player === match.human ? R(0, 666, 450, 135) : R(0, 263, 450, 135)
+            if match.current === player && match.phase == .play {
                 renderer.gradient(band, RGBA(r: 0.5, g: 0.38, b: 0.12, a: 0.0), RGBA(r: 0.85, g: 0.62, b: 0.2, a: 0.22), steps: 8)
-                renderer.rect(R(band.x, p === g.human ? band.y : band.y + band.h - 3, band.w, 3), RGBA.gold.alpha(0.8))
+                renderer.rect(R(band.x, player === match.human ? band.y : band.y + band.h - 3, band.w, 3), RGBA.gold.alpha(0.8))
             }
         }
         var targetRows: [(Player, RowType)] = []
         var decoyTargets: [Card] = []
         var rowChoice: [(Player, RowType)] = []
-        if let ch = g.choice, case .rows(let rs) = ch.kind { rowChoice = rs }
+        if let ch = match.choice, case .rows(let rs) = ch.kind { rowChoice = rs }
         if canAct, let s = selected {
-            if s.isUnit { targetRows = g.validRows(for: s, by: g.human).map { ((s.has("spy") || s.has("emissary") || s.has("ofiri_envoy")) ? g.computer : g.human, $0) } }
+            if s.isUnit { targetRows = match.validRows(for: s, by: match.human).map { ((s.has("spy") || s.has("emissary") || s.has("ofiri_envoy")) ? match.computer : match.human, $0) } }
             else {
                 switch s.specialKind ?? "" {
-                case "decoy": decoyTargets = g.decoyTargets(for: g.human)
-                case "lock", "knockback": targetRows = g.enemyRowTargets(for: s, by: g.human).map { (g.computer, $0) }
-                case "curse": targetRows = g.curseRows(by: g.human)
-                default: targetRows = g.validRows(for: s, by: g.human).map { (g.human, $0) }
+                case "decoy": decoyTargets = match.decoyTargets(for: match.human)
+                case "lock", "knockback": targetRows = match.enemyRowTargets(for: s, by: match.human).map { (match.computer, $0) }
+                case "curse": targetRows = match.curseRows(by: match.human)
+                default: targetRows = match.validRows(for: s, by: match.human).map { (match.human, $0) }
                 }
             }
         }
-        for p in [g.computer, g.human] {
-            for t in RowType.allCases {
-                let rr = rowRect(p, t)
-                let row = p.row(t)
-                if let ov = weatherOverlay(p.weather[t.rawValue]) { renderer.image("img/icons/\(ov).png", R(567, rr.y + 6, 950, 127), color: .white.alpha(0.7 + 0.15 * sin(time * 1.3 + Float(t.rawValue)))) }
-                drawWeatherFX(p.weather[t.rawValue], rr)
-                let full = R(567, rr.y + 2, 946, rr.h - 4)
-                let isTarget = targetRows.contains { $0.0 === p && $0.1 == t }
-                let isChoice = rowChoice.firstIndex { $0.0 === p && $0.1 == t }
+        for player in [match.computer, match.human] {
+            for rowType in RowType.allCases {
+                let rowArea = rowRect(player, rowType)
+                let row = player.row(rowType)
+                if let ov = weatherOverlay(player.weather[rowType.rawValue]) { renderer.image("img/icons/\(ov).png", R(567, rowArea.y + 6, 950, 127), color: .white.alpha(0.7 + 0.15 * sin(time * 1.3 + Float(rowType.rawValue)))) }
+                drawWeatherFX(player.weather[rowType.rawValue], rowArea)
+                let full = R(567, rowArea.y + 2, 946, rowArea.h - 4)
+                let isTarget = targetRows.contains { $0.0 === player && $0.1 == rowType }
+                let isChoice = rowChoice.firstIndex { $0.0 === player && $0.1 == rowType }
                 if isTarget || isChoice != nil {
                     let pulse = 0.18 + 0.1 * sin(time * 5)
                     renderer.rect(full, RGBA(r: 1, g: 0.8, b: 0.3, a: pulse)); renderer.frame(full, RGBA.gold, 2)
-                    if let s = selected, isTarget { button(full) { [weak self] in self?.playSelected(s, row: t, rowOwner: p) } }
-                    if let i = isChoice { button(full) { g.resolveChoice([i]) } }
+                    if let s = selected, isTarget { button(full) { [weak self] in self?.playSelected(s, row: rowType, rowOwner: player) } }
+                    if let i = isChoice { button(full) { match.resolveChoice([i]) } }
                 }
                 var mx: Float = 712
                 for (flag, icon) in [(row.lock != nil, "power_lock"), (row.curse != nil, "power_curse"), (row.door, "power_door"), (row.leaderHorn, "power_horn")] where flag {
-                    renderer.image("img/icons/\(icon).png", R(mx, rr.y + 92, 36, 36)); mx += 38
+                    renderer.image("img/icons/\(icon).png", R(mx, rowArea.y + 92, 36, 36)); mx += 38
                 }
-                let ps = layout(row.cards.count, in: R(rr.x + 4, rr.y + 5, rr.w - 8, cardHeight))
-                for (i, c) in row.cards.enumerated() {
-                    move(c, to: ps[i], from: p === g.human ? SIMD2(1000, 1000) : SIMD2(1000, -150), dt: dt)
-                    let cr = R(c.pos.x, c.pos.y, cardWidth, cardHeight)
-                    let isDecoy = decoyTargets.contains { $0 === c }
-                    let (fr, flying) = flightRect(c, target: ps[i])
+                let rowPositions = layout(row.cards.count, in: R(rowArea.x + 4, rowArea.y + 5, rowArea.w - 8, cardHeight))
+                for (i, card) in row.cards.enumerated() {
+                    move(card, to: rowPositions[i], from: player === match.human ? SIMD2(1000, 1000) : SIMD2(1000, -150), dt: dt)
+                    let cardRect = R(card.pos.x, card.pos.y, cardWidth, cardHeight)
+                    let isDecoy = decoyTargets.contains { $0 === card }
+                    let (fr, flying) = flightRect(card, target: rowPositions[i])
                     if flying { renderer.rect(R(fr.x + 10, fr.y + 16, fr.w, fr.h), RGBA.black.alpha(0.35)) }
-                    drawCard(c, flying ? fr : cr, highlight: isDecoy)
-                    if c.locked { renderer.image("img/icons/power_lock.png", R(cr.x + 50, cr.y + 4, 32, 32)) }
-                    if cr.contains(mouse) { hover = c }
-                    if isDecoy, let s = selected { button(cr) { [weak self] in self?.playSelected(s, target: c) } }
+                    drawCard(card, flying ? fr : cardRect, highlight: isDecoy)
+                    if card.locked { renderer.image("img/icons/power_lock.png", R(cardRect.x + 50, cardRect.y + 4, 32, 32)) }
+                    if cardRect.contains(mouse) { hover = card }
+                    if isDecoy, let s = selected { button(cardRect) { [weak self] in self?.playSelected(s, target: card) } }
                 }
-                let sp = specialRect(p, t)
+                let sp = specialRect(player, rowType)
                 for (i, s) in row.specials.enumerated() {
                     move(s, to: SIMD2(sp.x + Float(i) * 14, sp.y), from: SIMD2(1000, 1000), dt: dt)
-                    let cr = R(s.pos.x, s.pos.y, cardWidth, cardHeight)
-                    drawCard(s, cr)
-                    if cr.contains(mouse) { hover = s }
+                    let cardRect = R(s.pos.x, s.pos.y, cardWidth, cardHeight)
+                    drawCard(s, cardRect)
+                    if cardRect.contains(mouse) { hover = s }
                 }
-                let sc = "\(row.total)"
+                let scoreText = "\(row.total)"
                 let disc = Renderer.Font.ui(78)
                 let dh = renderer.measure("●", disc).h
-                renderer.text("●", disc, x: 534, y: rr.y + 70 - dh / 2, color: RGBA.goldDark.alpha(0.9), align: .center, shadow: nil)
-                renderer.text("●", .ui(70), x: 534, y: rr.y + 70 - renderer.measure("●", .ui(70)).h / 2, color: RGBA(r: 0.06, g: 0.05, b: 0.04, a: 1), align: .center, shadow: nil)
-                let th = renderer.measure(sc, .ui(28, bold: true)).h
-                renderer.text(sc, .ui(28, bold: true), x: 534, y: rr.y + 70 - th / 2, color: RGBA(r: 1, g: 0.9, b: 0.65, a: 1), align: .center, shadow: nil)
+                renderer.text("●", disc, x: 534, y: rowArea.y + 70 - dh / 2, color: RGBA.goldDark.alpha(0.9), align: .center, shadow: nil)
+                renderer.text("●", .ui(70), x: 534, y: rowArea.y + 70 - renderer.measure("●", .ui(70)).h / 2, color: RGBA(r: 0.06, g: 0.05, b: 0.04, a: 1), align: .center, shadow: nil)
+                let textHeight = renderer.measure(scoreText, .ui(28, bold: true)).h
+                renderer.text(scoreText, .ui(28, bold: true), x: 534, y: rowArea.y + 70 - textHeight / 2, color: RGBA(r: 1, g: 0.9, b: 0.65, a: 1), align: .center, shadow: nil)
             }
         }
-        let wps = layout(g.weatherCards.count, in: R(weatherRect.x + 8, weatherRect.y + 8, weatherRect.w - 16, cardHeight))
-        for (i, c) in g.weatherCards.enumerated() {
-            move(c, to: wps[i], from: SIMD2(1000, 1000), dt: dt)
-            let cr = R(c.pos.x, c.pos.y, cardWidth, cardHeight)
-            drawCard(c, cr)
-            if cr.contains(mouse) { hover = c }
+        let wps = layout(match.weatherCards.count, in: R(weatherRect.x + 8, weatherRect.y + 8, weatherRect.w - 16, cardHeight))
+        for (i, card) in match.weatherCards.enumerated() {
+            move(card, to: wps[i], from: SIMD2(1000, 1000), dt: dt)
+            let cardRect = R(card.pos.x, card.pos.y, cardWidth, cardHeight)
+            drawCard(card, cardRect)
+            if cardRect.contains(mouse) { hover = card }
         }
         if canAct, let s = selected, isFreeSpecial(s) {
             let pulse = 0.18 + 0.1 * sin(time * 5)
@@ -510,33 +510,33 @@ final class Scene {
             button(weatherRect) { [weak self] in self?.playSelected(s) }
             button(R(567, 5, 946, 816)) { [weak self] in self?.playSelected(s) }
         }
-        for p in [g.computer, g.human] { drawStats(p, g, canAct: canAct) }
+        for player in [match.computer, match.human] { drawStats(player, match, canAct: canAct) }
         smallButton(R(1540, 16, 190, 46), L("Rules"), enabled: true) { [weak self] in self?.openRules() }
-        for c in g.computer.hand { c.hasPos = true; c.pos = SIMD2(1000, -160) }
-        for p in [g.human, g.computer] { let d = deckRect(p); for c in p.deck { c.pos = SIMD2(d.x, d.y); c.hasPos = true } }
-        let hp = layout(g.human.hand.count, in: R(handRect.x + 8, handRect.y + 6, handRect.w - 16, cardHeight), gap: 3)
+        for card in match.computer.hand { card.hasPos = true; card.pos = SIMD2(1000, -160) }
+        for player in [match.human, match.computer] { let d = deckRect(player); for card in player.deck { card.pos = SIMD2(d.x, d.y); card.hasPos = true } }
+        let handPositions = layout(match.human.hand.count, in: R(handRect.x + 8, handRect.y + 6, handRect.w - 16, cardHeight), gap: 3)
         var hoveredHand: Card?
-        for (i, c) in g.human.hand.enumerated().reversed() where hoveredHand == nil {
-            if R(hp[i].x, hp[i].y - c.lift, cardWidth, cardHeight).contains(mouse) && g.phase == .play && g.choice == nil { hoveredHand = c }
+        for (i, card) in match.human.hand.enumerated().reversed() where hoveredHand == nil {
+            if R(handPositions[i].x, handPositions[i].y - card.lift, cardWidth, cardHeight).contains(mouse) && match.phase == .play && match.choice == nil { hoveredHand = card }
         }
-        let forced = g.human.forcedCard
-        for (i, c) in g.human.hand.enumerated() {
-            let want: Float = (selected === c ? 26 : (hoveredHand === c ? 14 : 0))
-            c.lift += (want - c.lift) * min(1, dt * 14)
-            move(c, to: hp[i], from: SIMD2(deckRect(g.human).x, deckRect(g.human).y), dt: dt)
-            let cr = R(c.pos.x, c.pos.y - c.lift, cardWidth, cardHeight)
-            drawCard(c, cr, highlight: selected === c || forced === c, dim: canAct && forced != nil && forced !== c)
-            if i == 0 && canAct { padPrimary = cr }
-            if hoveredHand === c { hover = c }
-            if canAct { button(cr) { [weak self] in self?.clickHand(c) } }
+        let forced = match.human.forcedCard
+        for (i, card) in match.human.hand.enumerated() {
+            let want: Float = (selected === card ? 26 : (hoveredHand === card ? 14 : 0))
+            card.lift += (want - card.lift) * min(1, dt * 14)
+            move(card, to: handPositions[i], from: SIMD2(deckRect(match.human).x, deckRect(match.human).y), dt: dt)
+            let cardRect = R(card.pos.x, card.pos.y - card.lift, cardWidth, cardHeight)
+            drawCard(card, cardRect, highlight: selected === card || forced === card, dim: canAct && forced != nil && forced !== card)
+            if i == 0 && canAct { padPrimary = cardRect }
+            if hoveredHand === card { hover = card }
+            if canAct { button(cardRect) { [weak self] in self?.clickHand(card) } }
         }
         for (i, (sym, act)) in [("♫", { [weak self] in self?.audio.musicOn.toggle() } as () -> Void), ("⏭", { [weak self] in self?.audio.skipTrack() })].enumerated() {
             let b = R(1570 + Float(i) * 52, 1018, 46, 46)
             padNoAuto.append(b)
             let on = i == 1 || audio.musicOn
-            let hov = b.contains(mouse)
-            renderer.rect(b, RGBA(r: 0.03, g: 0.03, b: 0.04, a: hov ? 0.9 : 0.7)); renderer.frame(b, RGBA.goldDark.alpha(hov ? 0.9 : 0.45), 1)
-            renderer.text(sym, .ui(24, bold: true), x: b.mid.x, y: b.y + 8, color: hov ? .white : RGBA(r: 0.93, g: 0.76, b: 0.35, a: on ? 1 : 0.35), align: .center)
+            let hovered = b.contains(mouse)
+            renderer.rect(b, RGBA(r: 0.03, g: 0.03, b: 0.04, a: hovered ? 0.9 : 0.7)); renderer.frame(b, RGBA.goldDark.alpha(hovered ? 0.9 : 0.45), 1)
+            renderer.text(sym, .ui(24, bold: true), x: b.mid.x, y: b.y + 8, color: hovered ? .white : RGBA(r: 0.93, g: 0.76, b: 0.35, a: on ? 1 : 0.35), align: .center)
             button(b, act)
         }
         exitConfirmT = max(0, exitConfirmT - dt)
@@ -547,117 +547,117 @@ final class Scene {
         }
         smallButton(R(292, 848, 150, 50), L("Pass"), enabled: canAct) { [weak self] in self?.selected = nil; self?.game?.humanPass() }
         padNoAuto.append(R(292, 944, 150, 50))
-        smallButton(R(292, 944, 150, 50), L("Give up"), enabled: g.phase != .over) { [weak self] in self?.game?.surrender() }
+        smallButton(R(292, 944, 150, 50), L("Give up"), enabled: match.phase != .over) { [weak self] in self?.game?.surrender() }
         drawFX(dt)
         if let h = hover ?? selected { drawPreview(h) }
-        if g.phase == .redraw && g.choice == nil { drawRedraw(g) }
-        if let ch = g.choice { drawChoice(ch, g) }
+        if match.phase == .redraw && match.choice == nil { drawRedraw(match) }
+        if let ch = match.choice { drawChoice(ch, match) }
         drawNotes(dt)
-        if g.phase == .over && notes.isEmpty { drawEnd(g) }
+        if match.phase == .over && notes.isEmpty { drawEnd(match) }
         let coinShown = fxList.contains { if case .coin = $0.kind { return true }; return false }
-        if g.phase == .play && !g.busy && g.choice == nil && notes.isEmpty && !coinShown && !rulesOpen {
+        if match.phase == .play && !match.busy && match.choice == nil && notes.isEmpty && !coinShown && !rulesOpen {
             aiT += dt
             let delay: Float = autotest ? 0.35 : 0.85
             if aiT > delay {
                 aiT = 0
-                if g.current === g.computer {
-                    if autotest { if let m = g.aiDecide(for: g.computer) { log("  Player 2: \(m.card?.key ?? (m.kind == .leader ? "LEADER \(g.computer.leaderAbility)" : "FACTION"))\(m.row.map { " -> \($0)" } ?? "")  [\(g.human.total):\(g.computer.total)]") } else { log("  Player 2: pass  [\(g.human.total):\(g.computer.total)]") } }
-                    Task { @MainActor in await g.aiTurn(g.computer) }
+                if match.current === match.computer {
+                    if autotest { if let m = match.aiDecide(for: match.computer) { log("  Player 2: \(m.card?.key ?? (m.kind == .leader ? "LEADER \(match.computer.leaderAbility)" : "FACTION"))\(m.row.map { " -> \($0)" } ?? "")  [\(match.human.total):\(match.computer.total)]") } else { log("  Player 2: pass  [\(match.human.total):\(match.computer.total)]") } }
+                    Task { @MainActor in await match.aiTurn(match.computer) }
                 }
-                else if autotest && g.current === g.human {
-                    if let m = g.aiDecide(for: g.human) { log("  Player 1: \(m.card?.key ?? (m.kind == .leader ? "LEADER \(g.human.leaderAbility)" : "FACTION"))\(m.row.map { " -> \($0)" } ?? "")  [\(g.human.total):\(g.computer.total)]") }
-                    else { log("  Player 1: pass  [\(g.human.total):\(g.computer.total)]") }
-                    Task { @MainActor in await g.aiTurn(g.human) }
+                else if autotest && match.current === match.human {
+                    if let m = match.aiDecide(for: match.human) { log("  Player 1: \(m.card?.key ?? (m.kind == .leader ? "LEADER \(match.human.leaderAbility)" : "FACTION"))\(m.row.map { " -> \($0)" } ?? "")  [\(match.human.total):\(match.computer.total)]") }
+                    else { log("  Player 1: pass  [\(match.human.total):\(match.computer.total)]") }
+                    Task { @MainActor in await match.aiTurn(match.human) }
                 }
             }
         } else { aiT = 0 }
-        if autotest { autoTest(g, dt) }
+        if autotest { autoTest(match, dt) }
     }
 
     private var watchdog: Float = 0
     private var lastSig = ""
     /// Automatic play used by tests (GWENT_AUTOTEST).
-    private func autoTest(_ g: Game, _ dt: Float) {
+    private func autoTest(_ match: Game, _ dt: Float) {
         autoT += dt
-        let sig = "\(g.turn)|\(g.round)|\(g.human.hand.count)|\(g.computer.hand.count)|\(g.phase)|\(g.human.total)|\(g.computer.total)"
+        let sig = "\(match.turn)|\(match.round)|\(match.human.hand.count)|\(match.computer.hand.count)|\(match.phase)|\(match.human.total)|\(match.computer.total)"
         if sig != lastSig { lastSig = sig; watchdog = 0 } else { watchdog += dt }
         if watchdog > 25 {
-            log("HANG: phase \(g.phase), turn \(g.current === g.human ? "Player 1" : "Player 2"), busy \(g.busy), choice: \(g.choice?.title ?? "none"), leaders \(g.human.leaderAbility)/\(g.computer.leaderAbility)")
+            log("HANG: phase \(match.phase), turn \(match.current === match.human ? "Player 1" : "Player 2"), busy \(match.busy), choice: \(match.choice?.title ?? "none"), leaders \(match.human.leaderAbility)/\(match.computer.leaderAbility)")
             watchdog = 0; gamesPlayed += 1; startGame(); return
         }
-        if g.phase == .redraw && autoT > 1 { autoT = 0; g.finishRedraw() }
-        if g.phase == .over && notes.isEmpty && autoT > 2 {
+        if match.phase == .redraw && autoT > 1 { autoT = 0; match.finishRedraw() }
+        if match.phase == .over && notes.isEmpty && autoT > 2 {
             autoT = 0; gamesPlayed += 1
-            log("END: rounds \(g.history.map { "\($0.human):\($0.computer)" }.joined(separator: ", ")) winner: \(g.winner === g.human ? "Player 1" : (g.winner === g.computer ? "Player 2" : "draw"))")
+            log("END: rounds \(match.history.map { "\($0.human):\($0.computer)" }.joined(separator: ", ")) winner: \(match.winner === match.human ? "Player 1" : (match.winner === match.computer ? "Player 2" : "draw"))")
             startGame()
         }
     }
 
     /// Smaller gold button that shrinks its font to fit.
-    func smallButton(_ b: R, _ title: String, enabled: Bool, _ action: @escaping () -> Void) {
+    func smallButton(_ box: R, _ title: String, enabled: Bool, _ action: @escaping () -> Void) {
         var f = Renderer.Font.serif(21, bold: true)
-        while renderer.measure(title, f).w > b.w - 18 && f.size > 11 { f = .serif(f.size - 1, bold: true) }
-        goldButton(b, title, font: f, enabled: enabled, action)
+        while renderer.measure(title, f).w > box.w - 18 && f.size > 11 { f = .serif(f.size - 1, bold: true) }
+        goldButton(box, title, font: f, enabled: enabled, action)
     }
 
     /// Player panel: name, faction, lives, card count and leader.
-    private func drawStats(_ p: Player, _ g: Game, canAct: Bool) {
-        let mine = p === g.human
+    private func drawStats(_ player: Player, _ match: Game, canAct: Bool) {
+        let mine = player === match.human
         let oy: Float = mine ? 666 : 263
         renderer.image("img/icons/profile.png", R(128, oy + 13, 99, 108))
         renderer.image("img/icons/icon_player_border.png", R(118, oy + 7, 116, 127))
         let shield = R(106, mine ? 748 : 270, 50, 55)
-        renderer.image("img/icons/deck_shield_\(p.faction).png", shield)
-        if shield.contains(mouse) { hoverText = gameData.factionName(p.faction) + "\n" + gameData.factionDesc(p.faction) }
+        renderer.image("img/icons/deck_shield_\(player.faction).png", shield)
+        if shield.contains(mouse) { hoverText = gameData.factionName(player.faction) + "\n" + gameData.factionDesc(player.faction) }
         let nameY: Float = mine ? 728 : 271
         renderer.text(mine ? playerName : (careerFightName ?? L("Player 2")), .gwent(24), x: 239, y: nameY, color: RGBA(r: 0.96, g: 0.85, b: 0.56, a: 1))
-        renderer.text(gameData.factionName(p.faction), .ui(17), x: 239, y: nameY + 27, color: .gray(0.85), maxWidth: 190)
+        renderer.text(gameData.factionName(player.faction), .ui(17), x: 239, y: nameY + 27, color: .gray(0.85), maxWidth: 190)
         let hcY: Float = mine ? 680 : 356
         renderer.image("img/icons/icon_card_count.png", R(240, hcY + 4, 30, 32))
-        renderer.text("\(p.hand.count)", .ui(30, bold: true), x: 274, y: hcY, color: RGBA(r: 0.93, g: 0.72, b: 0.2, a: 1))
+        renderer.text("\(player.hand.count)", .ui(30, bold: true), x: 274, y: hcY, color: RGBA(r: 0.93, g: 0.72, b: 0.2, a: 1))
         let gy: Float = mine ? 678 : 352
-        renderer.image("img/icons/icon_gem_\(p.gems >= 1 ? "on" : "off").png", R(319, gy, 41, 42))
-        renderer.image("img/icons/icon_gem_\(p.gems >= 2 ? "on" : "off").png", R(360, gy, 41, 42))
+        renderer.image("img/icons/icon_gem_\(player.gems >= 1 ? "on" : "off").png", R(319, gy, 41, 42))
+        renderer.image("img/icons/icon_gem_\(player.gems >= 2 ? "on" : "off").png", R(360, gy, 41, 42))
         let st = R(427, mine ? 708 : 305, 54, 54)
         renderer.image("img/icons/score_total_\(mine ? "me" : "op").png", st)
-        if p.total > p.opponent.total { renderer.image("img/icons/icon_high_score.png", R(st.x - 14, st.y - 12, 82, 78)) }
-        let th = renderer.measure("\(p.total)", .ui(30, bold: true)).h
-        renderer.text("\(p.total)", .ui(30, bold: true), x: st.mid.x, y: st.mid.y - th / 2, color: .black, align: .center, shadow: RGBA.white.alpha(0.5))
-        if p.passed { renderer.text(L("Passed"), .ui(24, bold: true), x: 330, y: mine ? 640 : 410, color: RGBA(r: 0.93, g: 0.72, b: 0.2, a: 1), align: .center) }
-        let lr = leaderRect(p)
-        p.leader.pos = SIMD2(lr.x, lr.y); p.leader.hasPos = true
-        let avail = g.leaderAvailable(p)
-        drawCard(p.leader, lr, dim: !avail && !Game.passiveLeaders.contains(p.leaderAbility))
-        renderer.image("img/icons/icon_leader_active.png", R(260, lr.y + 51, 38, 38), color: .white.alpha(avail ? 1 : 0.25))
-        if lr.contains(mouse) { hover = p.leader }
+        if player.total > player.opponent.total { renderer.image("img/icons/icon_high_score.png", R(st.x - 14, st.y - 12, 82, 78)) }
+        let textHeight = renderer.measure("\(player.total)", .ui(30, bold: true)).h
+        renderer.text("\(player.total)", .ui(30, bold: true), x: st.mid.x, y: st.mid.y - textHeight / 2, color: .black, align: .center, shadow: RGBA.white.alpha(0.5))
+        if player.passed { renderer.text(L("Passed"), .ui(24, bold: true), x: 330, y: mine ? 640 : 410, color: RGBA(r: 0.93, g: 0.72, b: 0.2, a: 1), align: .center) }
+        let leaderArea = leaderRect(player)
+        player.leader.pos = SIMD2(leaderArea.x, leaderArea.y); player.leader.hasPos = true
+        let avail = match.leaderAvailable(player)
+        drawCard(player.leader, leaderArea, dim: !avail && !Game.passiveLeaders.contains(player.leaderAbility))
+        renderer.image("img/icons/icon_leader_active.png", R(260, leaderArea.y + 51, 38, 38), color: .white.alpha(avail ? 1 : 0.25))
+        if leaderArea.contains(mouse) { hover = player.leader }
         if mine && canAct && avail {
-            if lr.contains(mouse) { renderer.frame(lr.inset(-3), RGBA.gold, 3) }
-            button(lr) { [weak self] in self?.game?.humanLeader() }
-            button(R(260, lr.y + 51, 38, 38)) { [weak self] in self?.game?.humanLeader() }
+            if leaderArea.contains(mouse) { renderer.frame(leaderArea.inset(-3), RGBA.gold, 3) }
+            button(leaderArea) { [weak self] in self?.game?.humanLeader() }
+            button(R(260, leaderArea.y + 51, 38, 38)) { [weak self] in self?.game?.humanLeader() }
         }
-        if mine, let f = g.factionActive(p) {
+        if mine, let f = match.factionActive(player) {
             let b = R(160, 612, 150, 34)
             let title = f == "transform" ? L("Transform") : (f.hasPrefix("skip") ? L("Skip turn") : L("Faction ability"))
             smallButton(b, title, enabled: canAct) { [weak self] in self?.game?.humanFaction() }
         }
-        let dr = deckRect(p)
-        let n = p.deck.count
-        for i in 0..<min(4, n) { renderer.image("img/icons/deck_back_\(p.faction).jpg", R(dr.x - Float(i), dr.y - Float(i), dr.w, dr.h)) }
+        let deckArea = deckRect(player)
+        let n = player.deck.count
+        for i in 0..<min(4, n) { renderer.image("img/icons/deck_back_\(player.faction).jpg", R(deckArea.x - Float(i), deckArea.y - Float(i), deckArea.w, deckArea.h)) }
         if n > 0 {
-            renderer.rect(R(dr.mid.x - 22, dr.y + dr.h - 40, 44, 30), RGBA.black.alpha(0.6))
-            renderer.text("\(n)", .ui(22, bold: true), x: dr.mid.x, y: dr.y + dr.h - 38, color: .white, align: .center)
+            renderer.rect(R(deckArea.mid.x - 22, deckArea.y + deckArea.h - 40, 44, 30), RGBA.black.alpha(0.6))
+            renderer.text("\(n)", .ui(22, bold: true), x: deckArea.mid.x, y: deckArea.y + deckArea.h - 38, color: .white, align: .center)
         }
-        let gr = graveRect(p)
-        for c in p.grave { move(c, to: SIMD2(gr.x, gr.y), from: SIMD2(gr.x, gr.y), dt: 1 / 60) }
-        if let top = p.grave.last {
+        let graveArea = graveRect(player)
+        for card in player.grave { move(card, to: SIMD2(graveArea.x, graveArea.y), from: SIMD2(graveArea.x, graveArea.y), dt: 1 / 60) }
+        if let top = player.grave.last {
             drawCard(top, R(top.pos.x, top.pos.y, cardWidth, cardHeight))
             if R(top.pos.x, top.pos.y, cardWidth, cardHeight).contains(mouse) { hover = top }
         }
     }
 
     /// Icon file for an ability.
-    private func abilityIcon(_ a: String) -> String {
-        var s = a
+    private func abilityIcon(_ ability: String) -> String {
+        var s = ability
         if s == "cerys" { s = "muster" }
         if s.hasPrefix("avenger") { s = "avenger" }
         if ["scorch_c", "scorch_r", "scorch_s"].contains(s) { s = "scorch_combat" }
@@ -665,79 +665,79 @@ final class Scene {
         return "img/icons/card_ability_\(s).png"
     }
     /// Power badge image of a card.
-    private func powerBadge(_ c: Card) -> String {
-        if c.hero { return "img/icons/power_hero.png" }
-        if c.data.isSpecial || c.data.isWeather {
-            var s = c.data.abilities.first ?? "normal"
+    private func powerBadge(_ card: Card) -> String {
+        if card.hero { return "img/icons/power_hero.png" }
+        if card.data.isSpecial || card.data.isWeather {
+            var s = card.data.abilities.first ?? "normal"
             if ["shield_c", "shield_r", "shield_s"].contains(s) { s = "shield" }
             return "img/icons/power_\(s).png"
         }
         return "img/icons/power_normal.png"
     }
     /// Draws a small card with power, row and ability icons.
-    func drawCard(_ c: Card, _ cr: R, highlight: Bool = false, dim: Bool = false) {
-        let s = cr.w / cardWidth
-        renderer.imageCover(c.data.image, cr, color: dim ? .gray(0.45) : .white)
-        if c.flash > 0 { renderer.rect(cr, RGBA(r: 1, g: 0.9, b: 0.6, a: c.flash * 0.35)) }
-        if c.data.isLeader { if highlight { renderer.frame(cr.inset(-3), RGBA.gold, 3) }; return }
-        renderer.image(powerBadge(c), R(cr.x - 3 * s, cr.y - 5 * s, 60 * s, 61 * s))
-        if c.data.isUnit {
-            let v = c.power
-            let col: RGBA = c.hero ? .white : (v > c.basePower ? RGBA(r: 0.1, g: 0.55, b: 0.1, a: 1) : (v < c.basePower ? RGBA(r: 0.75, g: 0.1, b: 0.1, a: 1) : .black))
+    func drawCard(_ card: Card, _ cardRect: R, highlight: Bool = false, dim: Bool = false) {
+        let s = cardRect.w / cardWidth
+        renderer.imageCover(card.data.image, cardRect, color: dim ? .gray(0.45) : .white)
+        if card.flash > 0 { renderer.rect(cardRect, RGBA(r: 1, g: 0.9, b: 0.6, a: card.flash * 0.35)) }
+        if card.data.isLeader { if highlight { renderer.frame(cardRect.inset(-3), RGBA.gold, 3) }; return }
+        renderer.image(powerBadge(card), R(cardRect.x - 3 * s, cardRect.y - 5 * s, 60 * s, 61 * s))
+        if card.data.isUnit {
+            let v = card.power
+            let col: RGBA = card.hero ? .white : (v > card.basePower ? RGBA(r: 0.1, g: 0.55, b: 0.1, a: 1) : (v < card.basePower ? RGBA(r: 0.75, g: 0.1, b: 0.1, a: 1) : .black))
             let cx: Float = 16.3, cy: Float = 14.6
             var pop: Float = 0
-            if let seen = powerSeen[c.id] { pop = seen.0 != v ? 0.45 : max(0, seen.1 - frameDT) }
-            powerSeen[c.id] = (v, pop)
-            let f = Renderer.Font.ui((c.hero ? 21 : 19) * s * (1 + pop * 1.1), bold: true)
-            let th = renderer.measure("\(v)", f).h
-            if pop > 0 { renderer.quad(glowTex, R(cr.x + cx * s - 22 * s, cr.y + cy * s - 22 * s, 44 * s, 44 * s), color: RGBA(r: 1, g: 0.9, b: 0.5, a: pop * 1.6)) }
-            renderer.text("\(v)", f, x: cr.x + cx * s, y: cr.y + cy * s - th / 2, color: col, align: .center, shadow: nil)
-            let rowName = c.data.row.hasPrefix("agile") ? c.data.row : c.data.row
-            renderer.image("img/icons/card_row_\(rowName).png", R(cr.x + 56 * s, cr.y + 91 * s, 28 * s, 27 * s))
-            let abis = c.data.abilities.filter { $0 != "hero" }
-            if let a = abis.last { renderer.image(abilityIcon(a), R(cr.x + 28 * s, cr.y + 91 * s, 28 * s, 27 * s)) }
-            else if c.data.row.hasPrefix("agile") { renderer.image("img/icons/card_ability_agile.png", R(cr.x + 28 * s, cr.y + 91 * s, 28 * s, 27 * s)) }
-            if abis.count > 1 { renderer.image(abilityIcon(abis[abis.count - 2]), R(cr.x + 0 * s, cr.y + 91 * s, 28 * s, 27 * s)) }
+            if let seen = powerSeen[card.id] { pop = seen.0 != v ? 0.45 : max(0, seen.1 - frameDT) }
+            powerSeen[card.id] = (v, pop)
+            let f = Renderer.Font.ui((card.hero ? 21 : 19) * s * (1 + pop * 1.1), bold: true)
+            let textHeight = renderer.measure("\(v)", f).h
+            if pop > 0 { renderer.quad(glowTex, R(cardRect.x + cx * s - 22 * s, cardRect.y + cy * s - 22 * s, 44 * s, 44 * s), color: RGBA(r: 1, g: 0.9, b: 0.5, a: pop * 1.6)) }
+            renderer.text("\(v)", f, x: cardRect.x + cx * s, y: cardRect.y + cy * s - textHeight / 2, color: col, align: .center, shadow: nil)
+            let rowName = card.data.row.hasPrefix("agile") ? card.data.row : card.data.row
+            renderer.image("img/icons/card_row_\(rowName).png", R(cardRect.x + 56 * s, cardRect.y + 91 * s, 28 * s, 27 * s))
+            let abis = card.data.abilities.filter { $0 != "hero" }
+            if let a = abis.last { renderer.image(abilityIcon(a), R(cardRect.x + 28 * s, cardRect.y + 91 * s, 28 * s, 27 * s)) }
+            else if card.data.row.hasPrefix("agile") { renderer.image("img/icons/card_ability_agile.png", R(cardRect.x + 28 * s, cardRect.y + 91 * s, 28 * s, 27 * s)) }
+            if abis.count > 1 { renderer.image(abilityIcon(abis[abis.count - 2]), R(cardRect.x + 0 * s, cardRect.y + 91 * s, 28 * s, 27 * s)) }
         }
-        if highlight { renderer.frame(cr.inset(-3), RGBA.gold, 3) }
+        if highlight { renderer.frame(cardRect.inset(-3), RGBA.gold, 3) }
     }
     private var largeCache: [String: Card] = [:]
     /// Draws a large card with its name and quote.
-    func drawCardLarge(_ c: Card, _ cr: R, cache: String = "") {
-        renderer.imageCover(c.data.image, cr)
-        let bh = cr.h * 0.26
-        let br = R(cr.x, cr.y + cr.h - bh, cr.w, bh)
-        renderer.gradient(br, RGBA(r: 0.95, g: 0.91, b: 0.82, a: 1), RGBA(r: 0.84, g: 0.77, b: 0.63, a: 1), steps: 10)
-        renderer.rect(R(br.x, br.y, br.w, max(1.5, cr.w * 0.008)), RGBA(r: 0.55, g: 0.42, b: 0.2, a: 1))
-        let nf = Renderer.Font.serif(max(10, cr.w * 0.078), bold: true)
-        let nh = renderer.text(gameData.cardName(c.data), nf, x: br.mid.x, y: br.y + bh * 0.08, color: RGBA(r: 0.22, g: 0.15, b: 0.06, a: 1), maxWidth: br.w - cr.w * 0.08, align: .center, shadow: nil).h
-        let q = gameData.cardQuote(c.data)
-        if !q.isEmpty && cr.w >= 150 {
-            renderer.text(q, .serif(max(9, cr.w * 0.053), italic: true), x: br.mid.x, y: br.y + bh * 0.06 + nh, color: RGBA(r: 0.13, g: 0.09, b: 0.04, a: 1), maxWidth: br.w - cr.w * 0.1, align: .center, shadow: nil)
+    func drawCardLarge(_ card: Card, _ cardRect: R, cache: String = "") {
+        renderer.imageCover(card.data.image, cardRect)
+        let bandHeight = cardRect.h * 0.26
+        let band = R(cardRect.x, cardRect.y + cardRect.h - bandHeight, cardRect.w, bandHeight)
+        renderer.gradient(band, RGBA(r: 0.95, g: 0.91, b: 0.82, a: 1), RGBA(r: 0.84, g: 0.77, b: 0.63, a: 1), steps: 10)
+        renderer.rect(R(band.x, band.y, band.w, max(1.5, cardRect.w * 0.008)), RGBA(r: 0.55, g: 0.42, b: 0.2, a: 1))
+        let nameFont = Renderer.Font.serif(max(10, cardRect.w * 0.078), bold: true)
+        let nameHeight = renderer.text(gameData.cardName(card.data), nameFont, x: band.mid.x, y: band.y + bandHeight * 0.08, color: RGBA(r: 0.22, g: 0.15, b: 0.06, a: 1), maxWidth: band.w - cardRect.w * 0.08, align: .center, shadow: nil).h
+        let quote = gameData.cardQuote(card.data)
+        if !quote.isEmpty && cardRect.w >= 150 {
+            renderer.text(quote, .serif(max(9, cardRect.w * 0.053), italic: true), x: band.mid.x, y: band.y + bandHeight * 0.06 + nameHeight, color: RGBA(r: 0.13, g: 0.09, b: 0.04, a: 1), maxWidth: band.w - cardRect.w * 0.1, align: .center, shadow: nil)
         }
-        if c.data.isLeader { return }
-        let s = cr.w / cardWidth * 0.5
-        renderer.image(powerBadge(c), R(cr.x - 3 * s, cr.y - 5 * s, 60 * s, 61 * s))
-        if c.data.isUnit {
+        if card.data.isLeader { return }
+        let s = cardRect.w / cardWidth * 0.5
+        renderer.image(powerBadge(card), R(cardRect.x - 3 * s, cardRect.y - 5 * s, 60 * s, 61 * s))
+        if card.data.isUnit {
             let cx: Float = 16.3, cy: Float = 14.6
-            let f = Renderer.Font.ui((c.hero ? 21 : 19) * s, bold: true)
-            let th = renderer.measure("\(c.basePower)", f).h
-            renderer.text("\(c.basePower)", f, x: cr.x + cx * s, y: cr.y + cy * s - th / 2, color: c.hero ? .white : .black, align: .center, shadow: nil)
-            renderer.image("img/icons/card_row_\(c.data.row).png", R(cr.x - 3 * s + 6 * s, cr.y + 58 * s, 44 * s, 42 * s))
-            if let a = c.data.abilities.filter({ $0 != "hero" }).last { renderer.image(abilityIcon(a), R(cr.x + 3 * s, cr.y + 102 * s, 44 * s, 42 * s)) }
+            let f = Renderer.Font.ui((card.hero ? 21 : 19) * s, bold: true)
+            let textHeight = renderer.measure("\(card.basePower)", f).h
+            renderer.text("\(card.basePower)", f, x: cardRect.x + cx * s, y: cardRect.y + cy * s - textHeight / 2, color: card.hero ? .white : .black, align: .center, shadow: nil)
+            renderer.image("img/icons/card_row_\(card.data.row).png", R(cardRect.x - 3 * s + 6 * s, cardRect.y + 58 * s, 44 * s, 42 * s))
+            if let a = card.data.abilities.filter({ $0 != "hero" }).last { renderer.image(abilityIcon(a), R(cardRect.x + 3 * s, cardRect.y + 102 * s, 44 * s, 42 * s)) }
         }
     }
     /// Card preview with the ability description.
-    func drawPreview(_ c: Card) {
-        let cr = R(1538, 232, 330, 474)
-        renderer.rect(cr.inset(-6), RGBA.black.alpha(0.55))
-        drawCardLarge(c, cr)
+    func drawPreview(_ card: Card) {
+        let cardRect = R(1538, 232, 330, 474)
+        renderer.rect(cardRect.inset(-6), RGBA.black.alpha(0.55))
+        drawCardLarge(card, cardRect)
         var lines: [(String, String)] = []
-        if c.data.isLeader { if let a = c.data.abilities.last { lines.append((L("Leader Ability"), gameData.abilityDesc(a))) } }
+        if card.data.isLeader { if let a = card.data.abilities.last { lines.append((L("Leader Ability"), gameData.abilityDesc(a))) } }
         else {
-            if c.data.row.hasPrefix("agile") { lines.append((gameData.abilityName("agile"), gameData.abilityDesc("agile"))) }
-            for a in c.data.abilities where a != "hero" { lines.append((gameData.abilityName(a), gameData.abilityDesc(a))) }
-            if c.hero { lines.append((L("Hero"), gameData.abilityDesc("hero"))) }
+            if card.data.row.hasPrefix("agile") { lines.append((gameData.abilityName("agile"), gameData.abilityDesc("agile"))) }
+            for a in card.data.abilities where a != "hero" { lines.append((gameData.abilityName(a), gameData.abilityDesc(a))) }
+            if card.hero { lines.append((L("Hero"), gameData.abilityDesc("hero"))) }
         }
         guard !lines.isEmpty else { return }
         var y: Float = 720
@@ -754,31 +754,31 @@ final class Scene {
     }
 
     /// Selects or plays a card from the hand.
-    private func clickHand(_ c: Card) {
-        guard let g = game, g.phase == .play, g.current === g.human, !g.busy, g.choice == nil else { return }
-        if let f = g.human.forcedCard, f !== c { notes.append((L("You must play the marked card."), nil)); return }
-        if selected === c {
-            if isFreeSpecial(c) { playSelected(c); return }
-            if c.isUnit, g.validRows(for: c, by: g.human).count == 1 { playSelected(c, row: g.validRows(for: c, by: g.human)[0]); return }
-            if !c.isUnit, ["lock", "knockback"].contains(c.specialKind ?? "") == false, c.specialKind != "decoy", c.specialKind != "curse", g.validRows(for: c, by: g.human).count == 1 {
-                playSelected(c, row: g.validRows(for: c, by: g.human)[0], rowOwner: g.human); return
+    private func clickHand(_ card: Card) {
+        guard let match = game, match.phase == .play, match.current === match.human, !match.busy, match.choice == nil else { return }
+        if let f = match.human.forcedCard, f !== card { notes.append((L("You must play the marked card."), nil)); return }
+        if selected === card {
+            if isFreeSpecial(card) { playSelected(card); return }
+            if card.isUnit, match.validRows(for: card, by: match.human).count == 1 { playSelected(card, row: match.validRows(for: card, by: match.human)[0]); return }
+            if !card.isUnit, ["lock", "knockback"].contains(card.specialKind ?? "") == false, card.specialKind != "decoy", card.specialKind != "curse", match.validRows(for: card, by: match.human).count == 1 {
+                playSelected(card, row: match.validRows(for: card, by: match.human)[0], rowOwner: match.human); return
             }
             selected = nil
             return
         }
-        selected = c
+        selected = card
         audio.play("card", volume: 0.5)
     }
     /// Plays the selected card on a row or target.
-    private func playSelected(_ c: Card, row: RowType? = nil, rowOwner: Player? = nil, target: Card? = nil) {
-        guard let g = game else { return }
+    private func playSelected(_ card: Card, row: RowType? = nil, rowOwner: Player? = nil, target: Card? = nil) {
+        guard let match = game else { return }
         selected = nil
-        g.humanPlay(c, row: row, rowOwner: rowOwner, target: target)
+        match.humanPlay(card, row: row, rowOwner: rowOwner, target: target)
     }
 
     /// Turns engine events into notifications, sounds and effects.
-    private func processEvents(_ g: Game, _ dt: Float) {
-        for e in g.events {
+    private func processEvents(_ match: Game, _ dt: Float) {
+        for e in match.events {
             switch e {
             case .notify(let t, let icon): notes.append((t, icon)); if notes.count > 4 { notes.removeFirst(notes.count - 4) }
             case .sound(let s): audio.play(s)
@@ -786,7 +786,7 @@ final class Scene {
             case .anim, .burn, .coin: addFX(e)
             }
         }
-        g.events.removeAll()
+        match.events.removeAll()
     }
     /// Draws the current notification banner.
     private func drawNotes(_ dt: Float) {
@@ -804,10 +804,10 @@ final class Scene {
         let a = max(0, min(1, min(noteT / 0.15, (dur - noteT) / 0.2)))
         let e = min(1, noteT / 0.18), ease = 1 - (1 - e) * (1 - e)
         let f = Renderer.Font.gwent(34)
-        let tw = min(900, renderer.measure(n.text, f, maxWidth: 900).w)
-        let th = renderer.measure(n.text, f, maxWidth: 900).h
+        let textWidth = min(900, renderer.measure(n.text, f, maxWidth: 900).w)
+        let textHeight = renderer.measure(n.text, f, maxWidth: 900).h
         let iw: Float = n.icon == nil ? 0 : 96
-        let w = tw + iw + 90, h = max(110, th + 50)
+        let w = textWidth + iw + 90, h = max(110, textHeight + 50)
         let card = R(960 - w / 2, 500 - h / 2 + (1 - ease) * 18, w, h)
         renderer.rect(R(0, 0, virtualWidth, virtualHeight), RGBA.black.alpha(0.25 * a))
         renderer.gradient(card, RGBA(r: 0.08, g: 0.07, b: 0.06, a: 0.93 * a), RGBA(r: 0.02, g: 0.02, b: 0.03, a: 0.95 * a), steps: 8)
@@ -816,7 +816,7 @@ final class Scene {
         renderer.frame(card, RGBA.goldDark.alpha(0.35 * a), 1)
         var x = card.x + 45
         if let icon = n.icon { renderer.image("img/icons/\(icon).png", R(x - 10, card.mid.y - 52, 104, 104), color: .white.alpha(a)); x += iw + 10 }
-        renderer.text(n.text, f, x: n.icon == nil ? card.mid.x : x, y: card.mid.y - th / 2, color: RGBA(r: 0.97, g: 0.88, b: 0.62, a: a), maxWidth: 900, align: n.icon == nil ? .center : .left, shadow: nil)
+        renderer.text(n.text, f, x: n.icon == nil ? card.mid.x : x, y: card.mid.y - textHeight / 2, color: RGBA(r: 0.97, g: 0.88, b: 0.62, a: a), maxWidth: 900, align: n.icon == nil ? .center : .left, shadow: nil)
         if noteT >= dur { notes.removeFirst(); noteT = 0 }
     }
 
@@ -830,57 +830,57 @@ final class Scene {
         let rows = Int((Double(n) / Double(perRow)).rounded(.up))
         let w: Float = rows > 2 ? 120 : (rows > 1 ? 168 : 190), h = w * 1.437, gap: Float = rows > 2 ? 12 : 22
         let y0: Float = rows > 1 ? 195 : 330
-        for (i, c) in cards.enumerated() {
+        for (i, card) in cards.enumerated() {
             let rowI = i / perRow, colI = i % perRow
             let inRow = min(perRow, n - rowI * perRow)
             let x0 = 960 - (Float(inRow) * w + Float(inRow - 1) * gap) / 2
-            let cr = R(x0 + Float(colI) * (w + gap), y0 + Float(rowI) * (h + gap), w, h)
-            if cr.y > 960 { break }
-            let hov = cr.contains(mouse)
-            drawCardLarge(c, cr)
-            if marked.contains(where: { $0 === c }) { renderer.frame(cr.inset(-5), RGBA(r: 0.3, g: 0.85, b: 0.3, a: 1), 4) }
-            if hov { renderer.frame(cr.inset(-4), RGBA.gold, 3); hover = c }
-            button(cr) { onClick(c) }
+            let cardRect = R(x0 + Float(colI) * (w + gap), y0 + Float(rowI) * (h + gap), w, h)
+            if cardRect.y > 960 { break }
+            let hovered = cardRect.contains(mouse)
+            drawCardLarge(card, cardRect)
+            if marked.contains(where: { $0 === card }) { renderer.frame(cardRect.inset(-5), RGBA(r: 0.3, g: 0.85, b: 0.3, a: 1), 4) }
+            if hovered { renderer.frame(cardRect.inset(-4), RGBA.gold, 3); hover = card }
+            button(cardRect) { onClick(card) }
         }
         return R(0, min(985, y0 + Float(rows) * (h + gap)), virtualWidth, 0)
     }
     /// Redraw phase overlay.
-    private func drawRedraw(_ g: Game) {
-        let end = overlayCards(g.human.hand, title: L("Click a card to redraw it"),
-                               info: L("Redraws left: ") + "\(g.redrawsLeft)") { [weak self] c in
-            guard let g = self?.game, g.redrawsLeft > 0, !g.busy else { return }
-            if let n = g.redraw(c) { n.hasPos = false }
-            if g.redrawsLeft == 0 { g.finishRedraw() }
+    private func drawRedraw(_ match: Game) {
+        let end = overlayCards(match.human.hand, title: L("Click a card to redraw it"),
+                               info: L("Redraws left: ") + "\(match.redrawsLeft)") { [weak self] c in
+            guard let match = self?.game, match.redrawsLeft > 0, !match.busy else { return }
+            if let n = match.redraw(c) { n.hasPos = false }
+            if match.redrawsLeft == 0 { match.finishRedraw() }
         }
         goldButton(R(960 - 150, min(990, end.y + 10), 300, 60), L("Done"), font: .gwent(30)) { [weak self] in self?.game?.finishRedraw() }
         if let h = hover { drawPreview(h) }
     }
     /// Overlay for a pending choice of the human player.
-    private func drawChoice(_ ch: Choice, _ g: Game) {
-        switch ch.kind {
+    private func drawChoice(_ choice: Choice, _ match: Game) {
+        switch choice.kind {
         case .cards(let cards, let mn, let mx):
             let multi = mx > 1 || mn != 1
-            let end = overlayCards(cards, title: ch.title, info: multi ? L("Selected: ") + "\(multiSel.count) / \(mx)" : nil, marked: multiSel) { [weak self] c in
+            let end = overlayCards(cards, title: choice.title, info: multi ? L("Selected: ") + "\(multiSel.count) / \(mx)" : nil, marked: multiSel) { [weak self] c in
                 guard let s = self else { return }
-                if !multi { g.resolveChoice([cards.firstIndex { $0 === c }!]); return }
+                if !multi { match.resolveChoice([cards.firstIndex { $0 === c }!]); return }
                 if let i = s.multiSel.firstIndex(where: { $0 === c }) { s.multiSel.remove(at: i) }
                 else if s.multiSel.count < mx { s.multiSel.append(c) }
             }
             var bx: Float = 960 - 150
             if multi {
                 let ok = multiSel.count >= mn && multiSel.count <= mx
-                goldButton(R(ch.canCancel ? 960 - 320 : bx, min(990, end.y + 10), 300, 60), L("Done"), font: .gwent(30), enabled: ok) { [weak self] in
+                goldButton(R(choice.canCancel ? 960 - 320 : bx, min(990, end.y + 10), 300, 60), L("Done"), font: .gwent(30), enabled: ok) { [weak self] in
                     guard let s = self else { return }
                     let idx = s.multiSel.compactMap { m in cards.firstIndex { $0 === m } }
-                    s.multiSel = []; g.resolveChoice(idx)
+                    s.multiSel = []; match.resolveChoice(idx)
                 }
                 bx = 960 + 20
             }
-            if ch.canCancel { goldButton(R(multi ? bx : 960 - 150, min(990, end.y + 10), 300, 60), L("Skip"), font: .serif(24, bold: true)) { [weak self] in self?.multiSel = []; g.resolveChoice(nil) } }
+            if choice.canCancel { goldButton(R(multi ? bx : 960 - 150, min(990, end.y + 10), 300, 60), L("Skip"), font: .serif(24, bold: true)) { [weak self] in self?.multiSel = []; match.resolveChoice(nil) } }
             if let h = hover { drawPreview(h) }
         case .reveal(let cards):
-            let end = overlayCards(cards, title: ch.title, info: nil) { _ in g.resolveChoice(nil) }
-            goldButton(R(960 - 150, min(990, end.y + 10), 300, 60), L("Close"), font: .serif(24, bold: true)) { g.resolveChoice(nil) }
+            let end = overlayCards(cards, title: choice.title, info: nil) { _ in match.resolveChoice(nil) }
+            goldButton(R(960 - 150, min(990, end.y + 10), 300, 60), L("Close"), font: .serif(24, bold: true)) { match.resolveChoice(nil) }
             if let h = hover { drawPreview(h) }
         case .options(let opts):
             renderer.rect(R(0, 0, virtualWidth, virtualHeight), RGBA.black.alpha(0.55))
@@ -891,36 +891,36 @@ final class Scene {
             let box = R(960 - 420, 540 - boxH / 2, 840, boxH)
             renderer.gradient(box, RGBA(r: 0.12, g: 0.09, b: 0.05, a: 0.97), RGBA(r: 0.05, g: 0.04, b: 0.02, a: 0.97), steps: 10)
             renderer.frame(box, RGBA.goldDark, 2)
-            renderer.text(ch.title, .serif(26, bold: true), x: 960, y: box.y + 30, color: RGBA.gold, maxWidth: 760, align: .center)
+            renderer.text(choice.title, .serif(26, bold: true), x: 960, y: box.y + 30, color: RGBA.gold, maxWidth: 760, align: .center)
             for (i, o) in opts.enumerated() {
                 let row = i / cols, col = i % cols
                 let inRow = min(cols, opts.count - row * cols)
                 let x0 = 960 - (Float(inRow) * bw + Float(inRow - 1) * 16) / 2
-                goldButton(R(x0 + Float(col) * (bw + 16), box.y + 120 + Float(row) * (bh + 16), bw, bh), o, font: .serif(22, bold: true)) { g.resolveChoice([i]) }
+                goldButton(R(x0 + Float(col) * (bw + 16), box.y + 120 + Float(row) * (bh + 16), bw, bh), o, font: .serif(22, bold: true)) { match.resolveChoice([i]) }
             }
         case .rows:
             let b = R(560, 820, 960, 46)
             renderer.rect(b, RGBA.black.alpha(0.8)); renderer.frame(b, RGBA.goldDark.alpha(0.7), 1)
-            renderer.text(ch.title, .serif(22, bold: true), x: b.mid.x, y: b.y + 10, color: RGBA.gold, maxWidth: 940, align: .center)
+            renderer.text(choice.title, .serif(22, bold: true), x: b.mid.x, y: b.y + 10, color: RGBA.gold, maxWidth: 940, align: .center)
         }
     }
 
     /// End-of-match screen.
-    private func drawEnd(_ g: Game) {
+    private func drawEnd(_ match: Game) {
         renderer.rect(R(0, 0, virtualWidth, virtualHeight), RGBA.black.alpha(0.8))
-        let img = g.winner === g.human ? "end_win" : (g.winner === g.computer ? "end_lose" : "end_draw")
+        let img = match.winner === match.human ? "end_win" : (match.winner === match.computer ? "end_lose" : "end_draw")
         renderer.imageContain("img/icons/\(img).png", R(660, 90, 600, 360))
         renderer.text(L("Round"), .serif(24, bold: true), x: 760, y: 500, color: .gray(0.8), align: .center)
         renderer.text(playerName, .serif(24, bold: true), x: 960, y: 500, color: RGBA.gold, maxWidth: 190, align: .center)
         renderer.text(careerFightName ?? L("Player 2"), .serif(24, bold: true), x: 1160, y: 500, color: RGBA.gold, maxWidth: 190, align: .center)
-        for (i, h) in g.history.enumerated() {
+        for (i, h) in match.history.enumerated() {
             let y = 545 + Float(i) * 44
             renderer.text("\(i + 1)", .ui(26, bold: true), x: 760, y: y, color: .white, align: .center)
-            renderer.text("\(h.human)", .ui(26, bold: true), x: 960, y: y, color: h.winner === g.human ? RGBA.gold : .white, align: .center)
-            renderer.text("\(h.computer)", .ui(26, bold: true), x: 1160, y: y, color: h.winner === g.computer ? RGBA.gold : .white, align: .center)
+            renderer.text("\(h.human)", .ui(26, bold: true), x: 960, y: y, color: h.winner === match.human ? RGBA.gold : .white, align: .center)
+            renderer.text("\(h.computer)", .ui(26, bold: true), x: 1160, y: y, color: h.winner === match.computer ? RGBA.gold : .white, align: .center)
         }
         if let fi = careerFight {
-            if g.winner === g.human {
+            if match.winner === match.human {
                 goldButton(R(960 - 160, 760, 320, 64), L("Claim reward"), font: .serif(26, bold: true)) { [weak self] in
                     guard let s = self else { return }
                     s.careerRewards = s.career.rewardOptions(fi); s.careerNewLeader = s.career.win(fi)

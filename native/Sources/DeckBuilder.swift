@@ -14,7 +14,7 @@ final class DeckBuilder {
     var ownedLeaders: [String]?
     var careerMode: Bool { limit != nil }
     /// Maximum copies of a card allowed in the deck.
-    func cap(_ d: CardData) -> Int { min(d.count, limit?[d.key] ?? d.count) }
+    func cap(_ cardData: CardData) -> Int { min(cardData.count, limit?[cardData.key] ?? cardData.count) }
     /// Loads the career deck and the owned cards as limits.
     func loadCareer() {
         let c = Career.shared
@@ -39,17 +39,17 @@ final class DeckBuilder {
             return parts.first == faction
         }.sorted { a, b in
             /// Sort order: units first, then specials and weather.
-            func rank(_ d: CardData) -> Int { d.isLeader ? 0 : (d.isWeather ? 1 : (d.isSpecial ? 2 : 3)) }
+            func rank(_ cardData: CardData) -> Int { cardData.isLeader ? 0 : (cardData.isWeather ? 1 : (cardData.isSpecial ? 2 : 3)) }
             if rank(a) != rank(b) { return rank(a) < rank(b) }
             if a.strength != b.strength { return a.strength > b.strength }
             return a.name < b.name
         }
     }
     /// Loads an existing deck for editing.
-    func load(_ d: DeckData, customIndex: Int?) {
-        faction = d.faction; leaderKey = d.leader; title = d.title; editingIndex = customIndex; limit = nil; ownedLeaders = nil
+    func load(_ deck: DeckData, customIndex: Int?) {
+        faction = deck.faction; leaderKey = deck.leader; title = deck.title; editingIndex = customIndex; limit = nil; ownedLeaders = nil
         counts = [:]
-        for (k, n) in d.cards { counts[k, default: 0] += n }
+        for (k, n) in deck.cards { counts[k, default: 0] += n }
         scrollL = 0; scrollR = 0
     }
     /// Starts an empty deck for a faction.
@@ -68,14 +68,14 @@ final class DeckBuilder {
     }
     var valid: Bool { let s = stats; return s.units >= 22 && s.specials <= 10 && !leaderKey.isEmpty }
     /// Adds one copy of a card.
-    func add(_ d: CardData) {
-        let n = counts[d.key] ?? 0
-        guard n < cap(d) else { return }
-        if (d.isSpecial || d.isWeather) && stats.specials >= 10 { return }
-        counts[d.key] = n + 1
+    func add(_ cardData: CardData) {
+        let n = counts[cardData.key] ?? 0
+        guard n < cap(cardData) else { return }
+        if (cardData.isSpecial || cardData.isWeather) && stats.specials >= 10 { return }
+        counts[cardData.key] = n + 1
     }
     /// Removes one copy of a card.
-    func remove(_ d: CardData) { let n = (counts[d.key] ?? 0) - 1; counts[d.key] = n > 0 ? n : nil }
+    func remove(_ cardData: CardData) { let n = (counts[cardData.key] ?? 0) - 1; counts[cardData.key] = n > 0 ? n : nil }
     /// Converts the builder state into a playable deck.
     func asDeck() -> DeckData {
         DeckData(title: title.isEmpty ? L("My deck") + " — " + gameData.factionName(faction) : title, description: "", leader: leaderKey, faction: faction,

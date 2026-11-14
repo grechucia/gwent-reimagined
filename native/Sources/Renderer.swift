@@ -15,9 +15,9 @@ let virtualWidth: Float = 1920, virtualHeight: Float = 1080
 struct RGBA { var r, g, b, a: Float
     static let white = RGBA(r: 1, g: 1, b: 1, a: 1), black = RGBA(r: 0, g: 0, b: 0, a: 1)
     /// Grey colour.
-    static func gray(_ v: Float, _ a: Float = 1) -> RGBA { RGBA(r: v, g: v, b: v, a: a) }
+    static func gray(_ value: Float, _ alpha: Float = 1) -> RGBA { RGBA(r: value, g: value, b: value, a: alpha) }
     /// Same colour with alpha multiplied.
-    func alpha(_ m: Float) -> RGBA { RGBA(r: r, g: g, b: b, a: a * m) }
+    func alpha(_ factor: Float) -> RGBA { RGBA(r: r, g: g, b: b, a: a * factor) }
     static let gold = RGBA(r: 0.95, g: 0.80, b: 0.45, a: 1), goldDark = RGBA(r: 0.79, g: 0.63, b: 0.29, a: 1)
 }
 
@@ -25,7 +25,7 @@ struct RGBA { var r, g, b, a: Float
 struct R: Equatable { var x, y, w, h: Float
     init(_ x: Float, _ y: Float, _ w: Float, _ h: Float) { self.x = x; self.y = y; self.w = w; self.h = h }
     /// Whether a point lies inside the rectangle.
-    func contains(_ p: SIMD2<Float>) -> Bool { p.x >= x && p.x <= x + w && p.y >= y && p.y <= y + h }
+    func contains(_ point: SIMD2<Float>) -> Bool { point.x >= x && point.x <= x + w && point.y >= y && point.y <= y + h }
     /// Rectangle shrunk (positive) or grown (negative) on every side.
     func inset(_ d: Float) -> R { R(x + d, y + d, w - 2 * d, h - 2 * d) }
     var mid: SIMD2<Float> { SIMD2(x + w / 2, y + h / 2) }
@@ -74,9 +74,9 @@ final class Renderer {
         do { lib = try d.makeLibrary(source: Renderer.shaderSource, options: nil) }
         catch { fatalError("Metal: \(error)") }
         /// Creates a render pipeline.
-        func pipe(_ v: String, _ f: String) -> MTLRenderPipelineState {
+        func pipe(_ v: String, _ faction: String) -> MTLRenderPipelineState {
             let p = MTLRenderPipelineDescriptor()
-            p.vertexFunction = lib.makeFunction(name: v); p.fragmentFunction = lib.makeFunction(name: f)
+            p.vertexFunction = lib.makeFunction(name: v); p.fragmentFunction = lib.makeFunction(name: faction)
             let a = p.colorAttachments[0]!
             a.pixelFormat = .bgra8Unorm
             a.isBlendingEnabled = true
@@ -99,16 +99,16 @@ final class Renderer {
     }
 
     /// Loads (and caches) an image from the game folder as a texture.
-    func texture(_ rel: String) -> MTLTexture? {
-        if let t = texCache[rel] { return t }
-        let url = gameDir.appendingPathComponent(rel)
+    func texture(_ path: String) -> MTLTexture? {
+        if let t = texCache[path] { return t }
+        let url = gameDir.appendingPathComponent(path)
         guard FileManager.default.fileExists(atPath: url.path) else { return nil }
         guard let t = decode(url) else { return nil }
-        texCache[rel] = t
+        texCache[path] = t
         return t
     }
     /// Loads textures in advance.
-    func preload(_ rels: [String]) { for r in rels { _ = texture(r) } }
+    func preload(_ paths: [String]) { for r in paths { _ = texture(r) } }
     /// Decodes an image file into a mipmapped texture.
     private func decode(_ url: URL) -> MTLTexture? {
         guard let src = CGImageSourceCreateWithURL(url as CFURL, nil),
@@ -159,13 +159,13 @@ final class Renderer {
         return cb
     }
     /// Finishes the frame and presents it.
-    func end(_ cb: MTLCommandBuffer, view: MTKView) {
+    func end(_ commandBuffer: MTLCommandBuffer, view: MTKView) {
         flush()
         enc?.endEncoding(); enc = nil
-        if let d = view.currentDrawable { cb.present(d) }
+        if let d = view.currentDrawable { commandBuffer.present(d) }
         let sem = inflight
-        cb.addCompletedHandler { _ in sem.signal() }
-        cb.commit()
+        commandBuffer.addCompletedHandler { _ in sem.signal() }
+        commandBuffer.commit()
         bufIndex = (bufIndex + 1) % 3
         if frameNo % 600 == 0 { trimTextCache() }
     }
@@ -180,58 +180,58 @@ final class Renderer {
     }
 
     /// Queues a textured quad.
-    func quad(_ t: MTLTexture, _ r: R, uv: R = R(0, 0, 1, 1), color c: RGBA = .white, mode: Float = 0, rotation: Float = 0) {
+    func quad(_ texture: MTLTexture, _ rect: R, uv: R = R(0, 0, 1, 1), color c: RGBA = .white, mode: Float = 0, rotation: Float = 0) {
         if vcount + 6 > maxVerts { return }
-        if t !== curTex { flush(); curTex = t }
+        if texture !== curTex { flush(); curTex = texture }
         let col = SIMD4<Float>(c.r, c.g, c.b, c.a)
-        var p = [SIMD2<Float>(r.x, r.y), SIMD2(r.x + r.w, r.y), SIMD2(r.x, r.y + r.h), SIMD2(r.x + r.w, r.y + r.h)]
+        var p = [SIMD2<Float>(rect.x, rect.y), SIMD2(rect.x + rect.w, rect.y), SIMD2(rect.x, rect.y + rect.h), SIMD2(rect.x + rect.w, rect.y + rect.h)]
         if rotation != 0 {
-            let m = r.mid, cs = cos(rotation), sn = sin(rotation)
+            let m = rect.mid, cs = cos(rotation), sn = sin(rotation)
             p = p.map { q in let d = q - m; return m + SIMD2(d.x * cs - d.y * sn, d.x * sn + d.y * cs) }
         }
         let u = [SIMD2<Float>(uv.x, uv.y), SIMD2(uv.x + uv.w, uv.y), SIMD2(uv.x, uv.y + uv.h), SIMD2(uv.x + uv.w, uv.y + uv.h)]
         for i in [0, 1, 2, 1, 3, 2] { verts[vcount] = Vtx(pos: p[i], uv: u[i], color: col, mode: mode); vcount += 1 }
     }
     /// Draws an image stretched into a rectangle.
-    func image(_ rel: String, _ r: R, color: RGBA = .white, rotation: Float = 0) {
-        guard let t = texture(rel) else { return }
-        quad(t, r, color: color, rotation: rotation)
+    func image(_ path: String, _ rect: R, color: RGBA = .white, rotation: Float = 0) {
+        guard let t = texture(path) else { return }
+        quad(t, rect, color: color, rotation: rotation)
     }
     /// Draws an image filling a rectangle, cropping to keep its aspect ratio.
-    func imageCover(_ rel: String, _ r: R, color: RGBA = .white) {
-        guard let t = texture(rel) else { return }
-        let ta = Float(t.width) / Float(t.height), ra = r.w / r.h
+    func imageCover(_ path: String, _ rect: R, color: RGBA = .white) {
+        guard let t = texture(path) else { return }
+        let ta = Float(t.width) / Float(t.height), ra = rect.w / rect.h
         var uv = R(0, 0, 1, 1)
         if ta > ra { uv.w = ra / ta; uv.x = (1 - uv.w) / 2 } else { uv.h = ta / ra; uv.y = (1 - uv.h) / 2 }
-        quad(t, r, uv: uv, color: color)
+        quad(t, rect, uv: uv, color: color)
     }
     /// Draws an image fitted inside a rectangle.
-    func imageContain(_ rel: String, _ r: R, color: RGBA = .white, alignTop: Bool = false) {
-        guard let t = texture(rel) else { return }
-        let ta = Float(t.width) / Float(t.height), ra = r.w / r.h
-        var d = r
-        if ta > ra { d.h = r.w / ta; if !alignTop { d.y = r.y + (r.h - d.h) / 2 } } else { d.w = r.h * ta; d.x = r.x + (r.w - d.w) / 2 }
+    func imageContain(_ path: String, _ rect: R, color: RGBA = .white, alignTop: Bool = false) {
+        guard let t = texture(path) else { return }
+        let ta = Float(t.width) / Float(t.height), ra = rect.w / rect.h
+        var d = rect
+        if ta > ra { d.h = rect.w / ta; if !alignTop { d.y = rect.y + (rect.h - d.h) / 2 } } else { d.w = rect.h * ta; d.x = rect.x + (rect.w - d.w) / 2 }
         quad(t, d, color: color)
     }
     /// Restricts drawing to a rectangle (nil removes the clip).
-    func clip(_ r: R?) {
+    func clip(_ rect: R?) {
         flush()
         guard let e = enc else { return }
         let vp = viewportPx
-        if let r = r {
-            let x = max(0, Int(vp.x + r.x * pxScale)), y = max(0, Int(vp.y + r.y * pxScale))
-            let w = max(1, Int(r.w * pxScale)), h = max(1, Int(r.h * pxScale))
+        if let rect = rect {
+            let x = max(0, Int(vp.x + rect.x * pxScale)), y = max(0, Int(vp.y + rect.y * pxScale))
+            let w = max(1, Int(rect.w * pxScale)), h = max(1, Int(rect.h * pxScale))
             e.setScissorRect(MTLScissorRect(x: x, y: y, width: w, height: h))
         } else {
             e.setScissorRect(MTLScissorRect(x: Int(vp.x), y: Int(vp.y), width: Int(vp.w), height: Int(vp.h)))
         }
     }
     /// Draws a filled rectangle.
-    func rect(_ r: R, _ c: RGBA) { quad(white, r, color: c) }
+    func rect(_ rect: R, _ color: RGBA) { quad(white, rect, color: color) }
     /// Draws a rectangle outline.
-    func frame(_ r: R, _ c: RGBA, _ t: Float = 2) {
-        rect(R(r.x, r.y, r.w, t), c); rect(R(r.x, r.y + r.h - t, r.w, t), c)
-        rect(R(r.x, r.y + t, t, r.h - 2 * t), c); rect(R(r.x + r.w - t, r.y + t, t, r.h - 2 * t), c)
+    func frame(_ r: R, _ color: RGBA, _ t: Float = 2) {
+        rect(R(r.x, r.y, r.w, t), color); rect(R(r.x, r.y + r.h - t, r.w, t), color)
+        rect(R(r.x, r.y + t, t, r.h - 2 * t), color); rect(R(r.x + r.w - t, r.y + t, t, r.h - 2 * t), color)
     }
     /// Draws a vertical gradient.
     func gradient(_ r: R, _ top: RGBA, _ bottom: RGBA, steps: Int = 24) {
@@ -247,11 +247,11 @@ final class Renderer {
     /// Font description: family, size and style.
     struct Font: Hashable { let name: String; let size: Float; let bold: Bool; let italic: Bool
         /// System sans-serif font.
-        static func ui(_ s: Float, bold: Bool = false) -> Font { Font(name: "Helvetica Neue", size: s, bold: bold, italic: false) }
+        static func ui(_ size: Float, bold: Bool = false) -> Font { Font(name: "Helvetica Neue", size: size, bold: bold, italic: false) }
         /// Serif font (Georgia).
-        static func serif(_ s: Float, bold: Bool = false, italic: Bool = false) -> Font { Font(name: "Georgia", size: s, bold: bold, italic: italic) }
+        static func serif(_ size: Float, bold: Bool = false, italic: Bool = false) -> Font { Font(name: "Georgia", size: size, bold: bold, italic: italic) }
         /// The Gwent logo font.
-        static func gwent(_ s: Float) -> Font { Font(name: "GWENT-ExtraBold", size: s, bold: false, italic: false) }
+        static func gwent(_ size: Float) -> Font { Font(name: "GWENT-ExtraBold", size: size, bold: false, italic: false) }
     }
     /// Text alignment.
     enum Align { case left, center, right }
@@ -266,17 +266,17 @@ final class Renderer {
         return font
     }
     /// Renders text into a cached greyscale texture.
-    func textTex(_ s: String, _ f: Font, maxWidth: Float = 0, align: Align = .left, lineSpacing: Float = 0) -> TextTex? {
-        if s.isEmpty { return nil }
+    func textTex(_ text: String, _ f: Font, maxWidth: Float = 0, align: Align = .left, lineSpacing: Float = 0) -> TextTex? {
+        if text.isEmpty { return nil }
         let scale = max(0.5, pxScale)
-        let key = "\(s)|\(f.name)|\(f.size)|\(f.bold)|\(f.italic)|\(maxWidth)|\(align)|\(lineSpacing)|\(scale)"
+        let key = "\(text)|\(f.name)|\(f.size)|\(f.bold)|\(f.italic)|\(maxWidth)|\(align)|\(lineSpacing)|\(scale)"
         if let c = textCache[key] { textCache[key] = (c.0, frameNo); return c.0 }
         let font = ctFont(f, scale: scale)
         let para = NSMutableParagraphStyle()
         para.alignment = align == .center ? .center : (align == .right ? .right : .left)
         para.lineSpacing = CGFloat(lineSpacing * scale)
         para.lineBreakMode = .byWordWrapping
-        let attr = NSAttributedString(string: s, attributes: [NSAttributedString.Key(kCTFontAttributeName as String): font, NSAttributedString.Key(kCTForegroundColorAttributeName as String): CGColor(gray: 1, alpha: 1), .paragraphStyle: para])
+        let attr = NSAttributedString(string: text, attributes: [NSAttributedString.Key(kCTFontAttributeName as String): font, NSAttributedString.Key(kCTForegroundColorAttributeName as String): CGColor(gray: 1, alpha: 1), .paragraphStyle: para])
         let fs = CTFramesetterCreateWithAttributedString(attr)
         let constraintW = maxWidth > 0 ? CGFloat(maxWidth * scale) : CGFloat.greatestFiniteMagnitude
         var size = CTFramesetterSuggestFrameSizeWithConstraints(fs, CFRange(location: 0, length: 0), nil, CGSize(width: constraintW, height: .greatestFiniteMagnitude), nil)
@@ -319,8 +319,8 @@ final class Renderer {
         return (t.w, t.h)
     }
     /// Measures text without drawing it.
-    func measure(_ s: String, _ f: Font, maxWidth: Float = 0) -> (w: Float, h: Float) {
-        guard let t = textTex(s, f, maxWidth: maxWidth) else { return (0, 0) }
+    func measure(_ text: String, _ font: Font, maxWidth: Float = 0) -> (w: Float, h: Float) {
+        guard let t = textTex(text, font, maxWidth: maxWidth) else { return (0, 0) }
         return (t.w, t.h)
     }
 
@@ -329,8 +329,8 @@ final class Renderer {
     /// An animated region of the title background (position/size and motion).
     struct BgRegion { var reg: SIMD4<Float>; var mot: SIMD4<Float> }
     /// Draws the animated title background with the dedicated shader.
-    func titleBackground(_ rel: String, time: Float, mouse: SIMD2<Float>, regions: [BgRegion], glints: [SIMD2<Float>], candles: [SIMD2<Float>]) {
-        guard let t = texture(rel), let e = enc else { return }
+    func titleBackground(_ path: String, time: Float, mouse: SIMD2<Float>, regions: [BgRegion], glints: [SIMD2<Float>], candles: [SIMD2<Float>]) {
+        guard let t = texture(path), let e = enc else { return }
         flush()
         e.setRenderPipelineState(bgPipeline)
         var p = BgParams(time: time, mouse: mouse, texel: SIMD2(1 / Float(t.width), 1 / Float(t.height)))

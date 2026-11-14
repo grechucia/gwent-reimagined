@@ -29,11 +29,11 @@ import UniformTypeIdentifiers
     #endif
 
     /// Opens a URL in the default browser.
-    static func openURL(_ u: URL) {
+    static func openURL(_ url: URL) {
         #if os(macOS)
-        NSWorkspace.shared.open(u)
+        NSWorkspace.shared.open(url)
         #else
-        UIApplication.shared.open(u)
+        UIApplication.shared.open(url)
         #endif
     }
 

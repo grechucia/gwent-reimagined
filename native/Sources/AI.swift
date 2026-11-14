@@ -18,9 +18,9 @@ extension Game {
         return Snap(rows: rs.map { $0.cards }, specials: rs.map { $0.specials }, weather: [human.weather, computer.weather], horns: rs.map { $0.leaderHorn })
     }
     /// Restores a board state captured with snap().
-    private func restore(_ s: Snap) {
-        for (i, r) in (human.rows + computer.rows).enumerated() { r.cards = s.rows[i]; r.specials = s.specials[i]; r.leaderHorn = s.horns[i] }
-        human.weather = s.weather[0]; computer.weather = s.weather[1]
+    private func restore(_ snapshot: Snap) {
+        for (i, r) in (human.rows + computer.rows).enumerated() { r.cards = snapshot.rows[i]; r.specials = snapshot.specials[i]; r.leaderHorn = snapshot.horns[i] }
+        human.weather = snapshot.weather[0]; computer.weather = snapshot.weather[1]
     }
     /// Returns how much the score difference changes for `ai` if `apply` is executed (the board is restored afterwards).
     private func diffAfter(_ ai: Player, _ apply: () -> Void) -> Int {
@@ -44,9 +44,9 @@ extension Game {
         var moves: [AIMove] = []
         let hand = ai.forcedCard.map { f in ai.hand.filter { $0 === f } } ?? ai.hand
         /// Records one candidate move.
-        func add(_ c: Card?, _ r: RowType?, _ ro: Player?, _ t: Card?, _ d: Int, _ extra: Double, _ kind: AIMove.Kind = .card) {
+        func add(_ c: Card?, _ rowType: RowType?, _ owner: Player?, _ t: Card?, _ scoreAfter: Int, _ extra: Double, _ kind: AIMove.Kind = .card) {
             let cost = c.map { Double($0.basePower) * 0.35 + ($0.hero ? 2 : 0) } ?? 0
-            moves.append(AIMove(card: c, row: r, rowOwner: ro, target: t, value: Double(d - base) + extra - cost, gain: d - base, kind: kind))
+            moves.append(AIMove(card: c, row: rowType, rowOwner: owner, target: t, value: Double(scoreAfter - base) + extra - cost, gain: scoreAfter - base, kind: kind))
         }
         for c in hand {
             if c.isUnit {
@@ -215,8 +215,8 @@ extension Game {
     }
 
     /// Chooses the move to play, or nil to pass, using round state and the configured difficulty.
-    func aiDecide(for ai0: Player? = nil) -> AIMove? {
-        let ai = ai0 ?? computer, foe: Player = ai.opponent
+    func aiDecide(for requestedPlayer: Player? = nil) -> AIMove? {
+        let ai = requestedPlayer ?? computer, foe: Player = ai.opponent
         recalc()
         if ai.hand.isEmpty && !leaderAvailable(ai) { return nil }
         let lead = ai.total - foe.total

@@ -83,20 +83,20 @@ final class GameData {
     }
 
     /// Section of the active translation file.
-    private func section(_ s: String) -> [String: Any] { (lang[language]?[s] as? [String: Any]) ?? [:] }
+    private func section(_ text: String) -> [String: Any] { (lang[language]?[text] as? [String: Any]) ?? [:] }
 
     /// Localised card name.
-    func cardName(_ c: CardData) -> String { ((section("cards")[c.key] as? [String: String])?["name"]).flatMap { $0.isEmpty ? nil : $0 } ?? c.name }
+    func cardName(_ cardData: CardData) -> String { ((section("cards")[cardData.key] as? [String: String])?["name"]).flatMap { $0.isEmpty ? nil : $0 } ?? cardData.name }
     /// Localised card quote.
-    func cardQuote(_ c: CardData) -> String { ((section("cards")[c.key] as? [String: String])?["quote"]).flatMap { $0.isEmpty ? nil : $0 } ?? c.quote }
+    func cardQuote(_ cardData: CardData) -> String { ((section("cards")[cardData.key] as? [String: String])?["quote"]).flatMap { $0.isEmpty ? nil : $0 } ?? cardData.quote }
     /// Localised ability name.
-    func abilityName(_ k: String) -> String { ((section("abilities")[k] as? [String: String])?["name"]) ?? abilities[k]?["name"] ?? k }
+    func abilityName(_ key: String) -> String { ((section("abilities")[key] as? [String: String])?["name"]) ?? abilities[key]?["name"] ?? key }
     /// Localised ability description.
-    func abilityDesc(_ k: String) -> String { ((section("abilities")[k] as? [String: String])?["description"]) ?? abilities[k]?["description"] ?? "" }
+    func abilityDesc(_ key: String) -> String { ((section("abilities")[key] as? [String: String])?["description"]) ?? abilities[key]?["description"] ?? "" }
     /// Localised faction name.
-    func factionName(_ k: String) -> String { ((section("factions")[k] as? [String: String])?["name"]) ?? factions[k]?["name"] ?? k }
+    func factionName(_ key: String) -> String { ((section("factions")[key] as? [String: String])?["name"]) ?? factions[key]?["name"] ?? key }
     /// Localised faction description.
-    func factionDesc(_ k: String) -> String { ((section("factions")[k] as? [String: String])?["description"]) ?? factions[k]?["description"] ?? "" }
+    func factionDesc(_ key: String) -> String { ((section("factions")[key] as? [String: String])?["description"]) ?? factions[key]?["description"] ?? "" }
     /// Localised rules text, split into headings and paragraphs.
     func rules() -> [(text: String, heading: Bool)] {
         guard let blocks = (lang[language]?["blocks"] ?? lang["en"]?["blocks"]) as? [String: String] else { return [] }

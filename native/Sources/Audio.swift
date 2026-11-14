@@ -67,9 +67,9 @@ final class Audio: NSObject, AVAudioPlayerDelegate {
 
     private(set) var menuMode = true
     /// Switches between the menu theme (true) and random in-game music (false).
-    func setMenuMode(_ m: Bool) {
-        guard m != menuMode else { return }
-        menuMode = m; music?.stop(); music = nil; playMusic()
+    func setMenuMode(_ menu: Bool) {
+        guard menu != menuMode else { return }
+        menuMode = menu; music?.stop(); music = nil; playMusic()
     }
     /// Starts the music for the current mode.
     func playMusic() {

@@ -37,7 +37,7 @@ cat > $APP/Info.plist <<'PLIST'
   <key>CFBundleIdentifier</key><string>io.github.grechucia.gwentreimagined</string>
   <key>CFBundleExecutable</key><string>GwentReimagined</string>
   <key>CFBundlePackageType</key><string>APPL</string>
-  <key>CFBundleShortVersionString</key><string>1.0</string>
+  <key>CFBundleShortVersionString</key><string>1.0.1</string>
   <key>CFBundleVersion</key><string>1</string>
   <key>CFBundleDevelopmentRegion</key><string>en</string>
   <key>MinimumOSVersion</key><string>17.0</string>

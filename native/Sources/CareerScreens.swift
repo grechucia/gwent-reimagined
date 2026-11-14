@@ -38,10 +38,10 @@ extension Scene {
         for (i, f) in facs.enumerated() {
             let a = ease(deckSwitchT * 1.6 - Float(i) * 0.04)
             let t = R(x0 + Float(i % 5) * (tw + gx), 256 + Float(i / 5) * (th + gy) + (1 - a) * 20, tw, th)
-            let hov = t.contains(mouse)
-            if hov { renderer.quad(glowTex, R(t.x - 40, t.y - 40, t.w + 80, t.h + 80), color: RGBA(r: 1, g: 0.72, b: 0.3, a: 0.3)) }
+            let hovered = t.contains(mouse)
+            if hovered { renderer.quad(glowTex, R(t.x - 40, t.y - 40, t.w + 80, t.h + 80), color: RGBA(r: 1, g: 0.72, b: 0.3, a: 0.3)) }
             glassPanel(t, alpha: 0.75 * a)
-            renderer.frame(t, RGBA.gold.alpha(hov ? 0.9 : 0.3), 1.5)
+            renderer.frame(t, RGBA.gold.alpha(hovered ? 0.9 : 0.3), 1.5)
             renderer.image("img/icons/deck_shield_\(f).png", R(t.mid.x - 34, t.y + 18, 68, 76), color: .white.alpha(a))
             renderer.text(gameData.factionName(f), .gwent(26), x: t.mid.x, y: t.y + 104, color: RGBA.gold.alpha(a), maxWidth: t.w - 20, align: .center)
             renderer.text(gameData.factionDesc(f), .ui(14), x: t.mid.x, y: t.y + 140, color: RGBA.gray(0.85, a), maxWidth: t.w - 30, align: .center)
@@ -83,18 +83,18 @@ extension Scene {
             let x = x0 + Float(k) * (cw + gap)
             let tile = R(x - 10, 200 + (1 - a) * 24, cw + 20, chh + 210)
             let open = career.unlocked(cc, k), won = career.beaten.contains(fi)
-            let hov = tile.contains(mouse) && open
-            if hov { renderer.quad(glowTex, R(tile.x - 40, tile.y - 40, tile.w + 80, tile.h + 80), color: RGBA(r: 1, g: 0.72, b: 0.3, a: 0.28)) }
+            let hovered = tile.contains(mouse) && open
+            if hovered { renderer.quad(glowTex, R(tile.x - 40, tile.y - 40, tile.w + 80, tile.h + 80), color: RGBA(r: 1, g: 0.72, b: 0.3, a: 0.28)) }
             glassPanel(tile, alpha: 0.65 * a)
             renderer.frame(tile, f.boss ? RGBA(r: 0.95, g: 0.35, b: 0.25, a: 0.8 * a) : RGBA.gold.alpha(0.35 * a), f.boss ? 2.5 : 1.5)
             let od = career.opponentDeck(fi, f)
-            let cr = R(x, tile.y + 10, cw, chh)
+            let cardRect = R(x, tile.y + 10, cw, chh)
             if let lc = gameData.cards[f.portrait] ?? gameData.cards[od.leader] {
-                drawCardLarge(Card(lc, owner: nil), cr)
-                if cr.contains(mouse) { builderHover = Card(lc, owner: nil) }
+                drawCardLarge(Card(lc, owner: nil), cardRect)
+                if cardRect.contains(mouse) { builderHover = Card(lc, owner: nil) }
             }
-            if !open { renderer.rect(cr, RGBA.black.alpha(0.6)); renderer.text("🔒", .ui(54), x: cr.mid.x, y: cr.mid.y - 34, color: .white, align: .center) }
-            var ty = cr.y + chh + 10
+            if !open { renderer.rect(cardRect, RGBA.black.alpha(0.6)); renderer.text("🔒", .ui(54), x: cardRect.mid.x, y: cardRect.mid.y - 34, color: .white, align: .center) }
+            var ty = cardRect.y + chh + 10
             ty += renderer.text((f.boss ? "☠ " : "") + f.name, .serif(20, bold: true), x: x, y: ty, color: f.boss ? RGBA(r: 1, g: 0.6, b: 0.5, a: a) : RGBA.white.alpha(a), maxWidth: cw).h + 2
             ty += renderer.text(gameData.factionName(f.faction), .ui(15), x: x, y: ty, color: RGBA.gray(0.8, a), maxWidth: cw).h + 2
             let diff = f.cap >= 99 ? L("Full strength") : L("Card strength up to") + " \(f.cap)"
@@ -118,9 +118,9 @@ extension Scene {
         glassPanel(colR, alpha: 0.7)
         renderer.text(L("Your deck"), .gwent(30), x: colR.mid.x, y: colR.y + 14, color: RGBA.gold, align: .center)
         if let lc = gameData.cards[career.leader] {
-            let lr = R(colR.mid.x - 90, colR.y + 64, 180, 180 / 0.697)
-            drawCardLarge(Card(lc, owner: nil), lr)
-            if lr.contains(mouse) { builderHover = Card(lc, owner: nil) }
+            let leaderArea = R(colR.mid.x - 90, colR.y + 64, 180, 180 / 0.697)
+            drawCardLarge(Card(lc, owner: nil), leaderArea)
+            if leaderArea.contains(mouse) { builderHover = Card(lc, owner: nil) }
         }
         let owned = career.collection.values.reduce(0, +)
         var y = colR.y + 64 + 180 / 0.697 + 14
@@ -138,12 +138,12 @@ extension Scene {
     }
 
     /// Starts a career fight against opponent `fi`.
-    func startCareerFight(_ fi: Int) {
-        let c = fi / 4, k = fi % 4
+    func startCareerFight(_ fightIndex: Int) {
+        let c = fightIndex / 4, k = fightIndex % 4
         let f = career.chapter(c).fights[k]
         careerConfirmReset = false
         defer { careerFightName = f.name }
-        startGame(with: career.playerDeck, against: career.opponentDeck(fi, f), careerFight: fi)
+        startGame(with: career.playerDeck, against: career.opponentDeck(fightIndex, f), careerFight: fightIndex)
     }
 
     /// Lets the player pick one of the reward cards after a win.
@@ -163,11 +163,11 @@ extension Scene {
         for (i, k) in opts.enumerated() {
             guard let d = gameData.cards[k] else { continue }
             let base = R(x0 + Float(i) * (cw + gap), 260, cw, chh)
-            let hov = base.contains(mouse)
-            let cr = hov ? R(base.x - 6, base.y - 10, base.w + 12, base.h + 12) : base
-            if hov { renderer.quad(glowTex, R(cr.x - 50, cr.y - 50, cr.w + 100, cr.h + 100), color: RGBA(r: 1, g: 0.75, b: 0.3, a: 0.45)) }
-            drawCardLarge(Card(d, owner: nil), cr)
-            if hov { builderHover = Card(d, owner: nil) }
+            let hovered = base.contains(mouse)
+            let cardRect = hovered ? R(base.x - 6, base.y - 10, base.w + 12, base.h + 12) : base
+            if hovered { renderer.quad(glowTex, R(cardRect.x - 50, cardRect.y - 50, cardRect.w + 100, cardRect.h + 100), color: RGBA(r: 1, g: 0.75, b: 0.3, a: 0.45)) }
+            drawCardLarge(Card(d, owner: nil), cardRect)
+            if hovered { builderHover = Card(d, owner: nil) }
             button(base) { [weak self] in self?.career.take(k); self?.careerRewards = nil; self?.careerNewLeader = nil; self?.audio.play("game_buy") }
         }
         if opts.isEmpty {
@@ -201,9 +201,9 @@ extension Scene {
              { [weak self] in self?.pickSaveFolder() })]
         for (i, o) in opts.enumerated() {
             let b = R(p.x + 80, p.y + 180 + Float(i) * 170, p.w - 160, 140)
-            let hov = o.2 && b.contains(mouse)
-            renderer.rect(b, RGBA.black.alpha(hov ? 0.5 : 0.32)); renderer.frame(b, RGBA.gold.alpha(o.2 ? (hov ? 1 : 0.5) : 0.2), hov ? 2.5 : 1.5)
-            renderer.text(o.0, .serif(28, bold: true), x: b.x + 30, y: b.y + 22, color: o.2 ? (hov ? .white : RGBA.gold) : .gray(0.45))
+            let hovered = o.2 && b.contains(mouse)
+            renderer.rect(b, RGBA.black.alpha(hovered ? 0.5 : 0.32)); renderer.frame(b, RGBA.gold.alpha(o.2 ? (hovered ? 1 : 0.5) : 0.2), hovered ? 2.5 : 1.5)
+            renderer.text(o.0, .serif(28, bold: true), x: b.x + 30, y: b.y + 22, color: o.2 ? (hovered ? .white : RGBA.gold) : .gray(0.45))
             renderer.text(o.1, .ui(18), x: b.x + 30, y: b.y + 72, color: o.2 ? .gray(0.88) : .gray(0.5), maxWidth: b.w - 60)
             if o.2 { button(b, o.3) }
         }
@@ -213,8 +213,8 @@ extension Scene {
         }
     }
     /// Applies the chosen save folder and reloads saved data.
-    private func finishSaveChoice(_ u: URL) {
-        SaveStore.shared.choose(u)
+    private func finishSaveChoice(_ url: URL) {
+        SaveStore.shared.choose(url)
         Career.shared.load(); customDecks = DeckBuilder.loadCustom()
         savePromptOpen = false
         let t = savePromptThen; savePromptThen = nil; t?()
@@ -237,11 +237,11 @@ extension Scene {
         var y = p.y + 110
         let lx = p.x + 60, bx = p.x + 420
         /// Draws a row label.
-        func label(_ t: String) { renderer.text(t, .serif(22, bold: true), x: lx, y: y + 10, color: .white, maxWidth: 340) }
+        func label(_ text: String) { renderer.text(text, .serif(22, bold: true), x: lx, y: y + 10, color: .white, maxWidth: 340) }
         /// Draws a row of toggle buttons; the selected one is highlighted.
-        func choice(_ items: [(String, Bool, Bool)], w: Float = 140, _ act: @escaping (Int) -> Void) {
+        func choice(_ items: [(String, Bool, Bool)], w width: Float = 140, _ act: @escaping (Int) -> Void) {
             for (i, it) in items.enumerated() {
-                let b = R(bx + Float(i) * (w + 10), y, w, 46)
+                let b = R(bx + Float(i) * (width + 10), y, width, 46)
                 goldButton(b, (it.1 ? "✓ " : "") + it.0, font: .serif(17, bold: true), enabled: it.2) { act(i) }
                 if it.1 { renderer.rect(b, RGBA(r: 1, g: 0.78, b: 0.3, a: 0.22)); renderer.frame(b.inset(-3), RGBA(r: 1, g: 0.85, b: 0.4, a: 1), 3) }
             }

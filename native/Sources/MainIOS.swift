@@ -43,7 +43,7 @@ final class IOSGameView: MTKView {
     }
 
     /// Touch down: moves focus and starts the long-press timer (long press = card details).
-    override func touchesBegan(_ touches: Set<UITouch>, with e: UIEvent?) {
+    override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
         guard let t = touches.first, let s = app?.scene else { return }
         start = t.location(in: self); last = start; dragging = false; longFired = false
         s.padCursor = false
@@ -58,7 +58,7 @@ final class IOSGameView: MTKView {
         }
     }
     /// Dragging scrolls lists.
-    override func touchesMoved(_ touches: Set<UITouch>, with e: UIEvent?) {
+    override func touchesMoved(_ touches: Set<UITouch>, with event: UIEvent?) {
         guard let t = touches.first, let s = app?.scene else { return }
         let p = t.location(in: self)
         if !dragging && hypot(p.x - start.x, p.y - start.y) > 12 { dragging = true; longTimer?.invalidate() }
@@ -70,7 +70,7 @@ final class IOSGameView: MTKView {
         s.mouseMoved(virtualPoint(p))
     }
     /// Tap = click, unless the touch was a drag or a long press.
-    override func touchesEnded(_ touches: Set<UITouch>, with e: UIEvent?) {
+    override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
         longTimer?.invalidate()
         guard let t = touches.first, let s = app?.scene else { return }
         let p = virtualPoint(t.location(in: self))
@@ -78,7 +78,7 @@ final class IOSGameView: MTKView {
         s.mouse = SIMD2(-1, -1)
     }
     /// Cancels the current touch.
-    override func touchesCancelled(_ touches: Set<UITouch>, with e: UIEvent?) {
+    override func touchesCancelled(_ touches: Set<UITouch>, with event: UIEvent?) {
         longTimer?.invalidate()
         app?.scene?.mouse = SIMD2(-1, -1)
     }
@@ -127,9 +127,9 @@ final class IOSAppDelegate: UIResponder, UIApplicationDelegate, MTKViewDelegate,
     var availableFrameLimits: [Int] { let hz = screenFPS; let l = frameLimits.filter { $0 <= hz && hz % $0 == 0 }; return l.isEmpty ? [hz] : l }
     var effectiveFrameLimit: Int { let a = availableFrameLimits; return a.contains(frameLimit) ? frameLimit : (a.last { $0 <= frameLimit } ?? a.last!) }
     /// Changes the render resolution.
-    func setRenderRes(_ px: Int) { renderRes = px; view.renderHeight = px }
+    func setRenderRes(_ height: Int) { renderRes = height; view.renderHeight = height }
     /// Changes the frame limit.
-    func setFrameLimit(_ f: Int) { frameLimit = f; view.preferredFramesPerSecond = effectiveFrameLimit }
+    func setFrameLimit(_ limit: Int) { frameLimit = limit; view.preferredFramesPerSecond = effectiveFrameLimit }
 
     /// Initialises the game when the app launches.
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil) -> Bool {
@@ -174,15 +174,15 @@ final class IOSAppDelegate: UIResponder, UIApplicationDelegate, MTKViewDelegate,
     }
 
     /// Not used: the drawable size is managed manually.
-    func mtkView(_ v: MTKView, drawableSizeWillChange size: CGSize) {}
+    func mtkView(_ metalView: MTKView, drawableSizeWillChange size: CGSize) {}
     /// Renders one frame.
-    func draw(in v: MTKView) {
+    func draw(in metalView: MTKView) {
         let now = CACurrentMediaTime()
         let dt = Float(min(0.1, now - last)); last = now
-        guard let cb = renderer.begin(view: v) else { return }
+        guard let cb = renderer.begin(view: metalView) else { return }
         gamepad.update(dt)
         scene?.frame(dt: dt)
-        renderer.end(cb, view: v)
+        renderer.end(cb, view: metalView)
     }
 }
 

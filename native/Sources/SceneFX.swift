@@ -20,11 +20,11 @@ struct FX {
 /// Visual effects.
 extension Scene {
     /// Creates effects for an engine event.
-    func addFX(_ e: GameEvent) {
-        switch e {
+    func addFX(_ event: GameEvent) {
+        switch event {
         case .anim(let c, let n):
-            let rr = R(c.pos.x, c.pos.y, cardWidth, cardHeight)
-            fxList.append(FX(kind: n == "hero" ? .hero : .icon(n), card: c, rect: rr, dur: n == "hero" ? 1.1 : 1.6))
+            let rowArea = R(c.pos.x, c.pos.y, cardWidth, cardHeight)
+            fxList.append(FX(kind: n == "hero" ? .hero : .icon(n), card: c, rect: rowArea, dur: n == "hero" ? 1.1 : 1.6))
         case .burn(let c):
             fxList.append(FX(kind: .burn, card: c, rect: R(c.pos.x, c.pos.y, cardWidth, cardHeight), dur: 1.0))
         case .coin(let mine):
@@ -77,20 +77,20 @@ extension Scene {
     private func isBurn(_ f: FX) -> Bool { if case .burn = f.kind { return true }; return false }
 
     /// Rectangle of a card flying towards a target.
-    func flightRect(_ c: Card, target: SIMD2<Float>) -> (R, Bool) {
-        let d = simd_length(target - c.pos)
+    func flightRect(_ card: Card, target: SIMD2<Float>) -> (R, Bool) {
+        let d = simd_length(target - card.pos)
         let s = 1 + min(0.22, d / 900)
         let w = cardWidth * s, h = cardHeight * s
-        return (R(c.pos.x + cardWidth / 2 - w / 2, c.pos.y + cardHeight / 2 - h / 2 - min(18, d / 25), w, h), d > 6)
+        return (R(card.pos.x + cardWidth / 2 - w / 2, card.pos.y + cardHeight / 2 - h / 2 - min(18, d / 25), w, h), d > 6)
     }
 
     /// Animated weather on a row (rain, frost, fog...).
-    func drawWeatherFX(_ w: Set<String>, _ rr: R) {
-        guard !w.isEmpty else { return }
-        let area = R(567, rr.y + 4, 946, rr.h - 6)
+    func drawWeatherFX(_ weather: Set<String>, _ rowArea: R) {
+        guard !weather.isEmpty else { return }
+        let area = R(567, rowArea.y + 4, 946, rowArea.h - 6)
         renderer.clip(area)
         defer { renderer.clip(nil) }
-        if w.contains("rain") || w.contains("storm") || w.contains("dragon_wrath") {
+        if weather.contains("rain") || weather.contains("storm") || weather.contains("dragon_wrath") {
             for i in 0..<46 {
                 let fi = Float(i)
                 let x = area.x + fract(fi * 0.6180339 + 0.13) * area.w + fract(time * 0.9 + fi * 0.37) * 30
@@ -98,22 +98,22 @@ extension Scene {
                 renderer.quad(renderer.white, R(x, y, 1.6, 16), color: RGBA(r: 0.75, g: 0.85, b: 1, a: 0.35), rotation: 0.22)
             }
         }
-        if w.contains("fog") || w.contains("tse_tse") {
+        if weather.contains("fog") || weather.contains("tse_tse") {
             for k in 0..<2 {
                 let off = sin(time * 0.25 + Float(k) * 2) * 40
-                renderer.image("img/icons/overlay_\(w.contains("fog") ? "fog" : "tse_tse").png", R(area.x + off - 20, area.y, area.w + 40, area.h), color: .white.alpha(0.25 + 0.12 * sin(time * 0.7 + Float(k))))
+                renderer.image("img/icons/overlay_\(weather.contains("fog") ? "fog" : "tse_tse").png", R(area.x + off - 20, area.y, area.w + 40, area.h), color: .white.alpha(0.25 + 0.12 * sin(time * 0.7 + Float(k))))
             }
         }
-        if w.contains("frost") || w.contains("white_frost") || w.contains("spider_web") {
+        if weather.contains("frost") || weather.contains("white_frost") || weather.contains("spider_web") {
             for i in 0..<26 {
                 let fi = Float(i)
                 let x = area.x + fract(fi * 0.754877) * area.w, y = area.y + fract(fi * 0.569840) * area.h
-                let tw = max(0, sin(time * 2.4 + fi * 1.7))
-                let s: Float = 6 + 10 * tw
-                renderer.quad(glowTex, R(x - s / 2, y - s / 2, s, s), color: RGBA(r: 0.8, g: 0.92, b: 1, a: 0.7 * tw))
+                let textWidth = max(0, sin(time * 2.4 + fi * 1.7))
+                let s: Float = 6 + 10 * textWidth
+                renderer.quad(glowTex, R(x - s / 2, y - s / 2, s, s), color: RGBA(r: 0.8, g: 0.92, b: 1, a: 0.7 * textWidth))
             }
         }
-        if w.contains("sandstorm") {
+        if weather.contains("sandstorm") {
             for i in 0..<40 {
                 let fi = Float(i)
                 let x = area.x - 40 + fract(time * 0.8 + fi * 0.6180339) * (area.w + 80)
@@ -163,8 +163,8 @@ extension Scene {
         }
         renderer.clip(nil)
         if maxScroll > 0 {
-            let th = content.h * content.h / total
-            renderer.rect(R(panel.x + panel.w - 14, content.y + (content.h - th) * rulesScroll / maxScroll, 5, th), RGBA.gold.alpha(0.6))
+            let textHeight = content.h * content.h / total
+            renderer.rect(R(panel.x + panel.w - 14, content.y + (content.h - textHeight) * rulesScroll / maxScroll, 5, textHeight), RGBA.gold.alpha(0.6))
         }
         renderer.text(L("Scroll with the mouse wheel · Esc — back"), .ui(16), x: 960, y: 1040, color: .gray(0.6), align: .center)
     }
@@ -184,16 +184,16 @@ extension Scene {
         let x = panel.x + 60, w = panel.w - 120
         var y = panel.y + 40
         /// Section heading.
-        func head(_ t: String) { y += renderer.text(t, .gwent(30), x: x, y: y, color: RGBA.gold, maxWidth: w).h + 4; goldDivider(x, y, min(w, 600)); y += 14 }
+        func head(_ text: String) { y += renderer.text(text, .gwent(30), x: x, y: y, color: RGBA.gold, maxWidth: w).h + 4; goldDivider(x, y, min(w, 600)); y += 14 }
         /// Paragraph.
-        func para(_ t: String, _ c: RGBA = RGBA(r: 0.92, g: 0.88, b: 0.8, a: 1)) { y += renderer.text(t, .serif(19), x: x, y: y, color: c, maxWidth: w).h + 10 }
+        func para(_ text: String, _ color: RGBA = RGBA(r: 0.92, g: 0.88, b: 0.8, a: 1)) { y += renderer.text(text, .serif(19), x: x, y: y, color: color, maxWidth: w).h + 10 }
         /// Clickable link.
-        func link(_ t: String, _ url: String) {
-            let sz = renderer.measure(t, .serif(19, bold: true), maxWidth: w)
+        func link(_ text: String, _ url: String) {
+            let sz = renderer.measure(text, .serif(19, bold: true), maxWidth: w)
             let b = R(x, y, sz.w, sz.h)
-            let hov = b.contains(mouse)
-            renderer.text(t, .serif(19, bold: true), x: x, y: y, color: hov ? .white : RGBA(r: 0.55, g: 0.78, b: 1, a: 1), maxWidth: w)
-            renderer.rect(R(x, y + sz.h - 2, sz.w, 1), RGBA(r: 0.55, g: 0.78, b: 1, a: hov ? 1 : 0.6))
+            let hovered = b.contains(mouse)
+            renderer.text(text, .serif(19, bold: true), x: x, y: y, color: hovered ? .white : RGBA(r: 0.55, g: 0.78, b: 1, a: 1), maxWidth: w)
+            renderer.rect(R(x, y + sz.h - 2, sz.w, 1), RGBA(r: 0.55, g: 0.78, b: 1, a: hovered ? 1 : 0.6))
             button(b) { if let u = URL(string: url) { Platform.openURL(u) } }
             y += sz.h + 12
         }

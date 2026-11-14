@@ -9,7 +9,7 @@
 ![Apple Silicon](https://img.shields.io/badge/arch-arm64-blue)
 ![Swift](https://img.shields.io/badge/Swift-5-orange)
 ![License](https://img.shields.io/badge/license-MIT%20%2B%20Commons%20Clause-green)
-![Version](https://img.shields.io/badge/version-1.0-gold)
+![Version](https://img.shields.io/badge/version-1.0.1-gold)
 
 ![Title screen](docs/screenshots/title.jpg)
 
