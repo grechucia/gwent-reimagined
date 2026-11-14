@@ -14,15 +14,15 @@ extension Scene {
         goldButton(R(40, 24, 190, 50), "‹  " + L("Back"), font: .serif(22, bold: true)) { [weak self] in self?.optionsOpen = false; self?.game?.paused = false }
         goldButton(R(panel.x + panel.w - 250, panel.y + 30, 210, 46), L("Licenses"), font: .serif(18, bold: true)) { [weak self] in self?.creditsOpen = true }
         var y = panel.y + 110
-        let lx = panel.x + 60, bx = panel.x + 420
+        let labelX = panel.x + 60, bx = panel.x + 420
         /// Draws a row label.
-        func label(_ text: String) { renderer.text(text, .serif(22, bold: true), x: lx, y: y + 10, color: .white, maxWidth: 340) }
+        func label(_ text: String) { renderer.text(text, .serif(22, bold: true), x: labelX, y: y + 10, color: .white, maxWidth: 340) }
         /// Draws a row of toggle buttons; the selected one is highlighted.
         func choice(_ items: [(String, Bool, Bool)], w width: Float = 140, _ act: @escaping (Int) -> Void) {
-            for (i, it) in items.enumerated() {
+            for (i, item) in items.enumerated() {
                 let box = R(bx + Float(i) * (width + 10), y, width, 46)
-                goldButton(box, (it.1 ? "✓ " : "") + it.0, font: .serif(17, bold: true), enabled: it.2) { act(i) }
-                if it.1 { renderer.rect(box, RGBA(r: 1, g: 0.78, b: 0.3, a: 0.22)); renderer.frame(box.inset(-3), RGBA(r: 1, g: 0.85, b: 0.4, a: 1), 3) }
+                goldButton(box, (item.1 ? "✓ " : "") + item.0, font: .serif(17, bold: true), enabled: item.2) { act(i) }
+                if item.1 { renderer.rect(box, RGBA(r: 1, g: 0.78, b: 0.3, a: 0.22)); renderer.frame(box.inset(-3), RGBA(r: 1, g: 0.85, b: 0.4, a: 1), 3) }
             }
         }
         label(L("Player name"))
@@ -45,8 +45,8 @@ extension Scene {
         y += 76
         if let h = host {
             label(L("Render resolution"))
-            let rs = resolutions
-            choice(rs.map { ($0.px == 0 ? L("Native") : "\($0.px)p", $0.px == h.renderRes, true) }, w: 128) { i in h.setRenderRes(rs[i].px) }
+            let options = resolutions
+            choice(options.map { ($0.px == 0 ? L("Native") : "\($0.px)p", $0.px == h.renderRes, true) }, w: 128) { i in h.setRenderRes(options[i].px) }
             y += 76
             label(L("Frame limit"))
             let fl = h.availableFrameLimits

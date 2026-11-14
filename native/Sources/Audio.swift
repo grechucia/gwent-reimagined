@@ -20,10 +20,10 @@ final class Audio: NSObject, AVAudioPlayerDelegate {
         let mixer = engine.mainMixerNode
         let fmt = mixer.outputFormat(forBus: 0)
         for _ in 0..<10 {
-            let p = AVAudioPlayerNode()
-            engine.attach(p)
-            engine.connect(p, to: mixer, format: fmt)
-            players.append(p)
+            let node = AVAudioPlayerNode()
+            engine.attach(node)
+            engine.connect(node, to: mixer, format: fmt)
+            players.append(node)
         }
         try? engine.start()
         tracks = ((try? FileManager.default.contentsOfDirectory(at: dir.appendingPathComponent("audio"), includingPropertiesForKeys: nil)) ?? [])
@@ -32,37 +32,37 @@ final class Audio: NSObject, AVAudioPlayerDelegate {
 
     /// Loads and caches a sound effect as a PCM buffer.
     func buffer(_ name: String) -> AVAudioPCMBuffer? {
-        if let b = buffers[name] { return b }
+        if let cached = buffers[name] { return cached }
         let url = dir.appendingPathComponent("sfx/\(name).mp3")
-        guard let f = try? AVAudioFile(forReading: url),
-              let b = AVAudioPCMBuffer(pcmFormat: f.processingFormat, frameCapacity: AVAudioFrameCount(f.length)) else { return nil }
-        try? f.read(into: b)
+        guard let file = try? AVAudioFile(forReading: url),
+              let pcmBuffer = AVAudioPCMBuffer(pcmFormat: file.processingFormat, frameCapacity: AVAudioFrameCount(file.length)) else { return nil }
+        try? file.read(into: pcmBuffer)
         let outFmt = engine.mainMixerNode.outputFormat(forBus: 0)
-        if b.format == outFmt { buffers[name] = b; return b }
-        guard let conv = AVAudioConverter(from: b.format, to: outFmt) else { return nil }
-        let cap = AVAudioFrameCount(Double(b.frameLength) * outFmt.sampleRate / b.format.sampleRate) + 1024
+        if pcmBuffer.format == outFmt { buffers[name] = pcmBuffer; return pcmBuffer }
+        guard let conv = AVAudioConverter(from: pcmBuffer.format, to: outFmt) else { return nil }
+        let cap = AVAudioFrameCount(Double(pcmBuffer.frameLength) * outFmt.sampleRate / pcmBuffer.format.sampleRate) + 1024
         guard let out = AVAudioPCMBuffer(pcmFormat: outFmt, frameCapacity: cap) else { return nil }
         var fed = false
         var err: NSError?
         conv.convert(to: out, error: &err) { _, status in
             if fed { status.pointee = .endOfStream; return nil }
-            fed = true; status.pointee = .haveData; return b
+            fed = true; status.pointee = .haveData; return pcmBuffer
         }
         buffers[name] = out
         return out
     }
     /// Loads the given sound effects in advance.
-    func preload(_ names: [String]) { DispatchQueue.global(qos: .utility).async { for n in names { _ = self.buffer(n) } } }
+    func preload(_ names: [String]) { DispatchQueue.global(qos: .utility).async { for name in names { _ = self.buffer(name) } } }
 
     /// Plays a sound effect by name.
     func play(_ name: String, volume: Float = 0.9) {
-        guard !muted, let b = buffer(name) else { return }
+        guard !muted, let pcmBuffer = buffer(name) else { return }
         if !engine.isRunning { try? engine.start() }
-        let p = players[next]; next = (next + 1) % players.count
-        p.stop()
-        p.volume = volume
-        p.scheduleBuffer(b, at: nil, options: [])
-        p.play()
+        let node = players[next]; next = (next + 1) % players.count
+        node.stop()
+        node.volume = volume
+        node.scheduleBuffer(pcmBuffer, at: nil, options: [])
+        node.play()
     }
 
     private(set) var menuMode = true

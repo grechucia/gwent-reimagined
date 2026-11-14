@@ -113,14 +113,14 @@ final class Player {
         leader = Card(gameData.cards[deck.leader]!, owner: nil)
         leader.owner = self
         if leader.data.abilities.last == "holger_blakhand" { leaderUses = 2 }
-        for (k, n) in deck.cards { if let cardData = gameData.cards[k] { for _ in 0..<max(1, n) { self.deck.append(Card(cardData, owner: self)) } } }
+        for (key, copies) in deck.cards { if let cardData = gameData.cards[key] { for _ in 0..<max(1, copies) { self.deck.append(Card(cardData, owner: self)) } } }
         self.deck.shuffle()
     }
     var rowCards: [Card] { rows.flatMap { $0.cards } }
     /// The given row of this player.
     func row(_ rowType: RowType) -> Row { rows[rowType.rawValue] }
     /// The row a card currently lies in.
-    func rowOf(_ card: Card) -> RowType? { for r in RowType.allCases where rows[r.rawValue].cards.contains(where: { $0 === card }) { return r }; return nil }
+    func rowOf(_ card: Card) -> RowType? { for rowType in RowType.allCases where rows[rowType.rawValue].cards.contains(where: { $0 === card }) { return rowType }; return nil }
     var leaderAbility: String { leader.data.abilities.last ?? "" }
 }
 
@@ -227,18 +227,18 @@ final class Game {
     }
     /// Called by the UI with the human's answer to the pending choice.
     func resolveChoice(_ r: [Int]?) {
-        let k = choiceCont
+        let continuation = choiceCont
         choice = nil; choiceCont = nil
-        k?.resume(returning: r)
+        continuation?.resume(returning: r)
     }
     /// Asks a player to pick several cards.
     func pickCards(_ p: Player, _ title: String, _ cards: [Card], min: Int = 1, max: Int = 1, cancel: Bool = false,
                            ai: @escaping ([Card]) -> [Card]) async -> [Card] {
         guard !cards.isEmpty else { return [] }
-        let r = await choose(Choice(player: p, title: title, kind: .cards(cards, min: min, max: Swift.min(max, cards.count)), canCancel: cancel) {
+        let selection = await choose(Choice(player: p, title: title, kind: .cards(cards, min: min, max: Swift.min(max, cards.count)), canCancel: cancel) {
             ai(cards).compactMap { c in cards.firstIndex { $0 === c } }
         }) ?? []
-        return r.compactMap { $0 < cards.count ? cards[$0] : nil }
+        return selection.compactMap { $0 < cards.count ? cards[$0] : nil }
     }
     /// Asks a player to pick one card.
     func pickOne(_ player: Player, _ title: String, _ cards: [Card], cancel: Bool = false, ai: @escaping ([Card]) -> Card?) async -> Card? {
@@ -280,8 +280,8 @@ final class Game {
     }
     /// Plays a card animation, optionally waiting for it.
     func animate(_ card: Card, _ name: String, wait: Bool = true) async {
-        guard let n = Game.animName(name) ?? (name == "hero" ? "hero" : nil) else { return }
-        events.append(.anim(card, n))
+        guard let animation = Game.animName(name) ?? (name == "hero" ? "hero" : nil) else { return }
+        events.append(.anim(card, animation))
         if wait { await pause(0.7) }
     }
     /// Shows a notification banner.
@@ -301,12 +301,12 @@ final class Game {
     /// Swaps a card in hand for a random card from the deck (redraw phase).
     func redraw(_ card: Card) -> Card? {
         guard phase == .redraw, redrawsLeft > 0, let i = human.hand.firstIndex(where: { $0 === card }), !human.deck.isEmpty else { return nil }
-        let n = human.deck.removeFirst()
-        human.hand[i] = n
+        let drawn = human.deck.removeFirst()
+        human.hand[i] = drawn
         human.deck.insert(card, at: Int.random(in: 0...human.deck.count))
         redrawsLeft -= 1
         sound("redraw")
-        return n
+        return drawn
     }
     /// AI decision for the redraw phase.
     func aiRedraw(_ player: Player) {
@@ -325,7 +325,7 @@ final class Game {
     func daisyReturn() async {
         if human.leaderAbility == "francesca_daisy" {
             let back = await pickCards(human, L("Choose 2 cards to put back into your deck"), human.hand, min: 2, max: 2) { candidates in Array(candidates.sorted { self.aiCardValue($0) < self.aiCardValue($1) }.prefix(2)) }
-            for c in back { human.hand.removeAll { $0 === c }; human.deck.insert(c, at: Int.random(in: 0...human.deck.count)) }
+            for returned in back { human.hand.removeAll { $0 === returned }; human.deck.insert(returned, at: Int.random(in: 0...human.deck.count)) }
         }
     }
     /// Ends the redraw phase and starts the first round.
@@ -437,23 +437,23 @@ final class Game {
         let doors = RowType.allCases.filter { player.row($0).door }
         if !doors.isEmpty, let top = player.deck.first {
             player.deck.removeFirst()
-            if top.isUnit, let r = doors.first(where: { top.allowedRows.contains($0) }) {
-                await placeUnit(top, by: player, row: r)
+            if top.isUnit, let doorRow = doors.first(where: { top.allowedRows.contains($0) }) {
+                await placeUnit(top, by: player, row: doorRow)
             } else if !top.isUnit {
                 player.hand.append(top)
             } else { player.deck.insert(top, at: Int.random(in: 0...player.deck.count)) }
         }
-        for q in [player, player.opponent!] where q.faction == "velen" && q.lostUnitThisTurn {
-            q.lostUnitThisTurn = false
-            let n = 1 + q.rowCards.filter { $0.act("soothsayer") }.count
-            if q.leaderAbility == "lady_wood_brewess", q.deck.count >= 2 {
-                let twoCards = Array(q.deck.prefix(2))
-                if let card = await pickOne(q, L("Choose a unit to play immediately"), twoCards, ai: { candidates in candidates.max { self.aiCardValue($0) < self.aiCardValue($1) } }) {
-                    q.deck.removeAll { $0 === card }
-                    if card.isUnit { await placeUnit(card, by: q, row: card.allowedRows.first ?? .close) } else { q.hand.append(card) }
-                    q.deck.shuffle()
+        for side in [player, player.opponent!] where side.faction == "velen" && side.lostUnitThisTurn {
+            side.lostUnitThisTurn = false
+            let extraDraws = 1 + side.rowCards.filter { $0.act("soothsayer") }.count
+            if side.leaderAbility == "lady_wood_brewess", side.deck.count >= 2 {
+                let twoCards = Array(side.deck.prefix(2))
+                if let card = await pickOne(side, L("Choose a unit to play immediately"), twoCards, ai: { candidates in candidates.max { self.aiCardValue($0) < self.aiCardValue($1) } }) {
+                    side.deck.removeAll { $0 === card }
+                    if card.isUnit { await placeUnit(card, by: side, row: card.allowedRows.first ?? .close) } else { side.hand.append(card) }
+                    side.deck.shuffle()
                 }
-            } else { draw(q, n) }
+            } else { draw(side, extraDraws) }
             note(L("Velen ability triggered: Player will draw a card"), "notif_velen")
         }
         recalc()
@@ -471,7 +471,7 @@ final class Game {
             let answer = await pickOption(player, L("Would you like to retake one of your cards?"), [L("Retake a card [E]"), L("Not yet [Q]")]) { self.round >= 2 ? 0 : 1 }
             if answer == 0, let card = await pickOne(player, L("Which card to retake?"), player.rowCards, ai: { candidates in candidates.max { self.aiCardValue($0) < self.aiCardValue($1) } }) {
                 player.monstersUsed = true
-                if let r = player.rowOf(card) { player.row(r).cards.removeAll { $0 === card } }
+                if let rowType = player.rowOf(card) { player.row(rowType).cards.removeAll { $0 === card } }
                 resetCard(card); player.hand.append(card)
                 note(L("Monsters faction ability triggered - monsters retake one card to their hand"), "notif_monsters")
             }
@@ -517,26 +517,26 @@ final class Game {
     func cleanupRound() async {
         var avengers: [(Card, Player, RowType)] = []
         for player in [human, computer] {
-            for c in player.rowCards where c.act("resilience") {
-                let key = c.data.abilities.last ?? ""
-                if player.rowCards.filter({ $0 !== c && $0.data.abilities.contains(key) }).count >= 1 { c.keepNextRound = true }
+            for unit in player.rowCards where unit.act("resilience") {
+                let key = unit.data.abilities.last ?? ""
+                if player.rowCards.filter({ $0 !== unit && $0.data.abilities.contains(key) }).count >= 1 { unit.keepNextRound = true }
             }
         }
         for player in [human, computer] {
-            for r in RowType.allCases {
-                let row = player.row(r)
+            for rowType in RowType.allCases {
+                let row = player.row(rowType)
                 var stay: [Card] = []
                 for card in row.cards {
                     if card.immortalRounds > 1 { card.immortalRounds -= 1; stay.append(card); continue }
                     if card.keepNextRound { card.keepNextRound = false; stay.append(card); continue }
-                    if card.data.abilities.contains(where: { $0.hasPrefix("avenger") }) && !card.locked { avengers.append((card, player, r)) }
+                    if card.data.abilities.contains(where: { $0.hasPrefix("avenger") }) && !card.locked { avengers.append((card, player, rowType)) }
                     resetCard(card); card.diedRound = round
                     (card.owner ?? player).grave.append(card)
                 }
                 row.cards = stay
-                for s in row.specials { (s.owner ?? player).grave.append(s) }
+                for special in row.specials { (special.owner ?? player).grave.append(special) }
                 row.specials.removeAll(); row.lock = nil; row.curse = nil; row.ambush = nil; row.door = false; row.leaderHorn = false; row.factionMorale = 0
-                player.weather[r.rawValue].removeAll()
+                player.weather[rowType.rawValue].removeAll()
             }
             for card in player.hand + player.deck { card.tempStrength = nil }
             player.forcedCard = nil
@@ -546,9 +546,9 @@ final class Game {
         for player in [human, computer] where player.fleetPending > 0 { draw(player, player.fleetPending); player.fleetPending = 0 }
         if round < 3 {
             for (card, player, r) in avengers {
-                for t in card.data.targets {
-                    guard let cardData = gameData.cards[t], cardData.isUnit else { continue }
-                    if let i = player.deck.firstIndex(where: { $0.key == t }) { let n = player.deck.remove(at: i); player.row(RowType.from(cardData.row) ?? r).cards.append(n); n.flash = 1 }
+                for targetKey in card.data.targets {
+                    guard let cardData = gameData.cards[targetKey], cardData.isUnit else { continue }
+                    if let i = player.deck.firstIndex(where: { $0.key == targetKey }) { let n = player.deck.remove(at: i); player.row(RowType.from(cardData.row) ?? r).cards.append(n); n.flash = 1 }
                     else { let newCard = Card(cardData, owner: player); player.row(RowType.from(cardData.row) ?? r).cards.append(newCard); newCard.flash = 1 }
                 }
             }
@@ -600,7 +600,7 @@ final class Game {
     /// Plays a unit, special or weather card for a player.
     func play(_ card: Card, by player: Player, row: RowType? = nil, rowOwner: Player? = nil, target: Card? = nil) async {
         guard phase == .play, current === player, let hi = player.hand.firstIndex(where: { $0 === card }) else { return }
-        if let f = player.forcedCard, f !== card, player.hand.contains(where: { $0 === f }) { return }
+        if let forced = player.forcedCard, forced !== card, player.hand.contains(where: { $0 === forced }) { return }
         player.forcedCard = nil
         player.hand.remove(at: hi)
         card.owner = player
@@ -613,14 +613,14 @@ final class Game {
 
     /// Places a unit on a row and triggers its abilities.
     func placeUnit(_ card: Card, by player: Player, row requestedRow: RowType, side forcedSide: Player? = nil) async {
-        var r = requestedRow
+        var chosenRow = requestedRow
         let isSpy = card.has("spy") || card.has("emissary") || card.has("ofiri_envoy")
         let side: Player = forcedSide ?? (isSpy ? player.opponent : player)
         if !card.isUnit { player.hand.append(card); return }
-        if !card.data.row.hasPrefix("agile") && !card.has("ambush"), let fixed = RowType.from(card.data.row) { r = fixed }
+        if !card.data.row.hasPrefix("agile") && !card.has("ambush"), let fixed = RowType.from(card.data.row) { chosenRow = fixed }
         card.owner = player
         card.playedTurn = turn
-        let row = side.row(r)
+        let row = side.row(chosenRow)
         if let curse = row.curse, !card.hero {
             row.curse = nil; (curse.owner ?? player).grave.append(curse)
             side.grave.append(card); card.diedRound = round
@@ -633,9 +633,9 @@ final class Game {
         if let lk = row.lock, !card.hero, !card.data.abilities.filter({ $0 != "hero" }).isEmpty {
             card.locked = true; row.lock = nil; (lk.owner ?? player).grave.append(lk); sound("lock"); events.append(.anim(card, "lock"))
         }
-        if let amb = side.opponent.row(r).cards.first(where: { $0.act("ambush") && $0.owner === side.opponent }), side === player {
+        if let amb = side.opponent.row(chosenRow).cards.first(where: { $0.act("ambush") && $0.owner === side.opponent }), side === player {
             let o = side.opponent!
-            o.row(r).cards.removeAll { $0 === amb }; o.grave.append(amb)
+            o.row(chosenRow).cards.removeAll { $0 === amb }; o.grave.append(amb)
             draw(o, 2); sound("ambush")
         }
         if isSpy && side.leaderAbility == "novigrad_sigismund2" { draw(side, 1) }
@@ -646,10 +646,10 @@ final class Game {
         if card.act("bond") {
             let group = row.cards.filter { $0.act("bond") && $0.groupKey == card.groupKey }
             if group.count > 1 { for g in group { await animate(g, "bond", wait: false) }; await pause(0.7) }
-        } else if let a = card.data.abilities.reversed().first(where: { Game.animName($0) != nil }) {
-            await animate(card, a)
+        } else if let animatedAbility = card.data.abilities.reversed().first(where: { Game.animName($0) != nil }) {
+            await animate(card, animatedAbility)
         } else if card.hero { await pause(0.6) }
-        await unitAbilities(card, by: player, side: side, row: r)
+        await unitAbilities(card, by: player, side: side, row: chosenRow)
         recalc()
     }
 

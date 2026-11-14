@@ -61,10 +61,10 @@ extension Game {
         if opponent.row(rowType).shielded { return }
         let units = opponent.row(rowType).cards.filter { !$0.hero && $0.immortalRounds == 0 }
         guard let lowestPower = units.map({ $0.power }).min() else { return }
-        for t in units where t.power == lowestPower {
-            opponent.row(rowType).cards.removeAll { $0 === t }
-            t.owner = player; t.locked = true
-            player.row(rowType).cards.append(t); t.flash = 1; events.append(.anim(t, "seize"))
+        for unit in units where unit.power == lowestPower {
+            opponent.row(rowType).cards.removeAll { $0 === unit }
+            unit.owner = player; unit.locked = true
+            player.row(rowType).cards.append(unit); unit.flash = 1; events.append(.anim(unit, "seize"))
         }
         sound("seize")
     }
@@ -89,25 +89,25 @@ extension Game {
 
     /// Plays a weather card.
     func playWeather(_ card: Card, by player: Player, row: RowType?) async {
-        let a = card.data.abilities.first ?? ""
-        if a == "clear" { await clearWeather(); (card.owner ?? player).grave.append(card); return }
-        var rows = weatherRows(a, card)
-        if a == "storm" {
+        let ability = card.data.abilities.first ?? ""
+        if ability == "clear" { await clearWeather(); (card.owner ?? player).grave.append(card); return }
+        var rows = weatherRows(ability, card)
+        if ability == "storm" {
             let answer = await pickOption(player, L("Skellige Storm can either target Close/Ranged rows or Ranged/Siege rows, which one to target?"), [L("Close + Ranged [E]"), L("Ranged + Siege [Q]")]) {
                 let opponent = player.opponent!
                 return opponent.row(.close).total + opponent.row(.ranged).total - player.row(.close).total - player.row(.ranged).total >= opponent.row(.ranged).total + opponent.row(.siege).total - player.row(.ranged).total - player.row(.siege).total ? 0 : 1
             }
             rows = answer == 0 ? [.close, .ranged] : [.ranged, .siege]
         }
-        if rows.allSatisfy({ human.weather[$0.rawValue].contains(a) && computer.weather[$0.rawValue].contains(a) }) { (card.owner ?? player).grave.append(card); return }
-        for q in [human, computer] { for r in rows { q.weather[r.rawValue].insert(a) } }
+        if rows.allSatisfy({ human.weather[$0.rawValue].contains(ability) && computer.weather[$0.rawValue].contains(ability) }) { (card.owner ?? player).grave.append(card); return }
+        for side in [human, computer] { for row in rows { side.weather[row.rawValue].insert(ability) } }
         weatherCards.append(card)
-        sound(["frost": "cold", "fog": "fog", "rain": "rain", "storm": "rain", "white_frost": "cold", "sandstorm": "sandstorm", "spider_web": "spider_web", "tse_tse": "tse_tse", "dragon_wrath": "dragon_wrath"][a] ?? "rain")
-        if a == "fog" {
-            for q in [human, computer] {
-                for x in (q.deck + q.grave).filter({ $0.has("fog_summoning") }) {
-                    q.deck.removeAll { $0 === x }; q.grave.removeAll { $0 === x }
-                    resetCard(x); x.owner = q; q.row(x.allowedRows.first ?? .ranged).cards.append(x); x.flash = 1
+        sound(["frost": "cold", "fog": "fog", "rain": "rain", "storm": "rain", "white_frost": "cold", "sandstorm": "sandstorm", "spider_web": "spider_web", "tse_tse": "tse_tse", "dragon_wrath": "dragon_wrath"][ability] ?? "rain")
+        if ability == "fog" {
+            for side in [human, computer] {
+                for x in (side.deck + side.grave).filter({ $0.has("fog_summoning") }) {
+                    side.deck.removeAll { $0 === x }; side.grave.removeAll { $0 === x }
+                    resetCard(x); x.owner = side; side.row(x.allowedRows.first ?? .ranged).cards.append(x); x.flash = 1
                 }
             }
         }
@@ -116,9 +116,9 @@ extension Game {
 
     /// Removes all weather.
     func clearWeather() async {
-        for c in weatherCards { c.owner?.grave.append(c) }
+        for weatherCard in weatherCards { weatherCard.owner?.grave.append(weatherCard) }
         weatherCards.removeAll()
-        for q in [human, computer] { for i in 0..<3 { q.weather[i].removeAll() } }
+        for side in [human, computer] { for i in 0..<3 { side.weather[i].removeAll() } }
         sound("clear")
         recalc()
     }
@@ -146,10 +146,10 @@ extension Game {
         (card.owner ?? side).grave.append(card)
         side.lostUnitThisTurn = true
         if card.data.abilities.contains(where: { $0.hasPrefix("avenger") }) {
-            for t in card.data.targets {
-                guard let cardData = gameData.cards[t], cardData.isUnit else { continue }
+            for targetKey in card.data.targets {
+                guard let cardData = gameData.cards[targetKey], cardData.isUnit else { continue }
                 let n: Card
-                if let i = side.deck.firstIndex(where: { $0.key == t }) { n = side.deck.remove(at: i) } else { n = Card(cardData, owner: side) }
+                if let i = side.deck.firstIndex(where: { $0.key == targetKey }) { n = side.deck.remove(at: i) } else { n = Card(cardData, owner: side) }
                 n.owner = side; side.row(RowType.from(cardData.row) ?? currentRow).cards.append(n); n.flash = 1
             }
         }
@@ -159,13 +159,13 @@ extension Game {
     func scorch(except: Card?) async {
         recalc()
         var all: [(Card, Player)] = []
-        for player in [human, computer] { for r in RowType.allCases where !player.row(r).shielded { for c in player.row(r).cards where !c.hero && c !== except && c.key != "spe_decoy" { all.append((c, player)) } } }
+        for player in [human, computer] { for rowType in RowType.allCases where !player.row(rowType).shielded { for unit in player.row(rowType).cards where !unit.hero && unit !== except && unit.key != "spe_decoy" { all.append((unit, player)) } } }
         guard let maxP = all.map({ $0.0.power }).max(), maxP > 0 else { return }
         sound("scorch")
         let victims = all.filter { $0.0.power == maxP }
-        for (c, _) in victims { events.append(.burn(c)) }
+        for (victim, _) in victims { events.append(.burn(victim)) }
         await pause(0.75)
-        for (c, player) in victims { await destroy(c, side: player, burn: false) }
+        for (victim, player) in victims { await destroy(victim, side: player, burn: false) }
         recalc()
     }
 
@@ -173,13 +173,13 @@ extension Game {
     func cull(except: Card?) async {
         recalc()
         var all: [(Card, Player)] = []
-        for player in [human, computer] { for r in RowType.allCases where !player.row(r).shielded { for c in player.row(r).cards where !c.hero && c !== except && c.key != "spe_decoy" { all.append((c, player)) } } }
+        for player in [human, computer] { for rowType in RowType.allCases where !player.row(rowType).shielded { for unit in player.row(rowType).cards where !unit.hero && unit !== except && unit.key != "spe_decoy" { all.append((unit, player)) } } }
         guard let lowestPower = all.map({ $0.0.power }).min() else { return }
         sound("cull")
         let victims = all.filter { $0.0.power == lowestPower }
-        for (c, _) in victims { events.append(.burn(c)) }
+        for (victim, _) in victims { events.append(.burn(victim)) }
         await pause(0.75)
-        for (c, player) in victims { await destroy(c, side: player, burn: false) }
+        for (victim, player) in victims { await destroy(victim, side: player, burn: false) }
         recalc()
     }
 
@@ -192,17 +192,17 @@ extension Game {
         guard let maxP = candidates.map({ $0.power }).max(), maxP > 0 else { return }
         sound("scorch")
         let victims = candidates.filter { $0.power == maxP }
-        for c in victims { events.append(.burn(c)) }
+        for victim in victims { events.append(.burn(victim)) }
         await pause(0.75)
-        for c in victims { await destroy(c, side: side, burn: false) }
+        for victim in victims { await destroy(victim, side: side, burn: false) }
         recalc()
     }
 
     /// Commander's Horn: Doubles the strength of all unit cards in that row. Limited to 1 per row. | Mardroeme: Triggers transformation of all Berserker cards on the same row. | Morale Boost: Adds +1 to…
     func specialHorn(_ card: Card, by player: Player, row: RowType?, rowOwner: Player?, target: Card?, kind: String) async {
-        var r = row
-        if r == nil { r = await pickRow(player, L("Select a card on your side of the board."), validRows(for: card, by: player).map { (player, $0) }) { 0 }?.1 }
-        guard let chosenRow = r else { player.grave.append(card); return }
+        var rowType = row
+        if rowType == nil { rowType = await pickRow(player, L("Select a card on your side of the board."), validRows(for: card, by: player).map { (player, $0) }) { 0 }?.1 }
+        guard let chosenRow = rowType else { player.grave.append(card); return }
         player.row(chosenRow).specials.append(card)
         await animate(card, kind)
         sound(kind == "horn" ? "horn" : (kind == "mardroeme" ? "mardroeme" : (kind.hasPrefix("shield") ? "shield" : "moral")))
@@ -211,10 +211,10 @@ extension Game {
 
     /// Dimensional Door: While the door is active, at the end of each of your turns you should draw one card from your deck. If the row of the card matches the row of the door, play it immediatly,…
     func specialDoor(_ card: Card, by player: Player, row: RowType?, rowOwner: Player?, target: Card?, kind: String) async {
-        var r = row
-        if r == nil { r = await pickRow(player, L("Select a card on your side of the board."), validRows(for: card, by: player).map { (player, $0) }) { 0 }?.1 }
+        var rowType = row
+        if rowType == nil { rowType = await pickRow(player, L("Select a card on your side of the board."), validRows(for: card, by: player).map { (player, $0) }) { 0 }?.1 }
         let open = RowType.allCases.filter { player.row($0).door }
-        if let chosenRow = r, open.count < maxDoors { player.row(chosenRow).door = true }
+        if let chosenRow = rowType, open.count < maxDoors { player.row(chosenRow).door = true }
         player.grave.append(card); sound("door")
     }
 
@@ -230,9 +230,9 @@ extension Game {
     /// Lock: Lock/cancels the ability of the next unit played in that row (ignores units without abilities and heroes).
     func specialLock(_ card: Card, by player: Player, row: RowType?, rowOwner: Player?, target: Card?, kind: String) async {
         let opponent = player.opponent!
-        var r = row
-        if r == nil { r = await pickRow(player, L("Select a card on your side of the board."), enemyRowTargets(for: card, by: player).map { (opponent, $0) }) { Int.random(in: 0..<3) }?.1 }
-        if let chosenRow = r { opponent.row(chosenRow).lock = card } else { player.grave.append(card) }
+        var rowType = row
+        if rowType == nil { rowType = await pickRow(player, L("Select a card on your side of the board."), enemyRowTargets(for: card, by: player).map { (opponent, $0) }) { Int.random(in: 0..<3) }?.1 }
+        if let chosenRow = rowType { opponent.row(chosenRow).lock = card } else { player.grave.append(card) }
         sound("lock")
     }
 
@@ -247,9 +247,9 @@ extension Game {
     /// Knockback: Pushes all units of the selected row (Melee or Ranged) or row back towards the Siege row, ignores shields.
     func specialKnockback(_ card: Card, by player: Player, row: RowType?, rowOwner: Player?, target: Card?, kind: String) async {
         let opponent = player.opponent!
-        var r = row
-        if r == nil { r = await pickRow(player, gameData.abilityName("knockback"), [(opponent, .close), (opponent, .ranged)]) { 0 }?.1 }
-        if let chosenRow = r {
+        var rowType = row
+        if rowType == nil { rowType = await pickRow(player, gameData.abilityName("knockback"), [(opponent, .close), (opponent, .ranged)]) { 0 }?.1 }
+        if let chosenRow = rowType {
             let dest: RowType = chosenRow == .close ? .ranged : .siege
             let moving = opponent.row(chosenRow).cards.filter { !$0.hero }
             opponent.row(chosenRow).cards.removeAll { m in moving.contains { $0 === m } }
@@ -309,7 +309,7 @@ extension Game {
     /// Veles: Move your strongest unit card to the Siege row. While there, its strength is doubled. Discard after playing.
     func specialVeles(_ card: Card, by player: Player, row: RowType?, rowOwner: Player?, target: Card?, kind: String) async {
         if let candidates = player.rowCards.filter({ !$0.hero }).max(by: { $0.power < $1.power }) {
-            if let tr = player.rowOf(candidates) { player.row(tr).cards.removeAll { $0 === candidates } }
+            if let currentRow = player.rowOf(candidates) { player.row(currentRow).cards.removeAll { $0 === candidates } }
             player.row(.siege).cards.append(candidates); candidates.siegeMult = 2; await animate(candidates, "veles")
         }
         player.grave.append(card); sound("veles")
@@ -318,7 +318,7 @@ extension Game {
     /// Devana's Hunt: Reduce the strength of all non-hero enemy units in the Ranged row to 2. Discard after playing.
     func specialDevana(_ card: Card, by player: Player, row: RowType?, rowOwner: Player?, target: Card?, kind: String) async {
         let opponent = player.opponent!
-        for t in opponent.row(.ranged).cards where !t.hero { t.setTo = 2; t.flash = 1 }
+        for unit in opponent.row(.ranged).cards where !unit.hero { unit.setTo = 2; unit.flash = 1 }
         player.grave.append(card); sound("rune_call")
     }
 
@@ -333,8 +333,8 @@ extension Game {
     func specialStribog(_ card: Card, by player: Player, row: RowType?, rowOwner: Player?, target: Card?, kind: String) async {
         let opponent = player.opponent!
         let units = opponent.row(.ranged).cards.filter { !$0.hero }
-        if let mn = units.map({ $0.power }).min() {
-            for t in units where t.power == mn { opponent.row(.ranged).cards.removeAll { $0 === t }; t.owner = player; player.row(.ranged).cards.append(t) }
+        if let lowestPower = units.map({ $0.power }).min() {
+            for unit in units where unit.power == lowestPower { opponent.row(.ranged).cards.removeAll { $0 === unit }; unit.owner = player; player.row(.ranged).cards.append(unit) }
         }
         player.grave.append(card); sound("rune_call")
     }

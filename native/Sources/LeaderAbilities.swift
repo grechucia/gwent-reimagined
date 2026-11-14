@@ -63,7 +63,7 @@ extension Game {
         case "eredin_commander": await leaderEredinCommander(player, free: free)
         // Eredin : Bringer of Death: Restore a unit card from your discard pile to your hand.
         case "eredin_bringer_of_death":
-            if let t = await pickOne(player, L("Which card to restore from your grave?"), player.grave.filter { $0.isUnit }, ai: strongestCard) { player.grave.removeAll { $0 === t }; resetCard(t); player.hand.append(t) }
+            if let chosen = await pickOne(player, L("Which card to restore from your grave?"), player.grave.filter { $0.isUnit }, ai: strongestCard) { player.grave.removeAll { $0 === chosen }; resetCard(chosen); player.hand.append(chosen) }
         // Discard 2 cards and draw 1 card of your choice from your deck.
         case "eredin_destroyer": await leaderEredinDestroyer(player, free: free)
         // Choose 3 or less unit and/or hero cards, which lie on the opponent's battlefield. Move these cards to any other opponent's row (rows). | Choose 4 or less unit and/or hero cards, which lie on your…
@@ -80,10 +80,10 @@ extension Game {
         case "radovid_mad_king": await leaderRadovidMadKing(player, free: free)
         // Choose one hero card on your battlefield. Take it back to your hand.
         case "radovid_strategist":
-            if let t = await pickOne(player, L("Choose the hero to take back into your hand"), player.rowCards.filter { $0.hero }, ai: strongestCard) { if let r = player.rowOf(t) { player.row(r).cards.removeAll { $0 === t } }; player.hand.append(t) }
+            if let chosen = await pickOne(player, L("Choose the hero to take back into your hand"), player.rowCards.filter { $0.hero }, ai: strongestCard) { if let rowType = player.rowOf(chosen) { player.row(rowType).cards.removeAll { $0 === chosen } }; player.hand.append(chosen) }
         // Pick one hero card from your grave and play it immediately.
         case "anna_henrietta_duchess":
-            if let t = await pickOne(player, L("Choose the hero to play"), player.grave.filter { $0.hero && $0.isUnit }, ai: strongestCard) { player.grave.removeAll { $0 === t }; await placeUnit(t, by: player, row: t.allowedRows.first ?? .close) }
+            if let chosen = await pickOne(player, L("Choose the hero to play"), player.grave.filter { $0.hero && $0.isUnit }, ai: strongestCard) { player.grave.removeAll { $0 === chosen }; await placeUnit(chosen, by: player, row: chosen.allowedRows.first ?? .close) }
         // Choose a second-form Toussaint Monster on the battlefield to play its weaker form. You can transform it back later.
         case "anna_henrietta_ladyship": await leaderAnnaHenriettaLadyship(player, free: free)
         // Choose an enemy hero card and remove its Hero status.
@@ -112,7 +112,7 @@ extension Game {
         case "cyrus_hemmelfart": await leaderCyrusHemmelfart(player, free: free)
         // Once per game: Play an Inquisitional Pyres card on the appropriate row.
         case "cyrus_hemmelfart1":
-            if let d = gameData.cards["nv_inquisitional_pyres"] { await placeUnit(Card(d, owner: player), by: player, row: .close) }
+            if let cardData = gameData.cards["nv_inquisitional_pyres"] { await placeUnit(Card(cardData, owner: player), by: player, row: .close) }
         // Destroy the enemy's weakest hero card (max 1 card).
         case "azar_javed": await leaderAzarJaved(player, free: free)
         // Select 2 cards from your opponent's discard pile and shuffle them back into his/her deck.
@@ -142,7 +142,7 @@ extension Game {
     func leaderMevePrincess(_ player: Player, free: Bool) async {
         let opponent = player.opponent!
         recalc()
-        if let r = RowType.allCases.filter({ opponent.row($0).total >= 10 }).max(by: { opponent.row($0).total < opponent.row($1).total }) { await rowScorch(opponent, r) }
+        if let strongRows = RowType.allCases.filter({ opponent.row($0).total >= 10 }).max(by: { opponent.row($0).total < opponent.row($1).total }) { await rowScorch(opponent, strongRows) }
     }
 
     /// Draw an opponent's discarded non-hero unit into your hand. Then put any card from your hand on the bottom of your deck.
@@ -164,7 +164,7 @@ extension Game {
 
     /// Destroy one unit or hero card on your battlefield. Then draw any one Spy or Emissary card from your deck into your hand.
     func leaderEmhyrRelentless(_ player: Player, free: Bool) async {
-        if let t = await pickOne(player, L("Which card to destroy?"), player.rowCards, ai: { candidates in candidates.min { $0.power < $1.power } }) { await destroy(t, side: player) }
+        if let chosen = await pickOne(player, L("Which card to destroy?"), player.rowCards, ai: { candidates in candidates.min { $0.power < $1.power } }) { await destroy(chosen, side: player) }
         let options = player.deck.filter { $0.has("spy") || $0.has("emissary") }
         if let chosen = await pickOne(player, L("Which Spy/Emissary card to draw?"), options, ai: { $0.first }) { player.deck.removeAll { $0 === chosen }; player.hand.append(chosen) }
     }
@@ -182,13 +182,13 @@ extension Game {
     /// Choose on your battlefield two or less unit and/or hero cards and take them into your hand.
     func leaderEredinCommander(_ player: Player, free: Bool) async {
         let picked = await pickCards(player, L("Choose on your battlefield two or less unit and/or hero cards and take them into your hand."), player.rowCards, min: 0, max: 2) { candidates in Array(candidates.filter { $0.has("spy") || $0.has("medic") }.prefix(2)) }
-        for t in picked { if let currentRow = player.rowOf(t) { player.row(currentRow).cards.removeAll { $0 === t } }; resetCard(t); player.hand.append(t) }
+        for card in picked { if let currentRow = player.rowOf(card) { player.row(currentRow).cards.removeAll { $0 === card } }; resetCard(card); player.hand.append(card) }
     }
 
     /// Discard 2 cards and draw 1 card of your choice from your deck.
     func leaderEredinDestroyer(_ player: Player, free: Bool) async {
         let disc = await pickCards(player, L("Which card to discard?"), player.hand, min: min(2, player.hand.count), max: 2) { candidates in Array(candidates.sorted { self.aiCardValue($0) < self.aiCardValue($1) }.prefix(2)) }
-        for t in disc { player.hand.removeAll { $0 === t }; player.grave.append(t) }
+        for card in disc { player.hand.removeAll { $0 === card }; player.grave.append(card) }
         if let chosen = await pickOne(player, L("Which card to draw?"), player.deck, ai: strongestCard) { player.deck.removeAll { $0 === chosen }; player.hand.append(chosen) }
     }
 
@@ -196,13 +196,13 @@ extension Game {
     func leaderFrancescaPureblood(_ player: Player, free: Bool) async {
         let opponent = player.opponent!
         let target = player.leaderAbility == "francesca_pureblood" ? opponent : player
-        let n = player.leaderAbility == "francesca_pureblood" ? 3 : 4
-        let picks = await pickCards(player, gameData.abilityDesc(player.leaderAbility), target.rowCards.filter { !$0.hero }, min: 0, max: n) { candidates in Array(candidates.prefix(n)) }
-        for t in picks {
-            guard let from = target.rowOf(t) else { continue }
+        let maxCount = player.leaderAbility == "francesca_pureblood" ? 3 : 4
+        let picks = await pickCards(player, gameData.abilityDesc(player.leaderAbility), target.rowCards.filter { !$0.hero }, min: 0, max: maxCount) { candidates in Array(candidates.prefix(maxCount)) }
+        for card in picks {
+            guard let from = target.rowOf(card) else { continue }
             let dests = RowType.allCases.filter { $0 != from }.map { (target, $0) }
-            if let (_, d) = await pickRow(player, gameData.cardName(t.data), dests, ai: { target === opponent ? (opponent.weather[dests[0].1.rawValue].isEmpty ? 1 : 0) : 0 }) {
-                target.row(from).cards.removeAll { $0 === t }; target.row(d).cards.append(t)
+            if let (_, d) = await pickRow(player, gameData.cardName(card.data), dests, ai: { target === opponent ? (opponent.weather[dests[0].1.rawValue].isEmpty ? 1 : 0) : 0 }) {
+                target.row(from).cards.removeAll { $0 === card }; target.row(d).cards.append(card)
             }
         }
     }
@@ -211,10 +211,10 @@ extension Game {
     func leaderCrachAnCraite(_ player: Player, free: Bool) async {
         let opponent = player.opponent!
         let keep = await pickOne(player, L("Would you like to select a card to keep in your graveyard?"), player.grave, cancel: true, ai: { _ in nil })
-        for q in [player, opponent] {
-            for card in q.grave where card !== keep { resetCard(card); q.deck.append(card) }
-            q.grave = keep != nil && q === player ? [keep!] : []
-            q.deck.shuffle()
+        for side in [player, opponent] {
+            for card in side.grave where card !== keep { resetCard(card); side.deck.append(card) }
+            side.grave = keep != nil && side === player ? [keep!] : []
+            side.deck.shuffle()
         }
     }
 
@@ -252,9 +252,9 @@ extension Game {
         let opponent = player.opponent!
         recalc()
         let all = (player.rowCards + opponent.rowCards)
-        if let mx = all.map({ $0.power }).max() {
-            let cands = all.filter { $0.power == mx }
-            if let t = await pickOne(player, L("Choose the card to destroy"), cands, ai: { candidates in candidates.first { $0.owner === opponent } ?? candidates.first }) { await destroy(t, side: opponent.rowCards.contains { $0 === t } ? opponent : player) }
+        if let highestPower = all.map({ $0.power }).max() {
+            let cands = all.filter { $0.power == highestPower }
+            if let chosen = await pickOne(player, L("Choose the card to destroy"), cands, ai: { candidates in candidates.first { $0.owner === opponent } ?? candidates.first }) { await destroy(chosen, side: opponent.rowCards.contains { $0 === chosen } ? opponent : player) }
         }
     }
 
@@ -262,14 +262,14 @@ extension Game {
     func leaderAnnaHenriettaLadyship(_ player: Player, free: Bool) async {
         let opponent = player.opponent!
         let options = (player.rowCards + opponent.rowCards).filter { $0.revertTo != nil }
-        if let chosen = await pickOne(player, L("Choose the monster to revert to its primal form."), options, ai: { $0.first }), let k = chosen.revertTo, let d = gameData.cards[k] { chosen.transform(into: d); chosen.revertTo = nil }
+        if let chosen = await pickOne(player, L("Choose the monster to revert to its primal form."), options, ai: { $0.first }), let originalKey = chosen.revertTo, let d = gameData.cards[originalKey] { chosen.transform(into: d); chosen.revertTo = nil }
     }
 
     /// Take from your discard pile in your hand 3 or less unit cards, that died in the current round.
     func leaderLadyWoodWhispess(_ player: Player, free: Bool) async {
         let options = player.grave.filter { $0.isUnit && $0.diedRound == round }
         let picked = await pickCards(player, gameData.abilityDesc("lady_wood_whispess"), options, min: 0, max: 3) { candidates in Array(candidates.sorted { self.aiCardValue($0) > self.aiCardValue($1) }.prefix(3)) }
-        for t in picked { player.grave.removeAll { $0 === t }; player.hand.append(t) }
+        for card in picked { player.grave.removeAll { $0 === card }; player.hand.append(card) }
     }
 
     /// Draw a Curse card from your deck and play it immediatly.
@@ -285,9 +285,9 @@ extension Game {
         let opponent = player.opponent!
         recalc()
         let all = (player.rowCards + opponent.rowCards).filter { !$0.hero }
-        if let mn = all.map({ $0.power }).min() {
-            let cands = all.filter { $0.power == mn }
-            if let t = await pickOne(player, L("Choose which enemy card to destroy"), cands, ai: { candidates in candidates.first { $0.owner === opponent } ?? candidates.first }) { await destroy(t, side: opponent.rowCards.contains { $0 === t } ? opponent : player) }
+        if let lowestPower = all.map({ $0.power }).min() {
+            let cands = all.filter { $0.power == lowestPower }
+            if let chosen = await pickOne(player, L("Choose which enemy card to destroy"), cands, ai: { candidates in candidates.first { $0.owner === opponent } ?? candidates.first }) { await destroy(chosen, side: opponent.rowCards.contains { $0 === chosen } ? opponent : player) }
         }
     }
 
@@ -295,10 +295,10 @@ extension Game {
     func leaderAuberonKing(_ player: Player, free: Bool) async {
         let navs = (player.deck + player.grave).filter { $0.has("door_o") }
         let picked = await pickCards(player, gameData.abilityDesc("auberon_king"), navs, min: 0, max: navs.count) { $0 }
-        for t in picked { player.deck.removeAll { $0 === t }; player.grave.removeAll { $0 === t }; player.hand.append(t) }
+        for card in picked { player.deck.removeAll { $0 === card }; player.grave.removeAll { $0 === card }; player.hand.append(card) }
         if !picked.isEmpty {
             let back = await pickCards(player, L("Which card to put back into the deck?"), player.hand.filter { card in !picked.contains { $0 === card } }, min: picked.count, max: picked.count) { candidates in Array(candidates.sorted { self.aiCardValue($0) < self.aiCardValue($1) }.prefix(picked.count)) }
-            for t in back { player.hand.removeAll { $0 === t }; player.deck.insert(t, at: Int.random(in: 0...player.deck.count)) }
+            for card in back { player.hand.removeAll { $0 === card }; player.deck.insert(card, at: Int.random(in: 0...player.deck.count)) }
         }
     }
 
@@ -315,22 +315,22 @@ extension Game {
     func leaderAlzurMaker(_ player: Player, free: Bool) async {
         if let chosen = await pickOne(player, gameData.abilityDesc("alzur_maker"), player.rowCards.filter { !$0.hero }, ai: { candidates in candidates.min { $0.power < $1.power } }) {
             await destroy(chosen, side: player)
-            if let d = gameData.cards["wu_koshchey"] { await placeUnit(Card(d, owner: player), by: player, row: .close) }
+            if let cardData = gameData.cards["wu_koshchey"] { await placeUnit(Card(cardData, owner: player), by: player, row: .close) }
         }
     }
 
     /// Summon Flyndr's Crew
     func leaderGudrunBjornsdottir(_ player: Player, free: Bool) async {
         let crew = (player.deck + player.hand + player.grave).filter { $0.key == "sy_flyndr_crew" }
-        if crew.isEmpty, let d = gameData.cards["sy_flyndr_crew"] { await placeUnit(Card(d, owner: player), by: player, row: .close) }
-        for t in crew { player.deck.removeAll { $0 === t }; player.hand.removeAll { $0 === t }; player.grave.removeAll { $0 === t }; resetCard(t); await placeUnit(t, by: player, row: .close) }
+        if crew.isEmpty, let cardData = gameData.cards["sy_flyndr_crew"] { await placeUnit(Card(cardData, owner: player), by: player, row: .close) }
+        for crewMember in crew { player.deck.removeAll { $0 === crewMember }; player.hand.removeAll { $0 === crewMember }; player.grave.removeAll { $0 === crewMember }; resetCard(crewMember); await placeUnit(crewMember, by: player, row: .close) }
     }
 
     /// Play a Dimeritum Shackles card in any of the opponent's row.
     func leaderCyrusHemmelfart(_ player: Player, free: Bool) async {
         let opponent = player.opponent!
-        if let d = gameData.cards["spe_dimeritium_shackles"], let (_, r) = await pickRow(player, gameData.abilityDesc("cyrus_hemmelfart"), RowType.allCases.map { (opponent, $0) }, ai: { Int.random(in: 0..<3) }) {
-            opponent.row(r).lock = Card(d, owner: player)
+        if let shacklesData = gameData.cards["spe_dimeritium_shackles"], let (_, r) = await pickRow(player, gameData.abilityDesc("cyrus_hemmelfart"), RowType.allCases.map { (opponent, $0) }, ai: { Int.random(in: 0..<3) }) {
+            opponent.row(r).lock = Card(shacklesData, owner: player)
         }
     }
 
@@ -345,14 +345,14 @@ extension Game {
     func leaderBaalZebuth(_ player: Player, free: Bool) async {
         let opponent = player.opponent!
         let picked = await pickCards(player, gameData.abilityDesc("baal_zebuth"), opponent.grave, min: 0, max: 2) { candidates in Array(candidates.sorted { self.aiCardValue($0) > self.aiCardValue($1) }.prefix(2)) }
-        for t in picked { opponent.grave.removeAll { $0 === t }; resetCard(t); opponent.deck.append(t) }
+        for card in picked { opponent.grave.removeAll { $0 === card }; resetCard(card); opponent.deck.append(card) }
         opponent.deck.shuffle()
     }
 
     /// Draw a random card from the discard pile to your hand (any card) and then shuffle the rest back into the deck.
     func leaderRarog(_ player: Player, free: Bool) async {
-        if let t = player.grave.randomElement() {
-            player.grave.removeAll { $0 === t }; resetCard(t); player.hand.append(t)
+        if let revived = player.grave.randomElement() {
+            player.grave.removeAll { $0 === revived }; resetCard(revived); player.hand.append(revived)
             for card in player.grave { resetCard(card); player.deck.append(card) }
             player.grave.removeAll(); player.deck.shuffle()
         }

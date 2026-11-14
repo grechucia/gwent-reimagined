@@ -32,7 +32,7 @@ final class DeckBuilder {
     func collection() -> [CardData] {
         gameData.cards.values.filter { d in
             if d.isLeader { return false }
-            if let l = limit { return (l[d.key] ?? 0) > 0 }
+            if let limits = limit { return (limits[d.key] ?? 0) > 0 }
             let parts = d.deck.split(separator: " ").map(String.init)
             if parts.first == "neutral" { return true }
             if d.isSpecial || d.isWeather { return parts.count == 1 || parts[1] == faction }
@@ -49,7 +49,7 @@ final class DeckBuilder {
     func load(_ deck: DeckData, customIndex: Int?) {
         faction = deck.faction; leaderKey = deck.leader; title = deck.title; editingIndex = customIndex; limit = nil; ownedLeaders = nil
         counts = [:]
-        for (k, n) in deck.cards { counts[k, default: 0] += n }
+        for (key, copies) in deck.cards { counts[key, default: 0] += copies }
         scrollL = 0; scrollR = 0
     }
     /// Starts an empty deck for a faction.
@@ -60,22 +60,22 @@ final class DeckBuilder {
     var deckCards: [CardData] { collection().filter { (counts[$0.key] ?? 0) > 0 } }
     var stats: (total: Int, units: Int, specials: Int, strength: Int, heroes: Int) {
         var t = 0, u = 0, s = 0, str = 0, h = 0
-        for (k, n) in counts { guard let cardData = gameData.cards[k] else { continue }
-            t += n
-            if cardData.isUnit { u += n; str += cardData.strength * n; if cardData.isHero { h += n } } else { s += n }
+        for (key, copies) in counts { guard let cardData = gameData.cards[key] else { continue }
+            t += copies
+            if cardData.isUnit { u += copies; str += cardData.strength * copies; if cardData.isHero { h += copies } } else { s += copies }
         }
         return (t, u, s, str, h)
     }
     var valid: Bool { let s = stats; return s.units >= 22 && s.specials <= 10 && !leaderKey.isEmpty }
     /// Adds one copy of a card.
     func add(_ cardData: CardData) {
-        let n = counts[cardData.key] ?? 0
-        guard n < cap(cardData) else { return }
+        let current = counts[cardData.key] ?? 0
+        guard current < cap(cardData) else { return }
         if (cardData.isSpecial || cardData.isWeather) && stats.specials >= 10 { return }
-        counts[cardData.key] = n + 1
+        counts[cardData.key] = current + 1
     }
     /// Removes one copy of a card.
-    func remove(_ cardData: CardData) { let n = (counts[cardData.key] ?? 0) - 1; counts[cardData.key] = n > 0 ? n : nil }
+    func remove(_ cardData: CardData) { let remaining = (counts[cardData.key] ?? 0) - 1; counts[cardData.key] = remaining > 0 ? remaining : nil }
     /// Converts the builder state into a playable deck.
     func asDeck() -> DeckData {
         DeckData(title: title.isEmpty ? L("My deck") + " — " + gameData.factionName(faction) : title, description: "", leader: leaderKey, faction: faction,
@@ -86,9 +86,9 @@ final class DeckBuilder {
     static func loadCustom() -> [DeckData] {
         guard let arr = SaveStore.shared["customDecks"] as? [[String: Any]] else { return [] }
         return arr.compactMap { e in
-            guard let f = e["faction"] as? String, let l = e["leader"] as? String, let cs = e["cards"] as? [[Any]] else { return nil }
+            guard let f = e["faction"] as? String, let l = e["leader"] as? String, let cardList = e["cards"] as? [[Any]] else { return nil }
             return DeckData(title: e["title"] as? String ?? "", description: "", leader: l, faction: f,
-                            cards: cs.compactMap { p in (p.first as? String).map { ($0, (p.last as? NSNumber)?.intValue ?? 1) } })
+                            cards: cardList.compactMap { p in (p.first as? String).map { ($0, (p.last as? NSNumber)?.intValue ?? 1) } })
         }
     }
     /// Writes the player's custom decks to the save file.
@@ -100,8 +100,8 @@ final class DeckBuilder {
     func save() {
         if careerMode { let career = Career.shared; career.deck = counts.filter { $0.value > 0 }; career.leader = leaderKey; career.save(); return }
         var all = DeckBuilder.loadCustom()
-        let d = asDeck()
-        if let i = editingIndex, i < all.count { all[i] = d } else { all.append(d); editingIndex = all.count - 1 }
+        let deck = asDeck()
+        if let i = editingIndex, i < all.count { all[i] = deck } else { all.append(deck); editingIndex = all.count - 1 }
         DeckBuilder.saveCustom(all)
     }
 }

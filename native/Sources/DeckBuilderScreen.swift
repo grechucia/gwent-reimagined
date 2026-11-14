@@ -10,7 +10,7 @@ extension Scene {
         drawMenuBackground(dt, dim: 0.72)
         if leaderPickerOpen { drawLeaderPicker(builder); return }
         renderer.text(L("Deck builder"), .gwent(46), x: 960, y: 14, color: RGBA.gold, align: .center)
-        let fi = DeckBuilder.factionsOrder.firstIndex(of: builder.faction) ?? 0
+        let factionIndex = DeckBuilder.factionsOrder.firstIndex(of: builder.faction) ?? 0
         renderer.quad(glowTex, R(960 - 240, 60, 100, 100), color: RGBA(r: 1, g: 0.75, b: 0.3, a: 0.3))
         renderer.image("img/icons/deck_shield_\(builder.faction).png", R(960 - 212, 78, 44, 48))
         renderer.text(gameData.factionName(builder.faction), .serif(28, bold: true), x: 960 - 155, y: 84, color: .white)
@@ -19,7 +19,7 @@ extension Scene {
             renderer.text(dir < 0 ? "‹" : "›", .serif(60), x: area.mid.x, y: area.y - 18, color: area.contains(mouse) ? .white : RGBA.gold, align: .center)
             button(area) { [weak self] in
                 let count = DeckBuilder.factionsOrder.count
-                builder.newDeck(DeckBuilder.factionsOrder[(fi + dir + count) % count]); self?.scrollTargetL = 0; self?.scrollTargetR = 0
+                builder.newDeck(DeckBuilder.factionsOrder[(factionIndex + dir + count) % count]); self?.scrollTargetL = 0; self?.scrollTargetR = 0
             }
         }
         renderer.text(gameData.factionDesc(builder.faction), .ui(16), x: 960, y: 134, color: .gray(0.78), maxWidth: 900, align: .center)
@@ -38,10 +38,10 @@ extension Scene {
         for (i, (n, _)) in filters.enumerated() {
             let w = renderer.measure(n, .ui(15, bold: true)).w + 22
             let area = R(fx, 192, w, 26)
-            let on = builderFilter == i
-            if on { renderer.gradient(area, RGBA(r: 0.95, g: 0.82, b: 0.49, a: 1), RGBA(r: 0.79, g: 0.59, b: 0.18, a: 1), steps: 6) }
+            let isActive = builderFilter == i
+            if isActive { renderer.gradient(area, RGBA(r: 0.95, g: 0.82, b: 0.49, a: 1), RGBA(r: 0.79, g: 0.59, b: 0.18, a: 1), steps: 6) }
             else if area.contains(mouse) { renderer.rect(area, RGBA.gold.alpha(0.15)) }
-            renderer.text(n, .ui(15, bold: true), x: area.mid.x, y: area.y + 4, color: on ? RGBA(r: 0.1, g: 0.07, b: 0.02, a: 1) : .gray(0.85), align: .center, shadow: nil)
+            renderer.text(n, .ui(15, bold: true), x: area.mid.x, y: area.y + 4, color: isActive ? RGBA(r: 0.1, g: 0.07, b: 0.02, a: 1) : .gray(0.85), align: .center, shadow: nil)
             button(area) { [weak self] in self?.builderFilter = i; self?.scrollTargetL = 0 }
             fx += w + 6
         }
@@ -76,10 +76,10 @@ extension Scene {
                 button(area) { builder.leaderKey = leaderCards[(li + dir + leaderCards.count) % leaderCards.count].key }
             }
         }
-        let s = builder.stats
+        let stats = builder.stats
         let rows: [(String, String, Bool)] = [
-            (L("Total cards in deck"), "\(s.total)", true), (L("Number of Unit Cards"), "\(s.units)", s.units >= 22),
-            (L("Special Cards"), "\(s.specials)/10", s.specials <= 10), (L("Total Unit Card Strength"), "\(s.strength)", true), (L("Hero Cards"), "\(s.heroes)", true)]
+            (L("Total cards in deck"), "\(stats.total)", true), (L("Number of Unit Cards"), "\(stats.units)", stats.units >= 22),
+            (L("Special Cards"), "\(stats.specials)/10", stats.specials <= 10), (L("Total Unit Card Strength"), "\(stats.strength)", true), (L("Hero Cards"), "\(stats.heroes)", true)]
         var y: Float = 424
         for (n, v, ok) in rows {
             renderer.text(n, .ui(14), x: 960, y: y, color: .gray(0.72), maxWidth: 220, align: .center); y += 19
@@ -87,9 +87,9 @@ extension Scene {
         }
         let area = R(870, y + 2, 180, 6)
         renderer.rect(area, RGBA.white.alpha(0.12))
-        renderer.rect(R(area.x, area.y, area.w * min(1, Float(s.units) / 22), area.h), s.units >= 22 ? RGBA(r: 0.45, g: 0.85, b: 0.4, a: 1) : RGBA.gold)
+        renderer.rect(R(area.x, area.y, area.w * min(1, Float(stats.units) / 22), area.h), stats.units >= 22 ? RGBA(r: 0.45, g: 0.85, b: 0.4, a: 1) : RGBA.gold)
         y += 18
-        if s.units < 22 { renderer.text(L("Your deck must have at least 22 unit cards."), .ui(13), x: 960, y: y, color: RGBA(r: 1, g: 0.55, b: 0.45, a: 1), maxWidth: 200, align: .center) }
+        if stats.units < 22 { renderer.text(L("Your deck must have at least 22 unit cards."), .ui(13), x: 960, y: y, color: RGBA(r: 1, g: 0.55, b: 0.45, a: 1), maxWidth: 200, align: .center) }
         goldButton(R(865, 800, 190, 52), L("Save"), font: .serif(22, bold: true), enabled: builder.valid) { [weak self] in builder.save(); self?.audio.play("game_buy"); self?.builderSaved = 1.5 }
         if !builder.careerMode {
         goldButton(R(865, 862, 190, 52), L("Start game"), font: .serif(20, bold: true), enabled: builder.valid) { [weak self] in
@@ -103,13 +103,13 @@ extension Scene {
         if builderSaved > 0 { renderer.text(L("Deck Saved!"), .serif(22, bold: true), x: 960, y: 760, color: RGBA(r: 0.5, g: 1, b: 0.5, a: min(1, builderSaved)), align: .center); builderSaved -= dt }
         for i in flyCards.indices.reversed() {
             flyCards[i].t += dt / 0.35
-            let f = flyCards[i]
-            if f.t >= 1 { flyCards.remove(at: i); continue }
-            let progress = ease(f.t)
+            let flight = flyCards[i]
+            if flight.t >= 1 { flyCards.remove(at: i); continue }
+            let progress = ease(flight.t)
             let arc = sin(progress * .pi) * -60
-            let cardRect = R(f.from.x + (f.to.x - f.from.x) * progress, f.from.y + (f.to.y - f.from.y) * progress + arc, f.from.w, f.from.h)
+            let cardRect = R(flight.from.x + (flight.to.x - flight.from.x) * progress, flight.from.y + (flight.to.y - flight.from.y) * progress + arc, flight.from.w, flight.from.h)
             renderer.rect(R(cardRect.x + 10, cardRect.y + 14, cardRect.w, cardRect.h), RGBA.black.alpha(0.35 * (1 - progress)))
-            drawCard(Card(f.d, owner: nil), cardRect)
+            drawCard(Card(flight.d, owner: nil), cardRect)
             renderer.rect(cardRect, RGBA.black.alpha(progress * 0.6))
         }
         if let h = builderHover { drawPreview(h) }
@@ -124,22 +124,22 @@ extension Scene {
         goldButton(R(40, 24, 190, 50), "‹  " + L("Back"), font: .serif(22, bold: true)) { [weak self] in self?.leaderPickerOpen = false }
         let leaderCards = builder.leaders()
         guard !leaderCards.isEmpty else { return }
-        let n = leaderCards.count, gap: Float = 24
-        let cw = min(240, (1800 - gap * Float(n - 1)) / Float(n)), ch = cw / 0.697
-        let x0 = 960 - (Float(n) * cw + Float(n - 1) * gap) / 2
+        let leaderCount = leaderCards.count, gap: Float = 24
+        let cw = min(240, (1800 - gap * Float(leaderCount - 1)) / Float(leaderCount)), ch = cw / 0.697
+        let x0 = 960 - (Float(leaderCount) * cw + Float(leaderCount - 1) * gap) / 2
         var hovered: Card?
-        for (i, l) in leaderCards.enumerated() {
+        for (i, leaderEntry) in leaderCards.enumerated() {
             let base = R(x0 + Float(i) * (cw + gap), 180, cw, ch)
             let hov = base.contains(mouse)
-            let sel = l.key == builder.leaderKey
+            let isSelected = leaderEntry.key == builder.leaderKey
             let cardRect = hov ? R(base.x, base.y - 8, base.w, base.h) : base
-            if hov || sel { renderer.quad(glowTex, R(cardRect.x - 40, cardRect.y - 40, cardRect.w + 80, cardRect.h + 80), color: RGBA(r: 1, g: 0.72, b: 0.3, a: sel ? 0.45 : 0.3)) }
-            let newCard = Card(l, owner: nil)
+            if hov || isSelected { renderer.quad(glowTex, R(cardRect.x - 40, cardRect.y - 40, cardRect.w + 80, cardRect.h + 80), color: RGBA(r: 1, g: 0.72, b: 0.3, a: isSelected ? 0.45 : 0.3)) }
+            let newCard = Card(leaderEntry, owner: nil)
             drawCardLarge(newCard, cardRect)
-            renderer.frame(cardRect.inset(-3), sel ? RGBA.gold : RGBA.gold.alpha(hov ? 0.7 : 0.25), sel ? 3 : 1.5)
-            if sel { renderer.text("★ " + L("Selected"), .serif(18, bold: true), x: cardRect.mid.x, y: cardRect.y + cardRect.h + 10, color: RGBA.gold, align: .center) }
+            renderer.frame(cardRect.inset(-3), isSelected ? RGBA.gold : RGBA.gold.alpha(hov ? 0.7 : 0.25), isSelected ? 3 : 1.5)
+            if isSelected { renderer.text("★ " + L("Selected"), .serif(18, bold: true), x: cardRect.mid.x, y: cardRect.y + cardRect.h + 10, color: RGBA.gold, align: .center) }
             if hov { hovered = newCard }
-            button(base) { [weak self] in builder.leaderKey = l.key; self?.leaderPickerOpen = false; self?.audio.play("card", volume: 0.5) }
+            button(base) { [weak self] in builder.leaderKey = leaderEntry.key; self?.leaderPickerOpen = false; self?.audio.play("card", volume: 0.5) }
         }
         let show = hovered?.data ?? leaderCards.first(where: { $0.key == builder.leaderKey }) ?? leaderCards[0]
         let panel = R(460, 180 + ch + 60, 1000, 150)
@@ -162,7 +162,7 @@ extension Scene {
         scroll = max(0, min(maxScroll, scroll))
         renderer.clip(area)
         defer { renderer.clip(nil) }
-        for (i, d) in cards.enumerated() {
+        for (i, cardData) in cards.enumerated() {
             let row = i / perRow, col = i % perRow
             let y = area.y + 10 + Float(row) * (ch + gap) - scroll
             if y + ch < area.y || y > area.y + area.h { continue }
@@ -170,22 +170,22 @@ extension Scene {
             let base = R(x, y, cw, ch)
             let inside = base.mid.y > area.y && base.mid.y < area.y + area.h
             let hovered = inside && base.contains(mouse)
-            let key = "\(area.x)_" + d.key
+            let key = "\(area.x)_" + cardData.key
             let previousHover = cardHover[key, default: 0]
             cardHover[key] = previousHover + ((hovered ? 1 : 0) - previousHover) * min(1, dt * 14)
             let hoverAmount = cardHover[key, default: 0]
             let zoom = 1 + 0.07 * hoverAmount
             let cardRect = R(base.mid.x - cw * zoom / 2, base.mid.y - ch * zoom / 2 - 4 * hoverAmount, cw * zoom, ch * zoom)
             if hoverAmount > 0.02 { renderer.quad(glowTex, R(cardRect.x - 20, cardRect.y - 20, cardRect.w + 40, cardRect.h + 40), color: RGBA(r: 1, g: 0.75, b: 0.3, a: 0.35 * hoverAmount)) }
-            let newCard = Card(d, owner: nil)
+            let newCard = Card(cardData, owner: nil)
             drawCard(newCard, cardRect)
-            let n = count(d)
-            if n > 1 || d.count > 1 {
+            let copies = count(cardData)
+            if copies > 1 || cardData.count > 1 {
                 renderer.rect(R(cardRect.x + cardRect.w - 30, cardRect.y + cardRect.h - 26, 28, 22), RGBA.black.alpha(0.75))
-                renderer.text("×\(n)", .ui(15, bold: true), x: cardRect.x + cardRect.w - 16, y: cardRect.y + cardRect.h - 25, color: .white, align: .center, shadow: nil)
+                renderer.text("×\(copies)", .ui(15, bold: true), x: cardRect.x + cardRect.w - 16, y: cardRect.y + cardRect.h - 25, color: .white, align: .center, shadow: nil)
             }
             if hovered { renderer.frame(cardRect.inset(-2), RGBA.gold, 2); builderHover = newCard }
-            if inside { button(base) { onClick(d, base) } }
+            if inside { button(base) { onClick(cardData, base) } }
         }
         if maxScroll > 0 {
             let scrollThumbHeight = area.h * area.h / contentH

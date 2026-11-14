@@ -39,8 +39,8 @@ import Foundation
 
     init() {
         load()
-        if data["customDecks"] == nil, let a = UserDefaults.standard.array(forKey: "customDecks") { data["customDecks"] = a }
-        if data["favoriteDeck"] == nil, let f = UserDefaults.standard.string(forKey: "favoriteDeck") { data["favoriteDeck"] = f }
+        if data["customDecks"] == nil, let decks = UserDefaults.standard.array(forKey: "customDecks") { data["customDecks"] = decks }
+        if data["favoriteDeck"] == nil, let favorite = UserDefaults.standard.string(forKey: "favoriteDeck") { data["favoriteDeck"] = favorite }
     }
     /// Reads the save file from the current location.
     func load() {

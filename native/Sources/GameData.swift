@@ -45,40 +45,40 @@ final class GameData {
     init(dir: URL) {
         /// Loads a JSON file from the data folder.
         func json(_ n: String) -> Any? {
-            guard let d = try? Data(contentsOf: dir.appendingPathComponent(n)) else { return nil }
-            return try? JSONSerialization.jsonObject(with: d)
+            guard let data = try? Data(contentsOf: dir.appendingPathComponent(n)) else { return nil }
+            return try? JSONSerialization.jsonObject(with: data)
         }
         /// Reads a JSON value as a string.
-        func str(_ v: Any?) -> String { if let s = v as? String { return s }; if let n = v as? NSNumber { return n.stringValue }; return "" }
+        func str(_ v: Any?) -> String { if let string = v as? String { return string }; if let number = v as? NSNumber { return number.stringValue }; return "" }
         /// Reads a JSON value as an integer.
         func int(_ v: Any?) -> Int { if let number = v as? NSNumber { return number.intValue }; return Int(str(v)) ?? 0 }
-        if let c = json("cards.json") as? [String: [String: Any]] {
-            for (k, v) in c {
-                cards[k] = CardData(key: k, name: str(v["name"]), deck: str(v["deck"]), row: str(v["row"]), strength: int(v["strength"]),
-                                    abilities: str(v["ability"]).split(separator: " ").map(String.init), filename: str(v["filename"]),
-                                    count: max(1, int(v["count"])), quote: str(v["quote"]), target: str(v["target"]),
-                                    targets: (v["target"] as? [String]) ?? (str(v["target"]).isEmpty ? [] : [str(v["target"])]))
+        if let cardsJSON = json("cards.json") as? [String: [String: Any]] {
+            for (k, value) in cardsJSON {
+                cards[k] = CardData(key: k, name: str(value["name"]), deck: str(value["deck"]), row: str(value["row"]), strength: int(value["strength"]),
+                                    abilities: str(value["ability"]).split(separator: " ").map(String.init), filename: str(value["filename"]),
+                                    count: max(1, int(value["count"])), quote: str(value["quote"]), target: str(value["target"]),
+                                    targets: (value["target"] as? [String]) ?? (str(value["target"]).isEmpty ? [] : [str(value["target"])]))
             }
         }
-        if let d = json("decks.json") as? [[String: Any]] {
-            decks = d.map { e in
-                let cs = (e["cards"] as? [[Any]] ?? []).compactMap { p -> (String, Int)? in
-                    guard p.count >= 2, let k = p[0] as? String else { return nil }
-                    return (k, (p[1] as? NSNumber)?.intValue ?? 1)
+        if let decksJSON = json("decks.json") as? [[String: Any]] {
+            decks = decksJSON.map { e in
+                let cardList = (e["cards"] as? [[Any]] ?? []).compactMap { p -> (String, Int)? in
+                    guard p.count >= 2, let key = p[0] as? String else { return nil }
+                    return (key, (p[1] as? NSNumber)?.intValue ?? 1)
                 }
-                return DeckData(title: str(e["title"]), description: str(e["description"]), leader: str(e["leader"]), faction: str(e["faction"]), cards: cs)
+                return DeckData(title: str(e["title"]), description: str(e["description"]), leader: str(e["leader"]), faction: str(e["faction"]), cards: cardList)
             }.filter { cards[$0.leader] != nil }
         }
         factions = (json("factions.json") as? [String: [String: String]]) ?? [:]
         abilities = (json("abilities.json") as? [String: [String: String]]) ?? [:]
         for (code, _) in GameData.languages {
-            guard var l = json("lang_\(code).json") as? [String: Any] else { continue }
+            guard var languageFile = json("lang_\(code).json") as? [String: Any] else { continue }
             if let extra = json("ui_\(code).json") as? [String: String] {
-                var ui = (l["ui"] as? [String: Any]) ?? [:]
-                for (k, v) in extra { ui[k] = v }
-                l["ui"] = ui
+                var uiStrings = (languageFile["ui"] as? [String: Any]) ?? [:]
+                for (key, value) in extra { uiStrings[key] = value }
+                languageFile["ui"] = uiStrings
             }
-            lang[code] = l
+            lang[code] = languageFile
         }
     }
 
@@ -104,12 +104,12 @@ final class GameData {
         for i in 1...138 {
             guard var h = blocks["b\(i)"] else { continue }
             h = h.replacingOccurrences(of: "<br>", with: "\n").replacingOccurrences(of: "<br/>", with: "\n")
-            var s = h.replacingOccurrences(of: "<[^>]+>", with: "", options: .regularExpression)
-            for (e, r) in [("&amp;", "&"), ("&quot;", "\""), ("&#39;", "'"), ("&lt;", "<"), ("&gt;", ">"), ("&nbsp;", " ")] { s = s.replacingOccurrences(of: e, with: r) }
-            s = s.trimmingCharacters(in: .whitespacesAndNewlines)
-            if s.isEmpty { continue }
-            let heading = s.count <= 48 && !s.hasSuffix(".") && !s.hasSuffix(":") && !s.contains("\n")
-            out.append((s, heading))
+            var plain = h.replacingOccurrences(of: "<[^>]+>", with: "", options: .regularExpression)
+            for (entity, replacement) in [("&amp;", "&"), ("&quot;", "\""), ("&#39;", "'"), ("&lt;", "<"), ("&gt;", ">"), ("&nbsp;", " ")] { plain = plain.replacingOccurrences(of: entity, with: replacement) }
+            plain = plain.trimmingCharacters(in: .whitespacesAndNewlines)
+            if plain.isEmpty { continue }
+            let heading = plain.count <= 48 && !plain.hasSuffix(".") && !plain.hasSuffix(":") && !plain.contains("\n")
+            out.append((plain, heading))
         }
         return out
     }

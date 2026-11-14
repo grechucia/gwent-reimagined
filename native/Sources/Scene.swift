@@ -75,7 +75,7 @@ final class Scene {
         Platform.askText(title: L("What's your name?"),
                          message: L("Your name is shown on the board. You can change it in Options."),
                          placeholder: L("Player 1"), current: (SaveStore.shared["playerName"] as? String) ?? "") { text in
-            if let n = text?.trimmingCharacters(in: .whitespacesAndNewlines) { SaveStore.shared["playerName"] = String(n.prefix(24)) }
+            if let name = text?.trimmingCharacters(in: .whitespacesAndNewlines) { SaveStore.shared["playerName"] = String(name.prefix(24)) }
             then?()
         }
     }
@@ -87,8 +87,8 @@ final class Scene {
     var deckStage = -1
     var favoriteDeckIndex: Int? {
         get {
-            guard let s = SaveStore.shared["favoriteDeck"] as? String, let n = Int(s.dropFirst()) else { return nil }
-            let i = s.hasPrefix("c") ? gameData.decks.count + n : n
+            guard let stored = SaveStore.shared["favoriteDeck"] as? String, let n = Int(stored.dropFirst()) else { return nil }
+            let i = stored.hasPrefix("c") ? gameData.decks.count + n : n
             return i >= 0 && i < allDecks.count ? i : nil
         }
         set {
@@ -150,13 +150,13 @@ final class Scene {
         padNoFocus = []; padNoAuto = []; padPrimary = nil
         let overlay = rulesOpen || creditsOpen || optionsOpen || savePromptOpen
         frameDT = overlay ? 0 : dt
-        let d = overlay ? 0 : dt
+        let frameDelta = overlay ? 0 : dt
         switch screen {
-        case .title: drawTitle(d)
-        case .decks: drawDeckSelect(d)
-        case .game: drawGame(d)
-        case .builder: drawBuilder(builder, d)
-        case .career: drawCareer(d)
+        case .title: drawTitle(frameDelta)
+        case .decks: drawDeckSelect(frameDelta)
+        case .game: drawGame(frameDelta)
+        case .builder: drawBuilder(builder, frameDelta)
+        case .career: drawCareer(frameDelta)
         }
         if rulesOpen { clicks.removeAll(); drawRules() }
         else if creditsOpen { clicks.removeAll(); drawCredits() }
@@ -169,7 +169,7 @@ final class Scene {
     func button(_ rect: R, _ action: @escaping () -> Void) { clicks.append((rect, action)) }
 
     static let regions: [Renderer.BgRegion] = {
-        let d: [[Float]] = [
+        let values: [[Float]] = [
             [120, 560, 110, 140, 0, 1.0, 4.6, 0.0], [240, 380, 70, 90, 0, 0.8, 5.2, 1.3], [380, 550, 115, 120, 0, 1.0, 4.1, 2.1],
             [590, 420, 80, 90, 0, 0.9, 4.8, 0.7], [900, 560, 160, 170, 0, 1.1, 5.4, 1.8], [1100, 590, 125, 140, 0, 1.0, 4.3, 3.0],
             [1300, 440, 95, 100, 0, 0.9, 5.0, 2.6], [1500, 600, 115, 140, 0, 1.0, 4.5, 0.4], [1680, 440, 80, 90, 0, 0.8, 5.6, 1.1],
@@ -179,7 +179,7 @@ final class Scene {
             [1100, 380, 75, 95, 1, 1.0, 7.4, 2.5], [1290, 260, 60, 75, 1, 0.9, 8.1, 0.2], [1500, 390, 70, 90, 1, 1.0, 6.8, 1.4],
             [1680, 300, 55, 70, 1, 0.9, 9.2, 3.1], [1750, 390, 70, 85, 1, 1.0, 7.0, 0.8], [470, 720, 95, 105, 1, 1.1, 7.9, 2.0],
             [1660, 760, 80, 95, 1, 1.2, 6.6, 1.2]]
-        return d.map { Renderer.BgRegion(reg: SIMD4($0[0] / 1920, $0[1] / 1080, $0[2] / 1920, $0[3] / 1080), mot: SIMD4($0[4], $0[5], $0[6], $0[7])) }
+        return values.map { Renderer.BgRegion(reg: SIMD4($0[0] / 1920, $0[1] / 1080, $0[2] / 1920, $0[3] / 1080), mot: SIMD4($0[4], $0[5], $0[6], $0[7])) }
     }()
     let glints: [SIMD2<Float>] = [SIMD2(605 / 1920, 318 / 1080), SIMD2(1250 / 1920, 382 / 1080)]
     let candles: [SIMD2<Float>] = [SIMD2(1405 / 1920, 290 / 1080), SIMD2(1850 / 1920, 330 / 1080), SIMD2(1245 / 1920, 1062 / 1080)]
@@ -213,8 +213,8 @@ final class Scene {
         game?.showChoices = ProcessInfo.processInfo.environment["GWENT_SHOWCHOICES"] == "1"
         /// Total unit strength and card count of a deck (used in test logs).
         func power(_ deck: DeckData) -> (Int, Int) { deck.cards.reduce((0, 0)) { acc, e in let cardData = gameData.cards[e.0]; return (acc.0 + (cardData?.strength ?? 0) * e.1, acc.1 + e.1) } }
-        let pm = power(mine), po = power(theirs)
-        log("GAME \(gamesPlayed + 1): \(mine.faction) power \(pm.0) / \(pm.1) cards vs \(theirs.faction) power \(po.0) / \(po.1) cards, AI level \(game?.aiLevel ?? -1)")
+        let myPower = power(mine), po = power(theirs)
+        log("GAME \(gamesPlayed + 1): \(mine.faction) power \(myPower.0) / \(myPower.1) cards vs \(theirs.faction) power \(po.0) / \(po.1) cards, AI level \(game?.aiLevel ?? -1)")
         selected = nil; notes = []; noteT = 0; aiT = 0
         screen = .game
         audio.play("game_start")

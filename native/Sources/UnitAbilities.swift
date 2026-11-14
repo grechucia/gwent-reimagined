@@ -53,7 +53,7 @@ extension Game {
             case "rune_call": await abilityRuneCall(card, by: player, side: side, row: rowType, ability: ability)
             // Omen: Create a copy of Cat and Dog and add it to your hand.
             case "omen":
-                if let d = gameData.cards["nv_catanddog"] { player.hand.append(Card(d, owner: player)) }
+                if let cardData = gameData.cards["nv_catanddog"] { player.hand.append(Card(cardData, owner: player)) }
             // Malicious Wish 1: Choose 1 of 3 random cards from the enemy hand. Cost: Destroy your strongest non-hero unit (Strength ≥ 6). | Malicious Wish 2: Choose 1 of the top 3 cards from your deck. Cost:…
             case "wish1", "wish2", "wish3":
                 await djinnWish(ability, card, player)
@@ -109,11 +109,11 @@ extension Game {
         let fromHand = player.hand.filter { $0 !== card && $0.groupKey == key && $0.isUnit }
         let fromDeck = player.deck.filter { $0.groupKey == key && $0.isUnit }
         if fromHand.isEmpty && fromDeck.isEmpty { return }
-        for m in fromHand + fromDeck {
-            player.hand.removeAll { $0 === m }; player.deck.removeAll { $0 === m }
-            let musterRow = card.data.row.hasPrefix("agile") ? rowType : (RowType.from(m.data.row) ?? m.allowedRows.first ?? rowType)
-            m.owner = player; m.playedTurn = turn
-            player.row(musterRow).cards.append(m); m.flash = 1
+        for musterCards in fromHand + fromDeck {
+            player.hand.removeAll { $0 === musterCards }; player.deck.removeAll { $0 === musterCards }
+            let musterRow = card.data.row.hasPrefix("agile") ? rowType : (RowType.from(musterCards.data.row) ?? musterCards.allowedRows.first ?? rowType)
+            musterCards.owner = player; musterCards.playedTurn = turn
+            player.row(musterRow).cards.append(musterCards); musterCards.flash = 1
         }
         sound("ally")
         recalc()
@@ -121,8 +121,8 @@ extension Game {
 
     /// Berserker: transforms berserkers on a row when mardroeme is present.
     func berserk(_ side: Player, _ rowType: RowType) async {
-        for c in side.row(rowType).cards where c.act("berserker") {
-            if let t = c.data.targets.first, let d = gameData.cards[t] { c.transform(into: d); events.append(.anim(c, "mardroeme")) }
+        for berserker in side.row(rowType).cards where berserker.act("berserker") {
+            if let targetKey = berserker.data.targets.first, let d = gameData.cards[targetKey] { berserker.transform(into: d); events.append(.anim(berserker, "mardroeme")) }
         }
         sound("mardroeme")
         recalc()
@@ -139,14 +139,14 @@ extension Game {
         // Malicious Wish 1: Choose 1 of 3 random cards from the enemy hand. Cost: Destroy your strongest non-hero unit (Strength ≥ 6).
         case "wish1":
             let three = Array(opponent.hand.shuffled().prefix(3))
-            if let t = await pickOne(player, L("The Djinn grants your wish: Choose 1 enemy card to steal."), three, ai: { candidates in candidates.max { self.aiCardValue($0) < self.aiCardValue($1) } }) {
-                opponent.hand.removeAll { $0 === t }; t.owner = player; player.hand.append(t)
+            if let chosen = await pickOne(player, L("The Djinn grants your wish: Choose 1 enemy card to steal."), three, ai: { candidates in candidates.max { self.aiCardValue($0) < self.aiCardValue($1) } }) {
+                opponent.hand.removeAll { $0 === chosen }; chosen.owner = player; player.hand.append(chosen)
             }
         // Malicious Wish 2: Choose 1 of the top 3 cards from your deck. Cost: Destroy your strongest non-hero unit (Strength ≥ 6). This card is immune.
         case "wish2":
             let three = Array(player.deck.prefix(3))
-            if let t = await pickOne(player, L("The Djinn grants your second wish: Choose 1 card from your deck to draw."), three, ai: { candidates in candidates.max { self.aiCardValue($0) < self.aiCardValue($1) } }) {
-                player.deck.removeAll { $0 === t }; player.hand.append(t)
+            if let chosen = await pickOne(player, L("The Djinn grants your second wish: Choose 1 card from your deck to draw."), three, ai: { candidates in candidates.max { self.aiCardValue($0) < self.aiCardValue($1) } }) {
+                player.deck.removeAll { $0 === chosen }; player.hand.append(chosen)
             }
             card.immortalRounds = max(card.immortalRounds, 1)
         default:
@@ -201,8 +201,8 @@ extension Game {
     /// Scorch Close: Destroy your enemy's strongest Close Combat unit(s) if the combined strength of all his or her Close Combat units is 10 or more. | Scorch Ranged: Destroy your enemy's strongest…
     func abilityScorchC(_ card: Card, by player: Player, side: Player, row rowType: RowType, ability: String) async {
         let opponent = player.opponent!
-        let t: RowType = ability == "scorch_c" ? .close : (ability == "scorch_r" ? .ranged : .siege)
-        await rowScorch(opponent, t)
+        let scorchRow: RowType = ability == "scorch_c" ? .close : (ability == "scorch_r" ? .ranged : .siege)
+        await rowScorch(opponent, scorchRow)
     }
 
     /// Witch Hunt: Destroy the weakest unit on the opposite row. If there are several, choose one.
@@ -211,9 +211,9 @@ extension Game {
         let enemyRow = opponent.row(rowType)
         if enemyRow.shielded { return }
         let candidates = enemyRow.cards.filter { !$0.hero && $0.immortalRounds == 0 }
-        if let mn = candidates.map({ $0.power }).min() {
-            let cands = candidates.filter { $0.power == mn }
-            if let t = await pickOne(player, L("Choose which enemy card to destroy"), cands, ai: { $0.first }) { await destroy(t, side: opponent) }
+        if let lowestPower = candidates.map({ $0.power }).min() {
+            let cands = candidates.filter { $0.power == lowestPower }
+            if let chosen = await pickOne(player, L("Choose which enemy card to destroy"), cands, ai: { $0.first }) { await destroy(chosen, side: opponent) }
         }
     }
 
@@ -294,7 +294,7 @@ extension Game {
     func abilityAerondight(_ card: Card, by player: Player, side: Player, row rowType: RowType, ability: String) async {
         let options = player.rowCards.filter { $0 !== card && !$0.hero }
         if let chosen = await pickOne(player, L("Choose which card to equip with Aerondight."), options, ai: { candidates in candidates.max { $0.basePower < $1.basePower } }) {
-            if let tr = player.rowOf(chosen) { player.row(tr).cards.removeAll { $0 === chosen } }
+            if let currentRow = player.rowOf(chosen) { player.row(currentRow).cards.removeAll { $0 === chosen } }
             player.row(.siege).cards.append(chosen); chosen.siegeMult = 3
         }
     }

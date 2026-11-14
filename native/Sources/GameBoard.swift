@@ -297,8 +297,8 @@ extension Scene {
     /// Automatic play used by tests (GWENT_AUTOTEST).
     func autoTest(_ match: Game, _ dt: Float) {
         autoT += dt
-        let sig = "\(match.turn)|\(match.round)|\(match.human.hand.count)|\(match.computer.hand.count)|\(match.phase)|\(match.human.total)|\(match.computer.total)"
-        if sig != lastSig { lastSig = sig; watchdog = 0 } else { watchdog += dt }
+        let progressSignature = "\(match.turn)|\(match.round)|\(match.human.hand.count)|\(match.computer.hand.count)|\(match.phase)|\(match.human.total)|\(match.computer.total)"
+        if progressSignature != lastSig { lastSig = progressSignature; watchdog = 0 } else { watchdog += dt }
         if watchdog > 25 {
             log("HANG: phase \(match.phase), turn \(match.current === match.human ? "Player 1" : "Player 2"), busy \(match.busy), choice: \(match.choice?.title ?? "none"), leaders \(match.human.leaderAbility)/\(match.computer.leaderAbility)")
             watchdog = 0; gamesPlayed += 1; startGame(); return
@@ -346,9 +346,9 @@ extension Scene {
             button(leaderArea) { [weak self] in self?.game?.humanLeader() }
             button(R(260, leaderArea.y + 51, 38, 38)) { [weak self] in self?.game?.humanLeader() }
         }
-        if mine, let f = match.factionActive(player) {
+        if mine, let factionAbility = match.factionActive(player) {
             let box = R(160, 612, 150, 34)
-            let title = f == "transform" ? L("Transform") : (f.hasPrefix("skip") ? L("Skip turn") : L("Faction ability"))
+            let title = factionAbility == "transform" ? L("Transform") : (factionAbility.hasPrefix("skip") ? L("Skip turn") : L("Faction ability"))
             smallButton(box, title, enabled: canAct) { [weak self] in self?.game?.humanFaction() }
         }
         let deckArea = deckRect(player)
@@ -369,7 +369,7 @@ extension Scene {
     /// Selects or plays a card from the hand.
     func clickHand(_ card: Card) {
         guard let match = game, match.phase == .play, match.current === match.human, !match.busy, match.choice == nil else { return }
-        if let f = match.human.forcedCard, f !== card { notes.append((L("You must play the marked card."), nil)); return }
+        if let forced = match.human.forcedCard, forced !== card { notes.append((L("You must play the marked card."), nil)); return }
         if selected === card {
             if isFreeSpecial(card) { playSelected(card); return }
             if card.isUnit, match.validRows(for: card, by: match.human).count == 1 { playSelected(card, row: match.validRows(for: card, by: match.human)[0]); return }
@@ -392,12 +392,12 @@ extension Scene {
 
     /// Turns engine events into notifications, sounds and effects.
     func processEvents(_ match: Game, _ dt: Float) {
-        for e in match.events {
-            switch e {
+        for event in match.events {
+            switch event {
             case .notify(let t, let icon): notes.append((t, icon)); if notes.count > 4 { notes.removeFirst(notes.count - 4) }
             case .sound(let s): audio.play(s)
             case .flash(let c): c.flash = 1
-            case .anim, .burn, .coin: addFX(e)
+            case .anim, .burn, .coin: addFX(event)
             }
         }
         match.events.removeAll()
@@ -413,25 +413,25 @@ extension Scene {
             renderer.text(tooltip, .ui(17), x: box.x + 12, y: box.y + 10, color: .gray(0.92), maxWidth: w - 24)
         }
         hoverText = nil
-        guard let n = notes.first else { return }
+        guard let note = notes.first else { return }
         noteT += dt
         let dur: Float = autotest ? 0.5 : 1.25
-        let a = max(0, min(1, min(noteT / 0.15, (dur - noteT) / 0.2)))
-        let e = min(1, noteT / 0.18), ease = 1 - (1 - e) * (1 - e)
+        let alpha = max(0, min(1, min(noteT / 0.15, (dur - noteT) / 0.2)))
+        let entry = min(1, noteT / 0.18), ease = 1 - (1 - entry) * (1 - entry)
         let font = Renderer.Font.gwent(34)
-        let textWidth = min(900, renderer.measure(n.text, font, maxWidth: 900).w)
-        let textHeight = renderer.measure(n.text, font, maxWidth: 900).h
-        let iw: Float = n.icon == nil ? 0 : 96
+        let textWidth = min(900, renderer.measure(note.text, font, maxWidth: 900).w)
+        let textHeight = renderer.measure(note.text, font, maxWidth: 900).h
+        let iw: Float = note.icon == nil ? 0 : 96
         let w = textWidth + iw + 90, h = max(110, textHeight + 50)
         let card = R(960 - w / 2, 500 - h / 2 + (1 - ease) * 18, w, h)
-        renderer.rect(R(0, 0, virtualWidth, virtualHeight), RGBA.black.alpha(0.25 * a))
-        renderer.gradient(card, RGBA(r: 0.08, g: 0.07, b: 0.06, a: 0.93 * a), RGBA(r: 0.02, g: 0.02, b: 0.03, a: 0.95 * a), steps: 8)
-        renderer.rect(R(card.x, card.y, card.w, 2), RGBA.gold.alpha(0.9 * a))
-        renderer.rect(R(card.x, card.y + card.h - 1, card.w, 1), RGBA.goldDark.alpha(0.6 * a))
-        renderer.frame(card, RGBA.goldDark.alpha(0.35 * a), 1)
+        renderer.rect(R(0, 0, virtualWidth, virtualHeight), RGBA.black.alpha(0.25 * alpha))
+        renderer.gradient(card, RGBA(r: 0.08, g: 0.07, b: 0.06, a: 0.93 * alpha), RGBA(r: 0.02, g: 0.02, b: 0.03, a: 0.95 * alpha), steps: 8)
+        renderer.rect(R(card.x, card.y, card.w, 2), RGBA.gold.alpha(0.9 * alpha))
+        renderer.rect(R(card.x, card.y + card.h - 1, card.w, 1), RGBA.goldDark.alpha(0.6 * alpha))
+        renderer.frame(card, RGBA.goldDark.alpha(0.35 * alpha), 1)
         var x = card.x + 45
-        if let icon = n.icon { renderer.image("img/icons/\(icon).png", R(x - 10, card.mid.y - 52, 104, 104), color: .white.alpha(a)); x += iw + 10 }
-        renderer.text(n.text, font, x: n.icon == nil ? card.mid.x : x, y: card.mid.y - textHeight / 2, color: RGBA(r: 0.97, g: 0.88, b: 0.62, a: a), maxWidth: 900, align: n.icon == nil ? .center : .left, shadow: nil)
+        if let icon = note.icon { renderer.image("img/icons/\(icon).png", R(x - 10, card.mid.y - 52, 104, 104), color: .white.alpha(alpha)); x += iw + 10 }
+        renderer.text(note.text, font, x: note.icon == nil ? card.mid.x : x, y: card.mid.y - textHeight / 2, color: RGBA(r: 0.97, g: 0.88, b: 0.62, a: alpha), maxWidth: 900, align: note.icon == nil ? .center : .left, shadow: nil)
         if noteT >= dur { notes.removeFirst(); noteT = 0 }
     }
 
@@ -465,7 +465,7 @@ extension Scene {
         let end = overlayCards(match.human.hand, title: L("Click a card to redraw it"),
                                info: L("Redraws left: ") + "\(match.redrawsLeft)") { [weak self] c in
             guard let match = self?.game, match.redrawsLeft > 0, !match.busy else { return }
-            if let n = match.redraw(c) { n.hasPos = false }
+            if let replacement = match.redraw(c) { replacement.hasPos = false }
             if match.redrawsLeft == 0 { match.finishRedraw() }
         }
         goldButton(R(960 - 150, min(990, end.y + 10), 300, 60), L("Done"), font: .gwent(30)) { [weak self] in self?.game?.finishRedraw() }
@@ -509,11 +509,11 @@ extension Scene {
             renderer.gradient(box, RGBA(r: 0.12, g: 0.09, b: 0.05, a: 0.97), RGBA(r: 0.05, g: 0.04, b: 0.02, a: 0.97), steps: 10)
             renderer.frame(box, RGBA.goldDark, 2)
             renderer.text(choice.title, .serif(26, bold: true), x: 960, y: box.y + 30, color: RGBA.gold, maxWidth: 760, align: .center)
-            for (i, o) in opts.enumerated() {
+            for (i, option) in opts.enumerated() {
                 let row = i / cols, col = i % cols
                 let inRow = min(cols, opts.count - row * cols)
                 let x0 = 960 - (Float(inRow) * bw + Float(inRow - 1) * 16) / 2
-                goldButton(R(x0 + Float(col) * (bw + 16), box.y + 120 + Float(row) * (bh + 16), bw, bh), o, font: .serif(22, bold: true)) { match.resolveChoice([i]) }
+                goldButton(R(x0 + Float(col) * (bw + 16), box.y + 120 + Float(row) * (bh + 16), bw, bh), option, font: .serif(22, bold: true)) { match.resolveChoice([i]) }
             }
         case .rows:
             let box = R(560, 820, 960, 46)
@@ -525,8 +525,8 @@ extension Scene {
     /// End-of-match screen.
     func drawEnd(_ match: Game) {
         renderer.rect(R(0, 0, virtualWidth, virtualHeight), RGBA.black.alpha(0.8))
-        let img = match.winner === match.human ? "end_win" : (match.winner === match.computer ? "end_lose" : "end_draw")
-        renderer.imageContain("img/icons/\(img).png", R(660, 90, 600, 360))
+        let image = match.winner === match.human ? "end_win" : (match.winner === match.computer ? "end_lose" : "end_draw")
+        renderer.imageContain("img/icons/\(image).png", R(660, 90, 600, 360))
         renderer.text(L("Round"), .serif(24, bold: true), x: 760, y: 500, color: .gray(0.8), align: .center)
         renderer.text(playerName, .serif(24, bold: true), x: 960, y: 500, color: RGBA.gold, maxWidth: 190, align: .center)
         renderer.text(careerFightName ?? L("Player 2"), .serif(24, bold: true), x: 1160, y: 500, color: RGBA.gold, maxWidth: 190, align: .center)
@@ -536,15 +536,15 @@ extension Scene {
             renderer.text("\(h.human)", .ui(26, bold: true), x: 960, y: y, color: h.winner === match.human ? RGBA.gold : .white, align: .center)
             renderer.text("\(h.computer)", .ui(26, bold: true), x: 1160, y: y, color: h.winner === match.computer ? RGBA.gold : .white, align: .center)
         }
-        if let fi = careerFight {
+        if let fightIndex = careerFight {
             if match.winner === match.human {
                 goldButton(R(960 - 160, 760, 320, 64), L("Claim reward"), font: .serif(26, bold: true)) { [weak self] in
                     guard let strongSelf = self else { return }
-                    strongSelf.careerRewards = strongSelf.career.rewardOptions(fi); strongSelf.careerNewLeader = strongSelf.career.win(fi)
+                    strongSelf.careerRewards = strongSelf.career.rewardOptions(fightIndex); strongSelf.careerNewLeader = strongSelf.career.win(fightIndex)
                     strongSelf.careerFight = nil; strongSelf.game = nil; strongSelf.careerChapter = nil; strongSelf.screen = .career
                 }
             } else {
-                goldButton(R(960 - 330, 760, 300, 64), L("Try again"), font: .serif(26, bold: true)) { [weak self] in self?.startCareerFight(fi) }
+                goldButton(R(960 - 330, 760, 300, 64), L("Try again"), font: .serif(26, bold: true)) { [weak self] in self?.startCareerFight(fightIndex) }
                 goldButton(R(960 + 30, 760, 300, 64), L("Career"), font: .serif(26, bold: true)) { [weak self] in self?.careerFight = nil; self?.game = nil; self?.screen = .career }
             }
             return

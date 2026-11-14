@@ -48,24 +48,24 @@ import UniformTypeIdentifiers
     static func askText(title: String, message: String, placeholder: String, current: String, done: @escaping (String?) -> Void) {
         #if os(macOS)
         DispatchQueue.main.async {
-            let a = NSAlert()
-            a.messageText = title
-            a.informativeText = message
-            let tf = NSTextField(frame: NSRect(x: 0, y: 0, width: 260, height: 24))
-            tf.stringValue = current
-            tf.placeholderString = placeholder
-            a.accessoryView = tf
-            a.addButton(withTitle: "OK"); a.addButton(withTitle: L("Cancel"))
-            a.window.initialFirstResponder = tf
-            done(a.runModal() == .alertFirstButtonReturn ? tf.stringValue : nil)
+            let alert = NSAlert()
+            alert.messageText = title
+            alert.informativeText = message
+            let textField = NSTextField(frame: NSRect(x: 0, y: 0, width: 260, height: 24))
+            textField.stringValue = current
+            textField.placeholderString = placeholder
+            alert.accessoryView = textField
+            alert.addButton(withTitle: "OK"); alert.addButton(withTitle: L("Cancel"))
+            alert.window.initialFirstResponder = textField
+            done(alert.runModal() == .alertFirstButtonReturn ? textField.stringValue : nil)
         }
         #else
         guard let presenter = rootViewController else { done(nil); return }
-        let a = UIAlertController(title: title, message: message, preferredStyle: .alert)
-        a.addTextField { $0.text = current; $0.placeholder = placeholder; $0.autocapitalizationType = .words }
-        a.addAction(UIAlertAction(title: L("Cancel"), style: .cancel) { _ in done(nil) })
-        a.addAction(UIAlertAction(title: "OK", style: .default) { _ in done(a.textFields?.first?.text) })
-        presenter.present(a, animated: true)
+        let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
+        alert.addTextField { $0.text = current; $0.placeholder = placeholder; $0.autocapitalizationType = .words }
+        alert.addAction(UIAlertAction(title: L("Cancel"), style: .cancel) { _ in done(nil) })
+        alert.addAction(UIAlertAction(title: "OK", style: .default) { _ in done(alert.textFields?.first?.text) })
+        presenter.present(alert, animated: true)
         #endif
     }
 
@@ -73,25 +73,25 @@ import UniformTypeIdentifiers
     static func pickFolder(message: String, done: @escaping (URL?) -> Void) {
         #if os(macOS)
         DispatchQueue.main.async {
-            let p = NSOpenPanel()
-            p.canChooseDirectories = true; p.canChooseFiles = false; p.canCreateDirectories = true; p.allowsMultipleSelection = false
-            p.prompt = L("Choose"); p.message = message
-            done(p.runModal() == .OK ? p.url : nil)
+            let panel = NSOpenPanel()
+            panel.canChooseDirectories = true; panel.canChooseFiles = false; panel.canCreateDirectories = true; panel.allowsMultipleSelection = false
+            panel.prompt = L("Choose"); panel.message = message
+            done(panel.runModal() == .OK ? panel.url : nil)
         }
         #else
         guard let presenter = rootViewController else { done(nil); return }
         let picker = UIDocumentPickerViewController(forOpeningContentTypes: [.folder])
-        let d = PickerDelegate { url in
-            if let u = url {
-                _ = u.startAccessingSecurityScopedResource()
-                if let b = try? u.bookmarkData(options: [], includingResourceValuesForKeys: nil, relativeTo: nil) {
-                    UserDefaults.standard.set(b, forKey: "saveDirBookmark")
+        let delegate = PickerDelegate { url in
+            if let folder = url {
+                _ = folder.startAccessingSecurityScopedResource()
+                if let bookmark = try? folder.bookmarkData(options: [], includingResourceValuesForKeys: nil, relativeTo: nil) {
+                    UserDefaults.standard.set(bookmark, forKey: "saveDirBookmark")
                 }
             }
             done(url)
         }
-        pickerDelegate = d
-        picker.delegate = d
+        pickerDelegate = delegate
+        picker.delegate = delegate
         presenter.present(picker, animated: true)
         #endif
     }
@@ -100,7 +100,7 @@ import UniformTypeIdentifiers
     static weak var iosRoot: UIViewController?
     static var rootViewController: UIViewController? {
         var presenter = iosRoot
-        while let p = presenter?.presentedViewController { presenter = p }
+        while let presented = presenter?.presentedViewController { presenter = presented }
         return presenter
     }
     static var pickerDelegate: PickerDelegate?
@@ -114,11 +114,11 @@ import UniformTypeIdentifiers
 
     /// Restores access to the save folder chosen earlier on iOS.
     static func restoreBookmarkedFolder() {
-        guard let b = UserDefaults.standard.data(forKey: "saveDirBookmark") else { return }
+        guard let bookmark = UserDefaults.standard.data(forKey: "saveDirBookmark") else { return }
         var stale = false
-        if let u = try? URL(resolvingBookmarkData: b, options: [], relativeTo: nil, bookmarkDataIsStale: &stale) {
-            _ = u.startAccessingSecurityScopedResource()
-            UserDefaults.standard.set(u.path, forKey: "saveDir")
+        if let folder = try? URL(resolvingBookmarkData: bookmark, options: [], relativeTo: nil, bookmarkDataIsStale: &stale) {
+            _ = folder.startAccessingSecurityScopedResource()
+            UserDefaults.standard.set(folder.path, forKey: "saveDir")
         }
     }
     #endif

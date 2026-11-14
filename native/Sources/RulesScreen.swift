@@ -25,22 +25,22 @@ extension Scene {
         let blocks = gameData.rules()
         var heights: [Float] = []
         var total: Float = 0
-        for b in blocks {
-            let h = b.heading ? renderer.measure(b.text, .gwent(30), maxWidth: content.w).h + 18 : renderer.measure(b.text, .serif(21), maxWidth: content.w).h + 16
+        for block in blocks {
+            let h = block.heading ? renderer.measure(block.text, .gwent(30), maxWidth: content.w).h + 18 : renderer.measure(block.text, .serif(21), maxWidth: content.w).h + 16
             heights.append(h); total += h
         }
         let maxScroll = max(0, total - content.h)
         rulesScroll = max(0, min(maxScroll, rulesScroll - wheel))
         renderer.clip(content)
         var y = content.y - rulesScroll
-        for (i, b) in blocks.enumerated() {
+        for (i, block) in blocks.enumerated() {
             let h = heights[i]
             if y + h >= content.y && y <= content.y + content.h {
-                if b.heading {
-                    renderer.text(b.text, .gwent(30), x: content.x, y: y + 10, color: RGBA.gold, maxWidth: content.w)
+                if block.heading {
+                    renderer.text(block.text, .gwent(30), x: content.x, y: y + 10, color: RGBA.gold, maxWidth: content.w)
                     renderer.rect(R(content.x, y + h - 6, min(content.w, 520), 1.5), RGBA.goldDark.alpha(0.6))
                 } else {
-                    renderer.text(b.text, .serif(21), x: content.x, y: y, color: RGBA(r: 0.92, g: 0.88, b: 0.8, a: 1), maxWidth: content.w)
+                    renderer.text(block.text, .serif(21), x: content.x, y: y, color: RGBA(r: 0.92, g: 0.88, b: 0.8, a: 1), maxWidth: content.w)
                 }
             }
             y += h

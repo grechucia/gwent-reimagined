@@ -25,8 +25,8 @@ final class IOSGameView: MTKView {
         autoResizeDrawable = false
         let aspect = boundsSize.width / boundsSize.height
         if renderHeight > 0 {
-            let h16 = CGFloat(renderHeight)
-            let h = aspect >= 16.0 / 9.0 ? h16 : h16 * (16.0 / 9.0) / aspect
+            let targetHeight = CGFloat(renderHeight)
+            let h = aspect >= 16.0 / 9.0 ? targetHeight : targetHeight * (16.0 / 9.0) / aspect
             drawableSize = CGSize(width: (h * aspect).rounded(), height: h.rounded())
         } else {
             let s = window?.screen.nativeScale ?? UIScreen.main.nativeScale
@@ -35,11 +35,11 @@ final class IOSGameView: MTKView {
     }
     /// Converts a touch position to the virtual 1920x1080 space.
     func virtualPoint(_ p: CGPoint) -> SIMD2<Float> {
-        guard let r = app?.renderer, bounds.width > 0 else { return .zero }
-        let px = Float(p.x / bounds.width) * Float(drawableSize.width)
-        let py = Float(p.y / bounds.height) * Float(drawableSize.height)
-        let vp = r.viewportPx
-        return SIMD2((px - vp.x) / vp.w * virtualWidth, (py - vp.y) / vp.h * virtualHeight)
+        guard let renderer = app?.renderer, bounds.width > 0 else { return .zero }
+        let pixelX = Float(p.x / bounds.width) * Float(drawableSize.width)
+        let pixelY = Float(p.y / bounds.height) * Float(drawableSize.height)
+        let viewport = renderer.viewportPx
+        return SIMD2((pixelX - viewport.x) / viewport.w * virtualWidth, (pixelY - viewport.y) / viewport.h * virtualHeight)
     }
 
     /// Touch down: moves focus and starts the long-press timer (long press = card details).
@@ -51,30 +51,30 @@ final class IOSGameView: MTKView {
         longTimer?.invalidate()
         longTimer = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: false) { [weak self] _ in
             MainActor.assumeIsolated {
-                guard let v = self, !v.dragging else { return }
-                v.longFired = true
-                v.app?.scene?.rightClick()
+                guard let view = self, !view.dragging else { return }
+                view.longFired = true
+                view.app?.scene?.rightClick()
             }
         }
     }
     /// Dragging scrolls lists.
     override func touchesMoved(_ touches: Set<UITouch>, with event: UIEvent?) {
         guard let touch = touches.first, let s = app?.scene else { return }
-        let p = touch.location(in: self)
-        if !dragging && hypot(p.x - start.x, p.y - start.y) > 12 { dragging = true; longTimer?.invalidate() }
+        let location = touch.location(in: self)
+        if !dragging && hypot(location.x - start.x, location.y - start.y) > 12 { dragging = true; longTimer?.invalidate() }
         if dragging {
-            let a = virtualPoint(last), b = virtualPoint(p)
-            s.scroll((b.y - a.y) * 1.2)
+            let previous = virtualPoint(last), b = virtualPoint(location)
+            s.scroll((b.y - previous.y) * 1.2)
         }
-        last = p
-        s.mouseMoved(virtualPoint(p))
+        last = location
+        s.mouseMoved(virtualPoint(location))
     }
     /// Tap = click, unless the touch was a drag or a long press.
     override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
         longTimer?.invalidate()
         guard let touch = touches.first, let s = app?.scene else { return }
-        let p = virtualPoint(touch.location(in: self))
-        if !dragging && !longFired { s.click(p) }
+        let point = virtualPoint(touch.location(in: self))
+        if !dragging && !longFired { s.click(point) }
         s.mouse = SIMD2(-1, -1)
     }
     /// Cancels the current touch.
@@ -106,7 +106,7 @@ final class IOSAppDelegate: UIResponder, UIApplicationDelegate, MTKViewDelegate,
     var audio: Audio!
     let gamepad = Gamepad()
     var last = CACurrentMediaTime()
-    let res = Bundle.main.resourceURL!
+    let resources = Bundle.main.resourceURL!
 
     var renderRes: Int { get { UserDefaults.standard.integer(forKey: "renderRes") } set { UserDefaults.standard.set(newValue, forKey: "renderRes") } }
     var frameLimit: Int {
@@ -136,18 +136,18 @@ final class IOSAppDelegate: UIResponder, UIApplicationDelegate, MTKViewDelegate,
         try? AVAudioSession.sharedInstance().setCategory(.ambient)
         try? AVAudioSession.sharedInstance().setActive(true)
         Platform.restoreBookmarkedFolder()
-        CTFontManagerRegisterFontsForURL(res.appendingPathComponent("game/fonts/gwent.ttf") as CFURL, .process, nil)
-        GameData.shared = GameData(dir: res.appendingPathComponent("data"))
+        CTFontManagerRegisterFontsForURL(resources.appendingPathComponent("game/fonts/gwent.ttf") as CFURL, .process, nil)
+        GameData.shared = GameData(dir: resources.appendingPathComponent("data"))
         GameData.shared.language = lang
 
         view = IOSGameView(frame: CGRect(x: 0, y: 0, width: 1280, height: 720))
         view.app = self
         view.isMultipleTouchEnabled = false
-        renderer = Renderer(view: view, gameDir: res.appendingPathComponent("game"))
+        renderer = Renderer(view: view, gameDir: resources.appendingPathComponent("game"))
         view.delegate = self
         view.preferredFramesPerSecond = effectiveFrameLimit
         view.renderHeight = renderRes
-        audio = Audio(gameDir: res.appendingPathComponent("game"))
+        audio = Audio(gameDir: resources.appendingPathComponent("game"))
         scene = Scene(renderer: renderer, audio: audio)
         scene?.onLanguageChange = { [weak self] code in self?.lang = code }
         scene?.host = self
@@ -168,9 +168,9 @@ final class IOSAppDelegate: UIResponder, UIApplicationDelegate, MTKViewDelegate,
 
     /// Uses IOSSceneDelegate for the app's window scene.
     func application(_ a: UIApplication, configurationForConnecting s: UISceneSession, options: UIScene.ConnectionOptions) -> UISceneConfiguration {
-        let c = UISceneConfiguration(name: nil, sessionRole: s.role)
-        c.delegateClass = IOSSceneDelegate.self
-        return c
+        let configuration = UISceneConfiguration(name: nil, sessionRole: s.role)
+        configuration.delegateClass = IOSSceneDelegate.self
+        return configuration
     }
 
     /// Not used: the drawable size is managed manually.
@@ -179,10 +179,10 @@ final class IOSAppDelegate: UIResponder, UIApplicationDelegate, MTKViewDelegate,
     func draw(in metalView: MTKView) {
         let now = CACurrentMediaTime()
         let dt = Float(min(0.1, now - last)); last = now
-        guard let cb = renderer.begin(view: metalView) else { return }
+        guard let commandBuffer = renderer.begin(view: metalView) else { return }
         gamepad.update(dt)
         scene?.frame(dt: dt)
-        renderer.end(cb, view: metalView)
+        renderer.end(commandBuffer, view: metalView)
     }
 }
 

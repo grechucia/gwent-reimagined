@@ -29,13 +29,13 @@ extension Scene {
              ic != nil, { [weak self] in if let u = ic { self?.finishSaveChoice(u) } }),
             (L("Choose a folder…"), L("E.g. a network drive, Dropbox or Google Drive – useful if you also want to sync with Android."), true,
              { [weak self] in self?.pickSaveFolder() })]
-        for (i, o) in opts.enumerated() {
-            let b = R(area.x + 80, area.y + 180 + Float(i) * 170, area.w - 160, 140)
-            let hovered = o.2 && b.contains(mouse)
-            renderer.rect(b, RGBA.black.alpha(hovered ? 0.5 : 0.32)); renderer.frame(b, RGBA.gold.alpha(o.2 ? (hovered ? 1 : 0.5) : 0.2), hovered ? 2.5 : 1.5)
-            renderer.text(o.0, .serif(28, bold: true), x: b.x + 30, y: b.y + 22, color: o.2 ? (hovered ? .white : RGBA.gold) : .gray(0.45))
-            renderer.text(o.1, .ui(18), x: b.x + 30, y: b.y + 72, color: o.2 ? .gray(0.88) : .gray(0.5), maxWidth: b.w - 60)
-            if o.2 { button(b, o.3) }
+        for (i, option) in opts.enumerated() {
+            let box = R(area.x + 80, area.y + 180 + Float(i) * 170, area.w - 160, 140)
+            let hovered = option.2 && box.contains(mouse)
+            renderer.rect(box, RGBA.black.alpha(hovered ? 0.5 : 0.32)); renderer.frame(box, RGBA.gold.alpha(option.2 ? (hovered ? 1 : 0.5) : 0.2), hovered ? 2.5 : 1.5)
+            renderer.text(option.0, .serif(28, bold: true), x: box.x + 30, y: box.y + 22, color: option.2 ? (hovered ? .white : RGBA.gold) : .gray(0.45))
+            renderer.text(option.1, .ui(18), x: box.x + 30, y: box.y + 72, color: option.2 ? .gray(0.88) : .gray(0.5), maxWidth: box.w - 60)
+            if option.2 { button(box, option.3) }
         }
         if SaveStore.shared.chosen {
             renderer.text(L("Currently") + ": " + SaveStore.shared.displayPath, .ui(15), x: 960, y: area.y + area.h - 70, color: .gray(0.7), maxWidth: area.w - 100, align: .center)

@@ -48,7 +48,7 @@ struct CareerFight {
     func chapter(_ chapter: Int) -> (title: String, fights: [CareerFight]) {
         let key = "\(seed)|\(difficulty)|\(gameData.language)"
         if key != cacheKey { cache = [:]; cacheKey = key }
-        if let v = cache[chapter] { return v }
+        if let cachedChapter = cache[chapter] { return cachedChapter }
         let generated = makeChapter(chapter); cache[chapter] = generated; return generated
     }
     /// Generates a chapter: three regular opponents and a boss whose strength grows with progress.
@@ -58,22 +58,22 @@ struct CareerFight {
         let order = Career.places.indices.shuffled(using: &orng)
         let place = Career.places[order[chapter % order.count]]
         let last = chapter == chapterCount - 1
-        let d = difficulty - 1
+        let difficultyOffset = difficulty - 1
         let progress = Float(chapter) / Float(max(1, chapterCount - 1))
-        let base = Int((progress * 6).rounded()) + (d < 0 ? -1 : d)
-        let h = max(0, Int((progress * 3).rounded()) + d - 1)
+        let base = Int((progress * 6).rounded()) + (difficultyOffset < 0 ? -1 : difficultyOffset)
+        let h = max(0, Int((progress * 3).rounded()) + difficultyOffset - 1)
         var fights: [CareerFight] = []
-        for k in 0..<4 {
-            let boss = k == 3
+        for slot in 0..<4 {
+            let boss = slot == 3
             let fac = DeckBuilder.factionsOrder.randomElement(using: &rng) ?? "realms"
-            var cap = boss ? base + 2 : base + (k == 2 ? 1 : 0)
+            var cap = boss ? base + 2 : base + (slot == 2 ? 1 : 0)
             if cap >= 11 || (boss && last) { cap = 99 }
-            let heroes = boss ? min(7, h + 1 + (last ? 2 : 0)) : max(0, h - 1 + (k == 2 ? 1 : 0))
-            let tmp = CareerFight(name: "", portrait: "", faction: fac, cap: max(2, cap), heroes: heroes, boss: boss)
-            let dk = opponentDeck(index(chapter, k), tmp)
+            let heroes = boss ? min(7, h + 1 + (last ? 2 : 0)) : max(0, h - 1 + (slot == 2 ? 1 : 0))
+            let draft = CareerFight(name: "", portrait: "", faction: fac, cap: max(2, cap), heroes: heroes, boss: boss)
+            let dk = opponentDeck(index(chapter, slot), draft)
             let pk: String = boss ? dk.leader : (dk.cards.compactMap { gameData.cards[$0.0] }.filter { $0.isUnit }.max { $0.strength < $1.strength }?.key ?? dk.leader)
             let nm = gameData.cards[pk].map { gameData.cardName($0) } ?? fac
-            fights.append(CareerFight(name: nm, portrait: pk, faction: fac, cap: tmp.cap, heroes: heroes, boss: boss))
+            fights.append(CareerFight(name: nm, portrait: pk, faction: fac, cap: draft.cap, heroes: heroes, boss: boss))
         }
         return (L(place), fights)
     }
@@ -92,15 +92,15 @@ struct CareerFight {
     /// Loads the career from the save file.
     func load() {
         faction = ""; leaders = []; leader = ""; collection = [:]; deck = [:]; beaten = []
-        guard let o = SaveStore.shared["career"] as? [String: Any] else { return }
-        faction = o["faction"] as? String ?? ""
-        leaders = o["leaders"] as? [String] ?? []
-        leader = o["leader"] as? String ?? leaders.first ?? ""
-        collection = (o["collection"] as? [String: Int]) ?? [:]
-        deck = (o["deck"] as? [String: Int]) ?? [:]
-        beaten = Set((o["beaten"] as? [Int]) ?? [])
-        seed = o["seed"] as? Int ?? 0
-        difficulty = o["difficulty"] as? Int ?? 1
+        guard let saved = SaveStore.shared["career"] as? [String: Any] else { return }
+        faction = saved["faction"] as? String ?? ""
+        leaders = saved["leaders"] as? [String] ?? []
+        leader = saved["leader"] as? String ?? leaders.first ?? ""
+        collection = (saved["collection"] as? [String: Int]) ?? [:]
+        deck = (saved["deck"] as? [String: Int]) ?? [:]
+        beaten = Set((saved["beaten"] as? [Int]) ?? [])
+        seed = saved["seed"] as? Int ?? 0
+        difficulty = saved["difficulty"] as? Int ?? 1
     }
     /// Stores the career in the save file.
     func save() {
@@ -111,25 +111,25 @@ struct CareerFight {
     func reset() { faction = ""; leaders = []; leader = ""; collection = [:]; deck = [:]; beaten = []; save() }
 
     /// All cards of a faction that can appear in decks.
-    func pool(_ faction: String) -> [CardData] { let b = DeckBuilder(); b.faction = faction; return b.collection() }
+    func pool(_ faction: String) -> [CardData] { let builder = DeckBuilder(); builder.faction = faction; return builder.collection() }
 
     /// Starts a new career: random seed, first leader and a starter deck of weak units.
     func start(_ f: String, difficulty level: Int = 1) {
         faction = f; difficulty = level; beaten = []; seed = Int.random(in: 1...999_999)
-        let p = pool(f)
+        let factionPool = pool(f)
         let leaderCards = gameData.cards.values.filter { $0.isLeader && $0.faction == f }.sorted { $0.key < $1.key }
         leaders = leaderCards.first.map { [$0.key] } ?? []; leader = leaders.first ?? ""
         var cap = 6 - (difficulty - 1), units: [CardData] = []
         while true {
-            units = p.filter { $0.isUnit && !$0.isHero && $0.strength <= cap && !$0.abilities.contains("spy") }
+            units = factionPool.filter { $0.isUnit && !$0.isHero && $0.strength <= cap && !$0.abilities.contains("spy") }
             if units.reduce(0, { $0 + $1.count }) >= 24 || cap > 12 { break }
             cap += 1
         }
         collection = [:]
-        var n = 0
-        for u in units.sorted(by: { $0.strength > $1.strength }) where n < 22 { let c = min(u.count, 22 - n); collection[u.key] = c; n += c }
-        for w in p.filter({ $0.isWeather }).prefix(2) { collection[w.key] = 1 }
-        for k in ["spe_horn", "spe_decoy"] where gameData.cards[k] != nil { collection[k] = 1 }
+        var cardCount = 0
+        for unit in units.sorted(by: { $0.strength > $1.strength }) where cardCount < 22 { let copies = min(unit.count, 22 - cardCount); collection[unit.key] = copies; cardCount += copies }
+        for w in factionPool.filter({ $0.isWeather }).prefix(2) { collection[w.key] = 1 }
+        for specialKey in ["spe_horn", "spe_decoy"] where gameData.cards[specialKey] != nil { collection[specialKey] = 1 }
         deck = collection
         save()
     }
@@ -142,21 +142,21 @@ struct CareerFight {
     /// Builds the opponent's deck for a fight (premade deck for the final boss).
     func opponentDeck(_ fightIndex: Int, _ f: CareerFight) -> DeckData {
         if f.boss && f.cap >= 99 {
-            var r = SeededRNG(rngBase &+ fightIndex)
-            let pre = gameData.decks.filter { $0.faction == f.faction }
-            if let d = pre.randomElement(using: &r) { return d }
+            var bossRng = SeededRNG(rngBase &+ fightIndex)
+            let premadeDecks = gameData.decks.filter { $0.faction == f.faction }
+            if let premade = premadeDecks.randomElement(using: &bossRng) { return premade }
         }
         var rng = SeededRNG(rngBase &+ fightIndex &* 7919)
-        let p = pool(f.faction)
+        let factionPool = pool(f.faction)
         var cap = f.cap
-        while cap < 15 && p.filter({ $0.isUnit && !$0.isHero && $0.strength <= cap }).reduce(0, { $0 + $1.count }) < 18 { cap += 1 }
-        let pool = p.filter { $0.isUnit && !$0.isHero && $0.strength <= cap && (f.boss || !$0.abilities.contains("spy")) }.shuffled(using: &rng)
+        while cap < 15 && factionPool.filter({ $0.isUnit && !$0.isHero && $0.strength <= cap }).reduce(0, { $0 + $1.count }) < 18 { cap += 1 }
+        let pool = factionPool.filter { $0.isUnit && !$0.isHero && $0.strength <= cap && (f.boss || !$0.abilities.contains("spy")) }.shuffled(using: &rng)
         let units = f.boss ? pool : pool.sorted { $0.strength < $1.strength }
-        let heroes = p.filter { $0.isUnit && $0.isHero }.shuffled(using: &rng).prefix(f.heroes)
-        let specials = p.filter { !$0.isUnit }.shuffled(using: &rng).prefix(min(4, f.heroes))
+        let heroes = factionPool.filter { $0.isUnit && $0.isHero }.shuffled(using: &rng).prefix(f.heroes)
+        let specials = factionPool.filter { !$0.isUnit }.shuffled(using: &rng).prefix(min(4, f.heroes))
         var cards: [(String, Int)] = heroes.map { ($0.key, 1) }
         var count = cards.count
-        for u in units where count < 20 { let c = min(u.count, 20 - count); cards.append((u.key, c)); count += c }
+        for unit in units where count < 20 { let copies = min(unit.count, 20 - count); cards.append((unit.key, copies)); count += copies }
         cards += specials.map { ($0.key, 1) }
         let leaderCards = gameData.cards.values.filter { $0.isLeader && $0.faction == f.faction }.sorted { $0.key < $1.key }
         let lead = f.boss ? (leaderCards.last ?? leaderCards.first) : leaderCards.first
@@ -165,13 +165,13 @@ struct CareerFight {
 
     /// Three cards offered as a reward after winning a fight.
     func rewardOptions(_ fightIndex: Int) -> [String] {
-        let c = fightIndex / 4, boss = fightIndex % 4 == 3
-        let progress = Float(c) / Float(max(1, chapterCount - 1))
+        let chapter = fightIndex / 4, boss = fightIndex % 4 == 3
+        let progress = Float(chapter) / Float(max(1, chapterCount - 1))
         let cap = progress > 0.8 ? 99 : 5 + Int(progress * 7)
         var rng = SeededRNG(seed &+ fightIndex * 104_729 &+ beaten.count)
-        let p = pool(faction).filter { (collection[$0.key] ?? 0) < $0.count }
-        var cand = boss ? p.filter { $0.isUnit && $0.isHero } : p.filter { !$0.isHero && (!$0.isUnit || $0.strength <= cap) }
-        if cand.count < 3 { cand = p }
+        let available = pool(faction).filter { (collection[$0.key] ?? 0) < $0.count }
+        var cand = boss ? available.filter { $0.isUnit && $0.isHero } : available.filter { !$0.isHero && (!$0.isUnit || $0.strength <= cap) }
+        if cand.count < 3 { cand = available }
         cand.sort { ($0.isUnit ? $0.strength : 3) > ($1.isUnit ? $1.strength : 3) }
         let top = Array(cand.prefix(max(6, cand.count / 2))).shuffled(using: &rng)
         return Array(top.prefix(3)).map { $0.key }
@@ -182,7 +182,7 @@ struct CareerFight {
         var newLeader: String?
         if fightIndex % 4 == 3 {
             let leaderCards = gameData.cards.values.filter { $0.isLeader && $0.faction == faction }.sorted { $0.key < $1.key }
-            if let l = leaderCards.first(where: { !leaders.contains($0.key) }) { leaders.append(l.key); newLeader = l.key }
+            if let newLeaderCard = leaderCards.first(where: { !leaders.contains($0.key) }) { leaders.append(newLeaderCard.key); newLeader = newLeaderCard.key }
         }
         save()
         return newLeader

@@ -14,26 +14,26 @@ extension Game {
     struct Snap { var rows: [[Card]]; var specials: [[Card]]; var weather: [[Set<String>]]; var horns: [Bool] }
     /// Captures the current board state.
     func snap() -> Snap {
-        let rs = human.rows + computer.rows
-        return Snap(rows: rs.map { $0.cards }, specials: rs.map { $0.specials }, weather: [human.weather, computer.weather], horns: rs.map { $0.leaderHorn })
+        let allRows = human.rows + computer.rows
+        return Snap(rows: allRows.map { $0.cards }, specials: allRows.map { $0.specials }, weather: [human.weather, computer.weather], horns: allRows.map { $0.leaderHorn })
     }
     /// Restores a board state captured with snap().
     func restore(_ snapshot: Snap) {
-        for (i, r) in (human.rows + computer.rows).enumerated() { r.cards = snapshot.rows[i]; r.specials = snapshot.specials[i]; r.leaderHorn = snapshot.horns[i] }
+        for (i, rowIndex) in (human.rows + computer.rows).enumerated() { rowIndex.cards = snapshot.rows[i]; rowIndex.specials = snapshot.specials[i]; rowIndex.leaderHorn = snapshot.horns[i] }
         human.weather = snapshot.weather[0]; computer.weather = snapshot.weather[1]
     }
     /// Returns how much the score difference changes for `ai` if `apply` is executed (the board is restored afterwards).
     func diffAfter(_ ai: Player, _ apply: () -> Void) -> Int {
-        let s = snap()
+        let snapshot = snap()
         apply(); recalc()
-        let d = ai.total - ai.opponent.total
-        restore(s); recalc()
-        return d
+        let scoreBefore = ai.total - ai.opponent.total
+        restore(snapshot); recalc()
+        return scoreBefore
     }
     /// Simulates removing the strongest non-hero units from the given rows (scorch-like effects).
     func killMax(_ cards: [Card], in rows: [Row]) {
-        guard let mx = cards.filter({ !$0.hero }).map({ $0.power }).max(), mx > 0 else { return }
-        for r in rows where !r.shielded { r.cards.removeAll { !$0.hero && $0.power == mx && $0.immortalRounds == 0 } }
+        guard let highestPower = cards.filter({ !$0.hero }).map({ $0.power }).max(), highestPower > 0 else { return }
+        for targetRow in rows where !targetRow.shielded { targetRow.cards.removeAll { !$0.hero && $0.power == highestPower && $0.immortalRounds == 0 } }
     }
 
     /// Lists every possible move for the AI player together with its estimated value.
@@ -48,39 +48,39 @@ extension Game {
             let cost = c.map { Double($0.basePower) * 0.35 + ($0.hero ? 2 : 0) } ?? 0
             moves.append(AIMove(card: c, row: rowType, rowOwner: owner, target: t, value: Double(scoreAfter - base) + extra - cost, gain: scoreAfter - base, kind: kind))
         }
-        for c in hand {
-            if c.isUnit {
-                let rows = c.has("ambush") ? [RowType.close] : c.allowedRows
-                for r in rows {
-                    let isSpy = c.has("spy") || c.has("emissary") || c.has("ofiri_envoy")
+        for handCard in hand {
+            if handCard.isUnit {
+                let rows = handCard.has("ambush") ? [RowType.close] : handCard.allowedRows
+                for rowType in rows {
+                    let isSpy = handCard.has("spy") || handCard.has("emissary") || handCard.has("ofiri_envoy")
                     let side = isSpy ? foe : ai
                     var extra = 0.0
                     let scoreGain = diffAfter(ai) {
-                        side.row(r).cards.append(c)
-                        if c.has("muster") {
-                            let ms = (ai.hand + ai.deck).filter { $0 !== c && $0.groupKey == c.groupKey && $0.isUnit }
-                            for m in ms { ai.row(c.data.row.hasPrefix("agile") ? r : (RowType.from(m.data.row) ?? r)).cards.append(m) }
+                        side.row(rowType).cards.append(handCard)
+                        if handCard.has("muster") {
+                            let ms = (ai.hand + ai.deck).filter { $0 !== handCard && $0.groupKey == handCard.groupKey && $0.isUnit }
+                            for candidateMove in ms { ai.row(handCard.data.row.hasPrefix("agile") ? rowType : (RowType.from(candidateMove.data.row) ?? rowType)).cards.append(candidateMove) }
                             extra += Double(ms.count) * 2.5
                         }
-                        if c.has("medic"), let best = ai.grave.filter({ $0.isUnit && !$0.hero }).max(by: { aiCardValue($0) < aiCardValue($1) }) {
+                        if handCard.has("medic"), let best = ai.grave.filter({ $0.isUnit && !$0.hero }).max(by: { aiCardValue($0) < aiCardValue($1) }) {
                             ai.row(best.allowedRows.first ?? .close).cards.append(best); extra += 3
                         }
                         recalc()
-                        for a in c.data.abilities where a.hasPrefix("scorch_") {
-                            let t: RowType = a == "scorch_c" ? .close : (a == "scorch_r" ? .ranged : .siege)
-                            if foe.row(t).total >= 10 { killMax(foe.row(t).cards, in: [foe.row(t)]) }
+                        for ability in handCard.data.abilities where ability.hasPrefix("scorch_") {
+                            let scorchRow: RowType = ability == "scorch_c" ? .close : (ability == "scorch_r" ? .ranged : .siege)
+                            if foe.row(scorchRow).total >= 10 { killMax(foe.row(scorchRow).cards, in: [foe.row(scorchRow)]) }
                         }
-                        if c.has("scorch") { killMax((ai.rowCards + foe.rowCards).filter { $0 !== c }, in: ai.rows + foe.rows) }
-                        if c.has("mardroeme") || (c.has("berserker") && side.row(r).specials.contains { $0.specialKind == "mardroeme" }) {
-                            for b in side.row(r).cards where b.has("berserker") { extra += 4; _ = b }
+                        if handCard.has("scorch") { killMax((ai.rowCards + foe.rowCards).filter { $0 !== handCard }, in: ai.rows + foe.rows) }
+                        if handCard.has("mardroeme") || (handCard.has("berserker") && side.row(rowType).specials.contains { $0.specialKind == "mardroeme" }) {
+                            for berserker in side.row(rowType).cards where berserker.has("berserker") { extra += 4; _ = berserker }
                         }
                     }
                     if isSpy { extra += 9 }
-                    for a in ["necrophage", "goetia", "sage", "zirael", "naglfar", "bait", "invoke", "summon_one_of", "trade", "rune_call", "omen", "clairvoyance", "witch_hunt", "doppler", "aerondight", "wish1", "wish2", "wish3", "cull"] where c.has(a) { extra += 2.5 }
-                    add(c, r, nil, nil, scoreGain, extra)
+                    for ability in ["necrophage", "goetia", "sage", "zirael", "naglfar", "bait", "invoke", "summon_one_of", "trade", "rune_call", "omen", "clairvoyance", "witch_hunt", "doppler", "aerondight", "wish1", "wish2", "wish3", "cull"] where handCard.has(ability) { extra += 2.5 }
+                    add(handCard, rowType, nil, nil, scoreGain, extra)
                 }
-            } else if c.data.isWeather {
-                let a = c.data.abilities.first ?? ""
+            } else if handCard.data.isWeather {
+                let a = handCard.data.abilities.first ?? ""
                 var options: [[RowType]] = []
                 switch a {
                 case "storm": options = [[.close, .ranged], [.ranged, .siege]]
@@ -89,122 +89,122 @@ extension Game {
                 case "fog", "tse_tse": options = [[.ranged]]
                 case "rain", "dragon_wrath": options = [[.siege]]
                 case "sandstorm": options = [[.close, .ranged]]
-                case "white_frost": options = [c.data.row == "agile_cs" ? [.close, .siege] : (c.data.row == "agile_rs" ? [.ranged, .siege] : [.close, .ranged])]
+                case "white_frost": options = [handCard.data.row == "agile_cs" ? [.close, .siege] : (handCard.data.row == "agile_rs" ? [.ranged, .siege] : [.close, .ranged])]
                 default: options = [[]]
                 }
                 var bestD = Int.min
-                for o in options {
+                for option in options {
                     let scoreGain = diffAfter(ai) {
-                        if a == "clear" { for q in [human, computer] { for i in 0..<3 { q.weather[i].removeAll() } } }
-                        else { for q in [human, computer] { for r in o { q.weather[r.rawValue].insert(a) } } }
+                        if a == "clear" { for side in [human, computer] { for i in 0..<3 { side.weather[i].removeAll() } } }
+                        else { for side in [human, computer] { for rowType in option { side.weather[rowType.rawValue].insert(a) } } }
                     }
                     bestD = max(bestD, scoreGain)
                 }
-                add(c, nil, nil, nil, bestD, -1.5)
+                add(handCard, nil, nil, nil, bestD, -1.5)
             } else {
-                let k = c.specialKind ?? ""
+                let k = handCard.specialKind ?? ""
                 switch k {
                 case "horn", "morale", "toussaint_wine", "mardroeme":
-                    for r in validRows(for: c, by: ai) {
+                    for rowType in validRows(for: handCard, by: ai) {
                         var extra = 0.0
-                        let scoreGain = diffAfter(ai) { ai.row(r).specials.append(c) }
-                        if k == "mardroeme" { extra = Double(ai.row(r).cards.filter { $0.has("berserker") }.count) * 5 }
-                        add(c, r, ai, nil, scoreGain, extra - 2.5)
+                        let scoreGain = diffAfter(ai) { ai.row(rowType).specials.append(handCard) }
+                        if k == "mardroeme" { extra = Double(ai.row(rowType).cards.filter { $0.has("berserker") }.count) * 5 }
+                        add(handCard, rowType, ai, nil, scoreGain, extra - 2.5)
                     }
                 case "shield", "shield_c", "shield_r", "shield_s":
-                    for r in validRows(for: c, by: ai) {
-                        let danger = foe.hand.contains { $0.has("scorch") || $0.specialKind == "scorch" } || ai.row(r).total >= 10
-                        add(c, r, ai, nil, base, danger ? Double(ai.row(r).total) * 0.25 : -3)
+                    for rowType in validRows(for: handCard, by: ai) {
+                        let danger = foe.hand.contains { $0.has("scorch") || $0.specialKind == "scorch" } || ai.row(rowType).total >= 10
+                        add(handCard, rowType, ai, nil, base, danger ? Double(ai.row(rowType).total) * 0.25 : -3)
                     }
                 case "lock":
-                    if let r = enemyRowTargets(for: c, by: ai).first { add(c, r, foe, nil, base, foe.hand.count > 3 ? 2 : -2) }
+                    if let rowType = enemyRowTargets(for: handCard, by: ai).first { add(handCard, rowType, foe, nil, base, foe.hand.count > 3 ? 2 : -2) }
                 case "curse":
-                    add(c, .close, foe, nil, base, foe.hand.count > 3 ? 2.5 : -2)
+                    add(handCard, .close, foe, nil, base, foe.hand.count > 3 ? 2.5 : -2)
                 case "knockback":
-                    for r in [RowType.close, .ranged] {
+                    for rowType in [RowType.close, .ranged] {
                         let scoreGain = diffAfter(ai) {
-                            let dest: RowType = r == .close ? .ranged : .siege
-                            let enemyCards = foe.row(r).cards.filter { !$0.hero }
-                            foe.row(r).cards.removeAll { x in enemyCards.contains { $0 === x } }; foe.row(dest).cards.append(contentsOf: enemyCards)
+                            let dest: RowType = rowType == .close ? .ranged : .siege
+                            let enemyCards = foe.row(rowType).cards.filter { !$0.hero }
+                            foe.row(rowType).cards.removeAll { x in enemyCards.contains { $0 === x } }; foe.row(dest).cards.append(contentsOf: enemyCards)
                         }
-                        add(c, r, foe, nil, scoreGain, -1)
+                        add(handCard, rowType, foe, nil, scoreGain, -1)
                     }
                 case "seize":
                     let d = diffAfter(ai) {
                         let enemyCards = foe.row(.close).cards.filter { !$0.hero }
                         if let lowestPower = enemyCards.map({ $0.power }).min() { for t in enemyCards where t.power == lowestPower { foe.row(.close).cards.removeAll { $0 === t }; ai.row(.close).cards.append(t) } }
                     }
-                    add(c, nil, nil, nil, d, 0)
+                    add(handCard, nil, nil, nil, d, 0)
                 case "scorch":
                     let d = diffAfter(ai) { recalc(); killMax(ai.rowCards + foe.rowCards, in: ai.rows + foe.rows) }
-                    add(c, nil, nil, nil, d, -2)
+                    add(handCard, nil, nil, nil, d, -2)
                 case "cull":
                     let d = diffAfter(ai) {
                         recalc()
                         let all = (ai.rowCards + foe.rowCards).filter { !$0.hero }
                         if let lowestPower = all.map({ $0.power }).min() { for r in ai.rows + foe.rows where !r.shielded { r.cards.removeAll { !$0.hero && $0.power == lowestPower } } }
                     }
-                    add(c, nil, nil, nil, d, -1)
+                    add(handCard, nil, nil, nil, d, -1)
                 case "clear":
                     let d = diffAfter(ai) { for q in [human, computer] { for i in 0..<3 { q.weather[i].removeAll() } } }
-                    add(c, nil, nil, nil, d, -1)
+                    add(handCard, nil, nil, nil, d, -1)
                 case "decoy":
-                    for t in decoyTargets(for: ai) {
-                        let scoreGain = diffAfter(ai) { if let r = ai.rowOf(t) { ai.row(r).cards.removeAll { $0 === t } } }
-                        let bonus: Double = t.has("spy") ? 9 : (t.has("medic") ? 4 : 0.5)
-                        add(c, nil, nil, t, scoreGain, bonus)
+                    for decoyTargetCards in decoyTargets(for: ai) {
+                        let scoreGain = diffAfter(ai) { if let r = ai.rowOf(decoyTargetCards) { ai.row(r).cards.removeAll { $0 === decoyTargetCards } } }
+                        let bonus: Double = decoyTargetCards.has("spy") ? 9 : (decoyTargetCards.has("medic") ? 4 : 0.5)
+                        add(handCard, nil, nil, decoyTargetCards, scoreGain, bonus)
                     }
-                case "bank", "skellige_fleet": add(c, nil, nil, nil, base, 5)
-                case "decoration": if !ai.rowCards.filter({ !$0.hero }).isEmpty { add(c, nil, nil, nil, base, 3) }
-                case "royal_decree": if !Game.passiveLeaders.contains(ai.leaderAbility) { add(c, nil, nil, nil, base, 3) }
-                case "door": if ai.deck.contains(where: { $0.isUnit }) { add(c, validRows(for: c, by: ai).first, ai, nil, base, 3) }
+                case "bank", "skellige_fleet": add(handCard, nil, nil, nil, base, 5)
+                case "decoration": if !ai.rowCards.filter({ !$0.hero }).isEmpty { add(handCard, nil, nil, nil, base, 3) }
+                case "royal_decree": if !Game.passiveLeaders.contains(ai.leaderAbility) { add(handCard, nil, nil, nil, base, 3) }
+                case "door": if ai.deck.contains(where: { $0.isUnit }) { add(handCard, validRows(for: handCard, by: ai).first, ai, nil, base, 3) }
                 case "chernobog":
-                    if let t = ai.row(.close).cards.filter({ !$0.hero }).max(by: { $0.power < $1.power }) { add(c, nil, nil, nil, base + t.power, -1) }
-                case "perun": if !ai.row(.ranged).cards.filter({ !$0.hero }).isEmpty { add(c, nil, nil, nil, base + 5, -1) }
+                    if let strongestCloseUnit = ai.row(.close).cards.filter({ !$0.hero }).max(by: { $0.power < $1.power }) { add(handCard, nil, nil, nil, base + strongestCloseUnit.power, -1) }
+                case "perun": if !ai.row(.ranged).cards.filter({ !$0.hero }).isEmpty { add(handCard, nil, nil, nil, base + 5, -1) }
                 case "svarog", "morana":
-                    if let t = foe.row(k == "svarog" ? .siege : .close).cards.filter({ !$0.hero }).max(by: { $0.power < $1.power }) { add(c, nil, nil, nil, base + t.power - 1, -1) }
-                case "triglav": if !foe.rowCards.filter({ $0.hero }).isEmpty { add(c, nil, nil, nil, base, 2) }
+                    if let enemyCandidates = foe.row(k == "svarog" ? .siege : .close).cards.filter({ !$0.hero }).max(by: { $0.power < $1.power }) { add(handCard, nil, nil, nil, base + enemyCandidates.power - 1, -1) }
+                case "triglav": if !foe.rowCards.filter({ $0.hero }).isEmpty { add(handCard, nil, nil, nil, base, 2) }
                 case "veles":
-                    if let candidates = ai.rowCards.filter({ !$0.hero }).max(by: { $0.power < $1.power }) { add(c, nil, nil, nil, base + candidates.power, -1) }
+                    if let candidates = ai.rowCards.filter({ !$0.hero }).max(by: { $0.power < $1.power }) { add(handCard, nil, nil, nil, base + candidates.power, -1) }
                 case "devana":
                     let loss = foe.row(.ranged).cards.filter { !$0.hero }.map { max(0, $0.power - 2) }.reduce(0, +)
-                    add(c, nil, nil, nil, base + loss, -1)
+                    add(handCard, nil, nil, nil, base + loss, -1)
                 case "zoria":
                     let d = diffAfter(ai) { foe.weather[0].insert("frost") }
-                    add(c, nil, nil, nil, d, -1)
+                    add(handCard, nil, nil, nil, d, -1)
                 case "stribog":
                     let scoreGain = diffAfter(ai) {
                         let enemyCards = foe.row(.ranged).cards.filter { !$0.hero }
                         if let lowestPower = enemyCards.map({ $0.power }).min() { for candidates in enemyCards where candidates.power == lowestPower { foe.row(.ranged).cards.removeAll { $0 === candidates }; ai.row(.ranged).cards.append(candidates) } }
                     }
-                    add(c, nil, nil, nil, scoreGain, 0)
+                    add(handCard, nil, nil, nil, scoreGain, 0)
                 default: break
                 }
             }
         }
         if leaderAvailable(ai) && ai.forcedCard == nil {
             let la = ai.leaderAbility
-            var d: Int? = nil
+            var leaderGain: Int? = nil
             switch la {
-            case "foltest_siegemaster": d = diffAfter(ai) { ai.row(.siege).leaderHorn = true }
-            case "francesca_beautiful": d = diffAfter(ai) { ai.row(.ranged).leaderHorn = true }
-            case "foltest_lord", "vilgefortz_sorcerer": d = diffAfter(ai) { for q in [human, computer] { for i in 0..<3 { q.weather[i].removeAll() } } }
+            case "foltest_siegemaster": leaderGain = diffAfter(ai) { ai.row(.siege).leaderHorn = true }
+            case "francesca_beautiful": leaderGain = diffAfter(ai) { ai.row(.ranged).leaderHorn = true }
+            case "foltest_lord", "vilgefortz_sorcerer": leaderGain = diffAfter(ai) { for side in [human, computer] { for i in 0..<3 { side.weather[i].removeAll() } } }
             case "foltest_son", "foltest_steelforged", "francesca_queen", "cosimo_malaspina":
-                let t: RowType = la == "foltest_son" ? .ranged : (la == "foltest_steelforged" ? .siege : .close)
-                d = foe.row(t).total >= 10 ? diffAfter(ai) { killMax(foe.row(t).cards, in: [foe.row(t)]) } : base - 5
-            default: d = nil
+                let hornRow: RowType = la == "foltest_son" ? .ranged : (la == "foltest_steelforged" ? .siege : .close)
+                leaderGain = foe.row(hornRow).total >= 10 ? diffAfter(ai) { killMax(foe.row(hornRow).cards, in: [foe.row(hornRow)]) } : base - 5
+            default: leaderGain = nil
             }
-            if let d = d { moves.append(AIMove(card: nil, row: nil, rowOwner: nil, target: nil, value: Double(d - base) - 2, gain: d - base, kind: .leader)) }
+            if let leaderGain = leaderGain { moves.append(AIMove(card: nil, row: nil, rowOwner: nil, target: nil, value: Double(leaderGain - base) - 2, gain: leaderGain - base, kind: .leader)) }
             else {
-                let v = 3.0 + Double(round) * 1.5 - Double(ai.hand.count) * 0.3
-                moves.append(AIMove(card: nil, row: nil, rowOwner: nil, target: nil, value: v, gain: 0, kind: .leader))
+                let leaderValue = 3.0 + Double(round) * 1.5 - Double(ai.hand.count) * 0.3
+                moves.append(AIMove(card: nil, row: nil, rowOwner: nil, target: nil, value: leaderValue, gain: 0, kind: .leader))
             }
         }
-        if let f = factionActive(ai), ai.forcedCard == nil {
-            switch f {
+        if let factionAbility = factionActive(ai), ai.forcedCard == nil {
+            switch factionAbility {
             case "morale":
-                let r = RowType.allCases.max { ai.row($0).cards.count < ai.row($1).cards.count }!
-                let scoreGain = diffAfter(ai) { ai.row(r).factionMorale += 1 }
+                let fullestRow = RowType.allCases.max { ai.row($0).cards.count < ai.row($1).cards.count }!
+                let scoreGain = diffAfter(ai) { ai.row(fullestRow).factionMorale += 1 }
                 moves.append(AIMove(card: nil, row: nil, rowOwner: nil, target: nil, value: Double(scoreGain - base) - 1, gain: scoreGain - base, kind: .faction))
             case "weather": moves.append(AIMove(card: nil, row: nil, rowOwner: nil, target: nil, value: 2, gain: 0, kind: .faction))
             case "transform": moves.append(AIMove(card: nil, row: nil, rowOwner: nil, target: nil, value: 4, gain: 3, kind: .faction))
@@ -225,15 +225,15 @@ extension Game {
         let moves = aiMoves(for: ai).sorted { $0.value > $1.value }
         guard let best = moves.first else { return nil }
         // A card that must be played this turn always wins.
-        if let f = ai.forcedCard, let m = moves.first(where: { $0.card === f }) { return m }
+        if let forced = ai.forcedCard, let m = moves.first(where: { $0.card === forced }) { return m }
         // Easy and normal opponents sometimes deviate from the best move.
-        if ai === computer && aiLevel < 2, let m = weakenedChoice(moves, ai: ai, foe: foe, lead: lead) { return m }
+        if ai === computer && aiLevel < 2, let weakerMove = weakenedChoice(moves, ai: ai, foe: foe, lead: lead) { return weakerMove }
         // With one life left the AI cannot afford to lose this round.
         let mustWin = ai.gems == 1
         // The opponent passed: play the cheapest card that takes the lead, or pass if already ahead.
         if foe.passed {
             if lead > 0 { return nil }
-            if let win = moves.filter({ lead + $0.gain > 0 }).min(by: { ($0.card?.basePower ?? 0) < ($1.card?.basePower ?? 0) }) { return win }
+            if let winningMove = moves.filter({ lead + $0.gain > 0 }).min(by: { ($0.card?.basePower ?? 0) < ($1.card?.basePower ?? 0) }) { return winningMove }
             let potential = moves.map { max(0, $0.gain) }.reduce(0, +)
             if mustWin || lead + potential > 0 { return best }
             return nil
@@ -262,16 +262,16 @@ extension Game {
         busy = true
         defer { busy = false }
         aiPlayer = ai
-        let m = aiDecide(for: ai)
-        if let f = factionActive(ai), f.hasPrefix("skip"), (m?.value ?? -10) < 0, !ai.opponent.passed {
+        let move = aiDecide(for: ai)
+        if let factionAbility = factionActive(ai), factionAbility.hasPrefix("skip"), (move?.value ?? -10) < 0, !ai.opponent.passed {
             await useFaction(ai); return
         }
-        guard let mv = m else { await pass(ai); return }
+        guard let mv = move else { await pass(ai); return }
         switch mv.kind {
         case .leader: await useLeader(ai)
         case .faction: await useFaction(ai)
         case .card:
-            if let c = mv.card { await play(c, by: ai, row: mv.row, rowOwner: mv.rowOwner, target: mv.target) } else { await pass(ai) }
+            if let card = mv.card { await play(card, by: ai, row: mv.row, rowOwner: mv.rowOwner, target: mv.target) } else { await pass(ai) }
         }
     }
 }

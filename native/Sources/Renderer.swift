@@ -79,30 +79,30 @@ final class Renderer {
         func pipe(_ v: String, _ faction: String) -> MTLRenderPipelineState {
             let p = MTLRenderPipelineDescriptor()
             p.vertexFunction = lib.makeFunction(name: v); p.fragmentFunction = lib.makeFunction(name: faction)
-            let a = p.colorAttachments[0]!
-            a.pixelFormat = .bgra8Unorm
-            a.isBlendingEnabled = true
-            a.rgbBlendOperation = .add; a.alphaBlendOperation = .add
-            a.sourceRGBBlendFactor = .sourceAlpha; a.destinationRGBBlendFactor = .oneMinusSourceAlpha
-            a.sourceAlphaBlendFactor = .one; a.destinationAlphaBlendFactor = .oneMinusSourceAlpha
+            let attachment = p.colorAttachments[0]!
+            attachment.pixelFormat = .bgra8Unorm
+            attachment.isBlendingEnabled = true
+            attachment.rgbBlendOperation = .add; attachment.alphaBlendOperation = .add
+            attachment.sourceRGBBlendFactor = .sourceAlpha; attachment.destinationRGBBlendFactor = .oneMinusSourceAlpha
+            attachment.sourceAlphaBlendFactor = .one; attachment.destinationAlphaBlendFactor = .oneMinusSourceAlpha
             return try! d.makeRenderPipelineState(descriptor: p)
         }
         pipeline = pipe("vmain", "fmain")
         bgPipeline = pipe("vbg", "fbg")
-        let sd = MTLSamplerDescriptor()
-        sd.minFilter = .linear; sd.magFilter = .linear; sd.mipFilter = .linear
-        sd.sAddressMode = .clampToEdge; sd.tAddressMode = .clampToEdge
-        sampler = d.makeSamplerState(descriptor: sd)!
+        let samplerDescriptor = MTLSamplerDescriptor()
+        samplerDescriptor.minFilter = .linear; samplerDescriptor.magFilter = .linear; samplerDescriptor.mipFilter = .linear
+        samplerDescriptor.sAddressMode = .clampToEdge; samplerDescriptor.tAddressMode = .clampToEdge
+        sampler = d.makeSamplerState(descriptor: samplerDescriptor)!
         for _ in 0..<3 { buffers.append(d.makeBuffer(length: MemoryLayout<Vtx>.stride * maxVerts, options: .storageModeShared)!) }
         let td = MTLTextureDescriptor.texture2DDescriptor(pixelFormat: .rgba8Unorm, width: 1, height: 1, mipmapped: false)
         white = d.makeTexture(descriptor: td)!
-        var px: [UInt8] = [255, 255, 255, 255]
-        white.replace(region: MTLRegionMake2D(0, 0, 1, 1), mipmapLevel: 0, withBytes: &px, bytesPerRow: 4)
+        var pixels: [UInt8] = [255, 255, 255, 255]
+        white.replace(region: MTLRegionMake2D(0, 0, 1, 1), mipmapLevel: 0, withBytes: &pixels, bytesPerRow: 4)
     }
 
     /// Loads (and caches) an image from the game folder as a texture.
     func texture(_ path: String) -> MTLTexture? {
-        if let t = texCache[path] { return t }
+        if let cached = texCache[path] { return cached }
         let url = gameDir.appendingPathComponent(path)
         guard FileManager.default.fileExists(atPath: url.path) else { return nil }
         guard let texture = decode(url) else { return nil }
@@ -110,31 +110,31 @@ final class Renderer {
         return texture
     }
     /// Loads textures in advance.
-    func preload(_ paths: [String]) { for r in paths { _ = texture(r) } }
+    func preload(_ paths: [String]) { for path in paths { _ = texture(path) } }
     /// Decodes an image file into a mipmapped texture.
     func decode(_ url: URL) -> MTLTexture? {
-        guard let src = CGImageSourceCreateWithURL(url as CFURL, nil),
-              let img = CGImageSourceCreateImageAtIndex(src, 0, [kCGImageSourceShouldCache: false] as CFDictionary) else { return nil }
-        let w = img.width, h = img.height
-        guard w > 0, h > 0, let ctx = CGContext(data: nil, width: w, height: h, bitsPerComponent: 8, bytesPerRow: w * 4,
+        guard let source = CGImageSourceCreateWithURL(url as CFURL, nil),
+              let image = CGImageSourceCreateImageAtIndex(source, 0, [kCGImageSourceShouldCache: false] as CFDictionary) else { return nil }
+        let w = image.width, h = image.height
+        guard w > 0, h > 0, let context = CGContext(data: nil, width: w, height: h, bitsPerComponent: 8, bytesPerRow: w * 4,
                                                 space: CGColorSpace(name: CGColorSpace.sRGB)!, bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue) else { return nil }
-        ctx.interpolationQuality = .high
-        ctx.draw(img, in: CGRect(x: 0, y: 0, width: w, height: h))
-        guard let data = ctx.data else { return nil }
-        let px = data.bindMemory(to: UInt8.self, capacity: w * h * 4)
-        if img.alphaInfo != .none && img.alphaInfo != .noneSkipLast && img.alphaInfo != .noneSkipFirst {
+        context.interpolationQuality = .high
+        context.draw(image, in: CGRect(x: 0, y: 0, width: w, height: h))
+        guard let data = context.data else { return nil }
+        let pixels = data.bindMemory(to: UInt8.self, capacity: w * h * 4)
+        if image.alphaInfo != .none && image.alphaInfo != .noneSkipLast && image.alphaInfo != .noneSkipFirst {
             for i in 0..<(w * h) {
-                let a = Int(px[i * 4 + 3])
-                if a > 0 && a < 255 { for k in 0..<3 { px[i * 4 + k] = UInt8(min(255, Int(px[i * 4 + k]) * 255 / a)) } }
+                let alpha = Int(pixels[i * 4 + 3])
+                if alpha > 0 && alpha < 255 { for channel in 0..<3 { pixels[i * 4 + channel] = UInt8(min(255, Int(pixels[i * 4 + channel]) * 255 / alpha)) } }
             }
         }
         let levels = Int(floor(log2(Double(max(w, h))))) + 1
         let td = MTLTextureDescriptor.texture2DDescriptor(pixelFormat: .rgba8Unorm, width: w, height: h, mipmapped: levels > 1)
         td.usage = [.shaderRead]
         guard let texture = device.makeTexture(descriptor: td) else { return nil }
-        texture.replace(region: MTLRegionMake2D(0, 0, w, h), mipmapLevel: 0, withBytes: px, bytesPerRow: w * 4)
-        if levels > 1, let cb = queue.makeCommandBuffer(), let blit = cb.makeBlitCommandEncoder() {
-            blit.generateMipmaps(for: texture); blit.endEncoding(); cb.commit(); cb.waitUntilCompleted()
+        texture.replace(region: MTLRegionMake2D(0, 0, w, h), mipmapLevel: 0, withBytes: pixels, bytesPerRow: w * 4)
+        if levels > 1, let mipmapCommands = queue.makeCommandBuffer(), let blit = mipmapCommands.makeBlitCommandEncoder() {
+            blit.generateMipmaps(for: texture); blit.endEncoding(); mipmapCommands.commit(); mipmapCommands.waitUntilCompleted()
         }
         return texture
     }
@@ -142,21 +142,21 @@ final class Renderer {
     /// Starts a frame: computes the letterboxed viewport and opens a render pass.
     func begin(view: MTKView) -> MTLCommandBuffer? {
         inflight.wait()
-        guard let rpd = view.currentRenderPassDescriptor, let cb = queue.makeCommandBuffer() else { inflight.signal(); return nil }
+        guard let passDescriptor = view.currentRenderPassDescriptor, let cb = queue.makeCommandBuffer() else { inflight.signal(); return nil }
         let ds = view.drawableSize
         let dw = Float(ds.width), dh = Float(ds.height)
         var w = dw, h = dw * virtualHeight / virtualWidth
         if h > dh { h = dh; w = dh * virtualWidth / virtualHeight }
         viewportPx = R(((dw - w) / 2).rounded(), ((dh - h) / 2).rounded(), w.rounded(), h.rounded())
         pxScale = viewportPx.w / virtualWidth
-        guard let e = cb.makeRenderCommandEncoder(descriptor: rpd) else { inflight.signal(); return nil }
-        enc = e
-        e.setViewport(MTLViewport(originX: Double(viewportPx.x), originY: Double(viewportPx.y), width: Double(viewportPx.w), height: Double(viewportPx.h), znear: 0, zfar: 1))
+        guard let encoder = cb.makeRenderCommandEncoder(descriptor: passDescriptor) else { inflight.signal(); return nil }
+        enc = encoder
+        encoder.setViewport(MTLViewport(originX: Double(viewportPx.x), originY: Double(viewportPx.y), width: Double(viewportPx.w), height: Double(viewportPx.h), znear: 0, zfar: 1))
         projection = float4x4(rows: [SIMD4(2 / virtualWidth, 0, 0, -1), SIMD4(0, -2 / virtualHeight, 0, 1), SIMD4(0, 0, 1, 0), SIMD4(0, 0, 0, 1)])
         verts = buffers[bufIndex].contents().bindMemory(to: Vtx.self, capacity: maxVerts)
         vcount = 0; flushedFrom = 0; curTex = nil
-        e.setRenderPipelineState(pipeline)
-        e.setFragmentSamplerState(sampler, index: 0)
+        encoder.setRenderPipelineState(pipeline)
+        encoder.setFragmentSamplerState(sampler, index: 0)
         frameNo += 1
         return cb
     }
@@ -164,20 +164,20 @@ final class Renderer {
     func end(_ commandBuffer: MTLCommandBuffer, view: MTKView) {
         flush()
         enc?.endEncoding(); enc = nil
-        if let d = view.currentDrawable { commandBuffer.present(d) }
-        let sem = inflight
-        commandBuffer.addCompletedHandler { _ in sem.signal() }
+        if let drawable = view.currentDrawable { commandBuffer.present(drawable) }
+        let semaphore = inflight
+        commandBuffer.addCompletedHandler { _ in semaphore.signal() }
         commandBuffer.commit()
         bufIndex = (bufIndex + 1) % 3
         if frameNo % 600 == 0 { trimTextCache() }
     }
     /// Sends the queued quads to the GPU.
     func flush() {
-        guard let e = enc, vcount > flushedFrom, let t = curTex else { return }
-        e.setVertexBuffer(buffers[bufIndex], offset: 0, index: 0)
-        e.setVertexBytes(&projection, length: MemoryLayout<float4x4>.stride, index: 1)
-        e.setFragmentTexture(t, index: 0)
-        e.drawPrimitives(type: .triangle, vertexStart: flushedFrom, vertexCount: vcount - flushedFrom)
+        guard let encoder = enc, vcount > flushedFrom, let t = curTex else { return }
+        encoder.setVertexBuffer(buffers[bufIndex], offset: 0, index: 0)
+        encoder.setVertexBytes(&projection, length: MemoryLayout<float4x4>.stride, index: 1)
+        encoder.setFragmentTexture(t, index: 0)
+        encoder.drawPrimitives(type: .triangle, vertexStart: flushedFrom, vertexCount: vcount - flushedFrom)
         flushedFrom = vcount
     }
 
@@ -186,13 +186,13 @@ final class Renderer {
         if vcount + 6 > maxVerts { return }
         if texture !== curTex { flush(); curTex = texture }
         let col = SIMD4<Float>(c.r, c.g, c.b, c.a)
-        var p = [SIMD2<Float>(rect.x, rect.y), SIMD2(rect.x + rect.w, rect.y), SIMD2(rect.x, rect.y + rect.h), SIMD2(rect.x + rect.w, rect.y + rect.h)]
+        var corners = [SIMD2<Float>(rect.x, rect.y), SIMD2(rect.x + rect.w, rect.y), SIMD2(rect.x, rect.y + rect.h), SIMD2(rect.x + rect.w, rect.y + rect.h)]
         if rotation != 0 {
-            let m = rect.mid, cs = cos(rotation), sn = sin(rotation)
-            p = p.map { q in let d = q - m; return m + SIMD2(d.x * cs - d.y * sn, d.x * sn + d.y * cs) }
+            let center = rect.mid, cs = cos(rotation), sn = sin(rotation)
+            corners = corners.map { q in let offset = q - center; return center + SIMD2(offset.x * cs - offset.y * sn, offset.x * sn + offset.y * cs) }
         }
-        let u = [SIMD2<Float>(uv.x, uv.y), SIMD2(uv.x + uv.w, uv.y), SIMD2(uv.x, uv.y + uv.h), SIMD2(uv.x + uv.w, uv.y + uv.h)]
-        for i in [0, 1, 2, 1, 3, 2] { verts[vcount] = Vtx(pos: p[i], uv: u[i], color: col, mode: mode); vcount += 1 }
+        let texCoords = [SIMD2<Float>(uv.x, uv.y), SIMD2(uv.x + uv.w, uv.y), SIMD2(uv.x, uv.y + uv.h), SIMD2(uv.x + uv.w, uv.y + uv.h)]
+        for i in [0, 1, 2, 1, 3, 2] { verts[vcount] = Vtx(pos: corners[i], uv: texCoords[i], color: col, mode: mode); vcount += 1 }
     }
     /// Draws an image stretched into a rectangle.
     func image(_ path: String, _ rect: R, color: RGBA = .white, rotation: Float = 0) {
@@ -202,30 +202,30 @@ final class Renderer {
     /// Draws an image filling a rectangle, cropping to keep its aspect ratio.
     func imageCover(_ path: String, _ rect: R, color: RGBA = .white) {
         guard let t = texture(path) else { return }
-        let ta = Float(t.width) / Float(t.height), ra = rect.w / rect.h
+        let textureAspect = Float(t.width) / Float(t.height), ra = rect.w / rect.h
         var uv = R(0, 0, 1, 1)
-        if ta > ra { uv.w = ra / ta; uv.x = (1 - uv.w) / 2 } else { uv.h = ta / ra; uv.y = (1 - uv.h) / 2 }
+        if textureAspect > ra { uv.w = ra / textureAspect; uv.x = (1 - uv.w) / 2 } else { uv.h = textureAspect / ra; uv.y = (1 - uv.h) / 2 }
         quad(t, rect, uv: uv, color: color)
     }
     /// Draws an image fitted inside a rectangle.
     func imageContain(_ path: String, _ rect: R, color: RGBA = .white, alignTop: Bool = false) {
         guard let t = texture(path) else { return }
-        let ta = Float(t.width) / Float(t.height), ra = rect.w / rect.h
-        var d = rect
-        if ta > ra { d.h = rect.w / ta; if !alignTop { d.y = rect.y + (rect.h - d.h) / 2 } } else { d.w = rect.h * ta; d.x = rect.x + (rect.w - d.w) / 2 }
-        quad(t, d, color: color)
+        let textureAspect = Float(t.width) / Float(t.height), ra = rect.w / rect.h
+        var destination = rect
+        if textureAspect > ra { destination.h = rect.w / textureAspect; if !alignTop { destination.y = rect.y + (rect.h - destination.h) / 2 } } else { destination.w = rect.h * textureAspect; destination.x = rect.x + (rect.w - destination.w) / 2 }
+        quad(t, destination, color: color)
     }
     /// Restricts drawing to a rectangle (nil removes the clip).
     func clip(_ rect: R?) {
         flush()
-        guard let e = enc else { return }
-        let vp = viewportPx
+        guard let encoder = enc else { return }
+        let viewport = viewportPx
         if let rect = rect {
-            let x = max(0, Int(vp.x + rect.x * pxScale)), y = max(0, Int(vp.y + rect.y * pxScale))
+            let x = max(0, Int(viewport.x + rect.x * pxScale)), y = max(0, Int(viewport.y + rect.y * pxScale))
             let w = max(1, Int(rect.w * pxScale)), h = max(1, Int(rect.h * pxScale))
-            e.setScissorRect(MTLScissorRect(x: x, y: y, width: w, height: h))
+            encoder.setScissorRect(MTLScissorRect(x: x, y: y, width: w, height: h))
         } else {
-            e.setScissorRect(MTLScissorRect(x: Int(vp.x), y: Int(vp.y), width: Int(vp.w), height: Int(vp.h)))
+            encoder.setScissorRect(MTLScissorRect(x: Int(viewport.x), y: Int(viewport.y), width: Int(viewport.w), height: Int(viewport.h)))
         }
     }
     /// Draws a filled rectangle.
@@ -237,12 +237,12 @@ final class Renderer {
     }
     /// Draws a vertical gradient.
     func gradient(_ r: R, _ top: RGBA, _ bottom: RGBA, steps: Int = 24) {
-        let n = max(1, steps)
-        for i in 0..<n {
-            let f0 = Float(i) / Float(n), f1 = Float(i + 1) / Float(n)
+        let stepCount = max(1, steps)
+        for i in 0..<stepCount {
+            let f0 = Float(i) / Float(stepCount), f1 = Float(i + 1) / Float(stepCount)
             let fm = (f0 + f1) / 2
-            let c = RGBA(r: top.r + (bottom.r - top.r) * fm, g: top.g + (bottom.g - top.g) * fm, b: top.b + (bottom.b - top.b) * fm, a: top.a + (bottom.a - top.a) * fm)
-            rect(R(r.x, r.y + r.h * f0, r.w, r.h * (f1 - f0) + 0.5), c)
+            let color = RGBA(r: top.r + (bottom.r - top.r) * fm, g: top.g + (bottom.g - top.g) * fm, b: top.b + (bottom.b - top.b) * fm, a: top.a + (bottom.a - top.a) * fm)
+            rect(R(r.x, r.y + r.h * f0, r.w, r.h * (f1 - f0) + 0.5), color)
         }
     }
 
@@ -264,7 +264,7 @@ final class Renderer {
         var traits: CTFontSymbolicTraits = []
         if f.bold { traits.insert(.traitBold) }
         if f.italic { traits.insert(.traitItalic) }
-        if !traits.isEmpty, let t = CTFontCreateCopyWithSymbolicTraits(font, 0, nil, traits, traits) { font = t }
+        if !traits.isEmpty, let styled = CTFontCreateCopyWithSymbolicTraits(font, 0, nil, traits, traits) { font = styled }
         return font
     }
     /// Renders text into a cached greyscale texture.
@@ -272,34 +272,34 @@ final class Renderer {
         if text.isEmpty { return nil }
         let scale = max(0.5, pxScale)
         let key = "\(text)|\(f.name)|\(f.size)|\(f.bold)|\(f.italic)|\(maxWidth)|\(align)|\(lineSpacing)|\(scale)"
-        if let c = textCache[key] { textCache[key] = (c.0, frameNo); return c.0 }
+        if let cached = textCache[key] { textCache[key] = (cached.0, frameNo); return cached.0 }
         let font = ctFont(f, scale: scale)
         let para = NSMutableParagraphStyle()
         para.alignment = align == .center ? .center : (align == .right ? .right : .left)
         para.lineSpacing = CGFloat(lineSpacing * scale)
         para.lineBreakMode = .byWordWrapping
         let attr = NSAttributedString(string: text, attributes: [NSAttributedString.Key(kCTFontAttributeName as String): font, NSAttributedString.Key(kCTForegroundColorAttributeName as String): CGColor(gray: 1, alpha: 1), .paragraphStyle: para])
-        let fs = CTFramesetterCreateWithAttributedString(attr)
+        let framesetter = CTFramesetterCreateWithAttributedString(attr)
         let constraintW = maxWidth > 0 ? CGFloat(maxWidth * scale) : CGFloat.greatestFiniteMagnitude
-        var size = CTFramesetterSuggestFrameSizeWithConstraints(fs, CFRange(location: 0, length: 0), nil, CGSize(width: constraintW, height: .greatestFiniteMagnitude), nil)
+        var size = CTFramesetterSuggestFrameSizeWithConstraints(framesetter, CFRange(location: 0, length: 0), nil, CGSize(width: constraintW, height: .greatestFiniteMagnitude), nil)
         if maxWidth > 0 && align != .left { size.width = constraintW }
-        let pad: CGFloat = 2
-        let W = Int(ceil(size.width + pad * 2)), H = Int(ceil(size.height + pad * 2))
+        let padding: CGFloat = 2
+        let W = Int(ceil(size.width + padding * 2)), H = Int(ceil(size.height + padding * 2))
         guard W > 0, H > 0, W < 16384, H < 16384,
-              let ctx = CGContext(data: nil, width: W, height: H, bitsPerComponent: 8, bytesPerRow: W, space: CGColorSpaceCreateDeviceGray(), bitmapInfo: CGImageAlphaInfo.none.rawValue)
+              let context = CGContext(data: nil, width: W, height: H, bitsPerComponent: 8, bytesPerRow: W, space: CGColorSpaceCreateDeviceGray(), bitmapInfo: CGImageAlphaInfo.none.rawValue)
         else { return nil }
-        ctx.setFillColor(gray: 0, alpha: 1); ctx.fill(CGRect(x: 0, y: 0, width: W, height: H))
-        ctx.setAllowsFontSmoothing(false); ctx.setShouldAntialias(true)
-        let path = CGPath(rect: CGRect(x: pad, y: pad, width: CGFloat(W) - pad * 2, height: CGFloat(H) - pad * 2), transform: nil)
-        let frame = CTFramesetterCreateFrame(fs, CFRange(location: 0, length: 0), path, nil)
-        ctx.setFillColor(gray: 1, alpha: 1)
-        CTFrameDraw(frame, ctx)
+        context.setFillColor(gray: 0, alpha: 1); context.fill(CGRect(x: 0, y: 0, width: W, height: H))
+        context.setAllowsFontSmoothing(false); context.setShouldAntialias(true)
+        let path = CGPath(rect: CGRect(x: padding, y: padding, width: CGFloat(W) - padding * 2, height: CGFloat(H) - padding * 2), transform: nil)
+        let frame = CTFramesetterCreateFrame(framesetter, CFRange(location: 0, length: 0), path, nil)
+        context.setFillColor(gray: 1, alpha: 1)
+        CTFrameDraw(frame, context)
         let td = MTLTextureDescriptor.texture2DDescriptor(pixelFormat: .r8Unorm, width: W, height: H, mipmapped: false)
-        guard let texture = device.makeTexture(descriptor: td), let data = ctx.data else { return nil }
+        guard let texture = device.makeTexture(descriptor: td), let data = context.data else { return nil }
         texture.replace(region: MTLRegionMake2D(0, 0, W, H), mipmapLevel: 0, withBytes: data, bytesPerRow: W)
-        let tt = TextTex(tex: texture, w: Float(W) / scale, h: Float(H) / scale)
-        textCache[key] = (tt, frameNo)
-        return tt
+        let textTexture = TextTex(tex: texture, w: Float(W) / scale, h: Float(H) / scale)
+        textCache[key] = (textTexture, frameNo)
+        return textTexture
     }
     /// Drops text textures that were not used recently.
     func trimTextCache() { textCache = textCache.filter { frameNo - $0.value.1 < 600 } }
@@ -313,9 +313,9 @@ final class Renderer {
         if maxWidth <= 0 || align == .left {
             if align == .center { x0 = x - textTexture.w / 2 } else if align == .right { x0 = x - textTexture.w }
         } else if align == .center { x0 = x - textTexture.w / 2 } else if align == .right { x0 = x - textTexture.w }
-        if let s = shadow {
-            let o = max(1, f.size * 0.06)
-            quad(textTexture.tex, R(x0 + o, y + o, textTexture.w, textTexture.h), color: s, mode: 1)
+        if let shadowColor = shadow {
+            let shadowOffset = max(1, f.size * 0.06)
+            quad(textTexture.tex, R(x0 + shadowOffset, y + shadowOffset, textTexture.w, textTexture.h), color: shadowColor, mode: 1)
         }
         quad(textTexture.tex, R(x0, y, textTexture.w, textTexture.h), color: color, mode: 1)
         return (textTexture.w, textTexture.h)
@@ -335,14 +335,14 @@ final class Renderer {
         guard let t = texture(path), let e = enc else { return }
         flush()
         e.setRenderPipelineState(bgPipeline)
-        var p = BgParams(time: time, mouse: mouse, texel: SIMD2(1 / Float(t.width), 1 / Float(t.height)))
+        var params = BgParams(time: time, mouse: mouse, texel: SIMD2(1 / Float(t.width), 1 / Float(t.height)))
         var regs = regions; while regs.count < 48 { regs.append(BgRegion(reg: .zero, mot: .zero)) }
         var gl = glints; while gl.count < 2 { gl.append(.zero) }
-        var cd = candles; while cd.count < 3 { cd.append(SIMD2(-1, -1)) }
-        e.setFragmentBytes(&p, length: MemoryLayout<BgParams>.stride, index: 0)
+        var candlePositions = candles; while candlePositions.count < 3 { candlePositions.append(SIMD2(-1, -1)) }
+        e.setFragmentBytes(&params, length: MemoryLayout<BgParams>.stride, index: 0)
         e.setFragmentBytes(&regs, length: MemoryLayout<BgRegion>.stride * 48, index: 1)
         e.setFragmentBytes(&gl, length: MemoryLayout<SIMD2<Float>>.stride * 2, index: 2)
-        e.setFragmentBytes(&cd, length: MemoryLayout<SIMD2<Float>>.stride * 3, index: 3)
+        e.setFragmentBytes(&candlePositions, length: MemoryLayout<SIMD2<Float>>.stride * 3, index: 3)
         e.setFragmentTexture(t, index: 0)
         e.setFragmentSamplerState(sampler, index: 0)
         e.drawPrimitives(type: .triangleStrip, vertexStart: 0, vertexCount: 4)

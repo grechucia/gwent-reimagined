@@ -23,8 +23,8 @@ extension Game {
 
     /// Uses a player's active faction ability.
     func useFaction(_ player: Player) async {
-        guard let f = factionActive(player), current === player else { return }
-        switch f {
+        guard let ability = factionActive(player), current === player else { return }
+        switch ability {
         case "skip_round":
             player.factionUsedRound = true
             note(L("Witcher Universe used its faction ability and skipped a turn"), "notif_witcher_universe")
@@ -39,14 +39,14 @@ extension Game {
             }
         case "weather":
             let options = player.deck.filter { $0.data.isWeather }
-            if let t = await pickOne(player, L("Choose a weather card to play"), options, ai: { $0.first }) {
-                player.factionUsedGame = true; player.deck.removeAll { $0 === t }; t.owner = player
-                await playWeather(t, by: player, row: nil)
+            if let chosen = await pickOne(player, L("Choose a weather card to play"), options, ai: { $0.first }) {
+                player.factionUsedGame = true; player.deck.removeAll { $0 === chosen }; chosen.owner = player
+                await playWeather(chosen, by: player, row: nil)
                 note(L("Ofir faction ability used - Weather card played from deck."), "notif_ofir")
             }
         case "transform":
             let options = player.rowCards.filter { $0.act("monster_toussaint") && $0.playedTurn < turn - 1 }
-            if let chosen = await pickOne(player, L("Choose which monster to transform."), options, ai: best1), let k = chosen.data.targets.first, let d = gameData.cards[k] {
+            if let chosen = await pickOne(player, L("Choose which monster to transform."), options, ai: best1), let targetKey = chosen.data.targets.first, let d = gameData.cards[targetKey] {
                 chosen.revertTo = chosen.key
                 chosen.transform(into: d); chosen.playedTurn = turn
                 sound("monster_toussaint")
