@@ -174,8 +174,8 @@ extension Scene {
             let k = cardHover[key, default: 0]
             cardHover[key] = k + ((hovered ? 1 : 0) - k) * min(1, dt * 14)
             let kk = cardHover[key, default: 0]
-            let scoreText = 1 + 0.07 * kk
-            let cardRect = R(base.mid.x - cw * scoreText / 2, base.mid.y - ch * scoreText / 2 - 4 * kk, cw * scoreText, ch * scoreText)
+            let zoom = 1 + 0.07 * kk
+            let cardRect = R(base.mid.x - cw * zoom / 2, base.mid.y - ch * zoom / 2 - 4 * kk, cw * zoom, ch * zoom)
             if kk > 0.02 { renderer.quad(glowTex, R(cardRect.x - 20, cardRect.y - 20, cardRect.w + 40, cardRect.h + 40), color: RGBA(r: 1, g: 0.75, b: 0.3, a: 0.35 * kk)) }
             let c = Card(d, owner: nil)
             drawCard(c, cardRect)
@@ -188,8 +188,8 @@ extension Scene {
             if inside { button(base) { onClick(d, base) } }
         }
         if maxScroll > 0 {
-            let textHeight = area.h * area.h / contentH
-            renderer.rect(R(area.x + area.w - 6, area.y + (area.h - textHeight) * scroll / maxScroll, 4, textHeight), RGBA.gold.alpha(0.6))
+            let scrollThumbHeight = area.h * area.h / contentH
+            renderer.rect(R(area.x + area.w - 6, area.y + (area.h - scrollThumbHeight) * scroll / maxScroll, 4, scrollThumbHeight), RGBA.gold.alpha(0.6))
         }
     }
 }

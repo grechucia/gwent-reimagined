@@ -107,9 +107,9 @@ extension Scene {
             for i in 0..<26 {
                 let fi = Float(i)
                 let x = area.x + fract(fi * 0.754877) * area.w, y = area.y + fract(fi * 0.569840) * area.h
-                let textWidth = max(0, sin(time * 2.4 + fi * 1.7))
-                let s: Float = 6 + 10 * textWidth
-                renderer.quad(glowTex, R(x - s / 2, y - s / 2, s, s), color: RGBA(r: 0.8, g: 0.92, b: 1, a: 0.7 * textWidth))
+                let twinkle = max(0, sin(time * 2.4 + fi * 1.7))
+                let s: Float = 6 + 10 * twinkle
+                renderer.quad(glowTex, R(x - s / 2, y - s / 2, s, s), color: RGBA(r: 0.8, g: 0.92, b: 1, a: 0.7 * twinkle))
             }
         }
         if weather.contains("sandstorm") {

@@ -47,8 +47,8 @@ extension Scene {
         }
         renderer.clip(nil)
         if maxScroll > 0 {
-            let textHeight = content.h * content.h / total
-            renderer.rect(R(panel.x + panel.w - 14, content.y + (content.h - textHeight) * rulesScroll / maxScroll, 5, textHeight), RGBA.gold.alpha(0.6))
+            let scrollThumbHeight = content.h * content.h / total
+            renderer.rect(R(panel.x + panel.w - 14, content.y + (content.h - scrollThumbHeight) * rulesScroll / maxScroll, 5, scrollThumbHeight), RGBA.gold.alpha(0.6))
         }
         renderer.text(L("Scroll with the mouse wheel · Esc — back"), .ui(16), x: 960, y: 1040, color: .gray(0.6), align: .center)
     }

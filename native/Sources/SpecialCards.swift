@@ -4,32 +4,15 @@ import Foundation
 extension Game {
     /// Resolves a special (non-weather) card.
     func playSpecial(_ card: Card, by player: Player, row: RowType?, rowOwner: Player?, target: Card?) async {
-        let o = player.opponent!
+        let opponent = player.opponent!
         let kind = card.specialKind ?? ""
         switch kind {
         // Commander's Horn: Doubles the strength of all unit cards in that row. Limited to 1 per row. | Mardroeme: Triggers transformation of all Berserker cards on the same row. | Morale Boost: Adds +1 to…
-        case "horn", "mardroeme", "morale", "toussaint_wine", "shield", "shield_c", "shield_r", "shield_s":
-            var r = row
-            if r == nil { r = await pickRow(player, L("Select a card on your side of the board."), validRows(for: card, by: player).map { (player, $0) }) { 0 }?.1 }
-            guard let rowArea = r else { player.grave.append(card); return }
-            player.row(rowArea).specials.append(card)
-            await animate(card, kind)
-            sound(kind == "horn" ? "horn" : (kind == "mardroeme" ? "mardroeme" : (kind.hasPrefix("shield") ? "shield" : "moral")))
-            if kind == "mardroeme" { await berserk(player, rowArea) }
+        case "horn", "mardroeme", "morale", "toussaint_wine", "shield", "shield_c", "shield_r", "shield_s": await specialHorn(card, by: player, row: row, rowOwner: rowOwner, target: target, kind: kind)
         // Dimensional Door: While the door is active, at the end of each of your turns you should draw one card from your deck. If the row of the card matches the row of the door, play it immediatly,…
-        case "door":
-            var r = row
-            if r == nil { r = await pickRow(player, L("Select a card on your side of the board."), validRows(for: card, by: player).map { (player, $0) }) { 0 }?.1 }
-            let open = RowType.allCases.filter { player.row($0).door }
-            if let rowArea = r, open.count < maxDoors { player.row(rowArea).door = true }
-            player.grave.append(card); sound("door")
+        case "door": await specialDoor(card, by: player, row: row, rowOwner: rowOwner, target: target, kind: kind)
         // Decoy: Swap with a card on the battlefield to return it to your hand.
-        case "decoy":
-            if let t = target, let r = player.rowOf(t), let i = player.row(r).cards.firstIndex(where: { $0 === t }) {
-                player.row(r).cards[i] = card
-                resetCard(t); t.owner = player; player.hand.append(t)
-                sound("decoy")
-            } else { player.grave.append(card) }
+        case "decoy": await specialDecoy(card, by: player, row: row, rowOwner: rowOwner, target: target, kind: kind)
         // Scorch: Discard after playing. Kills the strongest card(s) on the battlefield.
         case "scorch": await scorch(except: nil); player.grave.append(card)
         // Cull: Kills the weakest card(s) on the battlefield.
@@ -37,88 +20,35 @@ extension Game {
         // Clear Weather: Removes all Weather Cards (Biting Frost, Impenetrable Fog and Torrential Rain) effects.
         case "clear": await clearWeather(); player.grave.append(card)
         // Lock: Lock/cancels the ability of the next unit played in that row (ignores units without abilities and heroes).
-        case "lock":
-            var r = row
-            if r == nil { r = await pickRow(player, L("Select a card on your side of the board."), enemyRowTargets(for: card, by: player).map { (o, $0) }) { Int.random(in: 0..<3) }?.1 }
-            if let rowArea = r { o.row(rowArea).lock = card } else { player.grave.append(card) }
-            sound("lock")
+        case "lock": await specialLock(card, by: player, row: row, rowOwner: rowOwner, target: target, kind: kind)
         // Curse: Place on your or opponent's battlefield on any row. Next unit card (not hero) that will be placed on this row will be destroyed and it's abilities will not work
-        case "curse":
-            var dest: (Player, RowType)? = rowOwner.flatMap { q in row.map { (q, $0) } }
-            if dest == nil { dest = await pickRow(player, gameData.abilityName("curse"), curseRows(by: player)) { 3 + Int.random(in: 0..<3) } }
-            if let (q, rowArea) = dest { q.row(rowArea).curse = card } else { player.grave.append(card) }
-            sound("curse")
+        case "curse": await specialCurse(card, by: player, row: row, rowOwner: rowOwner, target: target, kind: kind)
         // Knockback: Pushes all units of the selected row (Melee or Ranged) or row back towards the Siege row, ignores shields.
-        case "knockback":
-            var r = row
-            if r == nil { r = await pickRow(player, gameData.abilityName("knockback"), [(o, .close), (o, .ranged)]) { 0 }?.1 }
-            if let rowArea = r {
-                let dest: RowType = rowArea == .close ? .ranged : .siege
-                let moving = o.row(rowArea).cards.filter { !$0.hero }
-                o.row(rowArea).cards.removeAll { m in moving.contains { $0 === m } }
-                o.row(dest).cards.append(contentsOf: moving)
-                sound("knockback")
-            }
-            player.grave.append(card)
+        case "knockback": await specialKnockback(card, by: player, row: row, rowOwner: rowOwner, target: target, kind: kind)
         // Seize: Move the Melee unit(s) with the lowest strength on your side of the board/ Their abilities won't work anymore.
         case "seize": await seize(player, .close); player.grave.append(card)
         // Bank: Draw a card from your deck.
         case "bank": draw(player, 1); sound("game_buy"); player.grave.append(card)
         // Skellige Fleet: Place on your battlefield and either draw from your deck 1 top card instantly OR draw 2 top cards at the end of this round. In one round you can draw by Skellige Fleet no more than…
-        case "skellige_fleet":
-            if player.fleetDrawsRound < 3 {
-                let answer = await pickOption(player, L("Draw now or more later?"), [L("Draw 1 now [E]"), L("Draw 2 later [Q]")]) { 0 }
-                if answer == 0 { draw(player, 1); player.fleetDrawsRound += 1 } else { player.fleetPending += 2; player.fleetDrawsRound += 2 }
-            }
-            player.row(.siege).specials.append(card)
+        case "skellige_fleet": await specialSkelligeFleet(card, by: player, row: row, rowOwner: rowOwner, target: target, kind: kind)
         // Royal Decree: Use your leader's ability
-        case "royal_decree":
-            player.grave.append(card)
-            await leaderEffect(player, free: true)
+        case "royal_decree": await specialRoyalDecree(card, by: player, row: row, rowOwner: rowOwner, target: target, kind: kind)
         // Decoration: Promote a friendly unit to Hero status
-        case "decoration":
-            let options = player.rowCards.filter { !$0.hero }
-            if let t = await pickOne(player, L("Choose a unit to promote to Hero."), options, ai: { candidates in candidates.max { $0.power < $1.power } }) { t.heroOverride = true; t.flash = 1; await animate(t, "decoration") }
-            player.grave.append(card); sound("decoration")
+        case "decoration": await specialDecoration(card, by: player, row: row, rowOwner: rowOwner, target: target, kind: kind)
         // Chernobog: Double the strength of any unit card in your Close combat row. Discard after playing. | Perun: Add +5 strength to any unit card in your Ranged row. Discard after playing.
-        case "chernobog", "perun":
-            let options = player.row(kind == "chernobog" ? .close : .ranged).cards.filter { !$0.hero }
-            if let t = await pickOne(player, kind == "chernobog" ? L("Choose which unit to double with Chernobog runestone") : L("Choose which unit to grant +5 strength with Perun runestone"), options, ai: { candidates in candidates.max { $0.power < $1.power } }) {
-                if kind == "chernobog" { t.multiplier *= 2 } else { t.bonus += 5 }; t.flash = 1; await animate(t, kind)
-            }
-            player.grave.append(card); sound("rune_call")
+        case "chernobog", "perun": await specialChernobog(card, by: player, row: row, rowOwner: rowOwner, target: target, kind: kind)
         // Svarog: Choose an enemy unit in the Siege row and reduce its strength to 1. Discard after playing. | Morana: Choose an enemy unit in the Close row and reduce its strength to 1. Discard after playing.
-        case "svarog", "morana":
-            let options = o.row(kind == "svarog" ? .siege : .close).cards.filter { !$0.hero }
-            if let t = await pickOne(player, kind == "svarog" ? L("Choose which enemy siege unit to reduce to 1 with Svarog.") : L("Choose which enemy close unit to reduce to 1 with Morana."), options, ai: { candidates in candidates.max { $0.power < $1.power } }) { t.setTo = 1; t.flash = 1; await animate(t, kind) }
-            player.grave.append(card); sound("rune_call")
+        case "svarog", "morana": await specialSvarog(card, by: player, row: row, rowOwner: rowOwner, target: target, kind: kind)
         // Triglav's Weaken: Choose an enemy hero card and weaken it by removing its Hero status. Discard after playing.
-        case "triglav":
-            let options = o.rowCards.filter { $0.hero }
-            if let t = await pickOne(player, L("Choose the enemy hero to weaken."), options, ai: { candidates in candidates.max { $0.power < $1.power } }) { t.heroOverride = false; t.flash = 1; await animate(t, "triglav") }
-            player.grave.append(card); sound("triglav")
+        case "triglav": await specialTriglav(card, by: player, row: row, rowOwner: rowOwner, target: target, kind: kind)
         // Veles: Move your strongest unit card to the Siege row. While there, its strength is doubled. Discard after playing.
-        case "veles":
-            if let t = player.rowCards.filter({ !$0.hero }).max(by: { $0.power < $1.power }) {
-                if let tr = player.rowOf(t) { player.row(tr).cards.removeAll { $0 === t } }
-                player.row(.siege).cards.append(t); t.siegeMult = 2; await animate(t, "veles")
-            }
-            player.grave.append(card); sound("veles")
+        case "veles": await specialVeles(card, by: player, row: row, rowOwner: rowOwner, target: target, kind: kind)
         // Devana's Hunt: Reduce the strength of all non-hero enemy units in the Ranged row to 2. Discard after playing.
-        case "devana":
-            for t in o.row(.ranged).cards where !t.hero { t.setTo = 2; t.flash = 1 }
-            player.grave.append(card); sound("rune_call")
+        case "devana": await specialDevana(card, by: player, row: row, rowOwner: rowOwner, target: target, kind: kind)
         // Zoria's Frost: Freeze the opponent's Close combat row. Discard after playing.
-        case "zoria":
-            o.weather[RowType.close.rawValue].insert("frost")
-            player.grave.append(card); sound("cold")
+        case "zoria": await specialZoria(card, by: player, row: row, rowOwner: rowOwner, target: target, kind: kind)
         // Stribog: Move the enemy Ranged unit(s) with the lowest strength to your side of the board. Discard after playing.
-        case "stribog":
-            let units = o.row(.ranged).cards.filter { !$0.hero }
-            if let mn = units.map({ $0.power }).min() {
-                for t in units where t.power == mn { o.row(.ranged).cards.removeAll { $0 === t }; t.owner = player; player.row(.ranged).cards.append(t) }
-            }
-            player.grave.append(card); sound("rune_call")
+        case "stribog": await specialStribog(card, by: player, row: row, rowOwner: rowOwner, target: target, kind: kind)
         default:
             player.grave.append(card)
         }
@@ -266,5 +196,146 @@ extension Game {
         await pause(0.75)
         for c in victims { await destroy(c, side: side, burn: false) }
         recalc()
+    }
+
+    /// Commander's Horn: Doubles the strength of all unit cards in that row. Limited to 1 per row. | Mardroeme: Triggers transformation of all Berserker cards on the same row. | Morale Boost: Adds +1 to…
+    func specialHorn(_ card: Card, by player: Player, row: RowType?, rowOwner: Player?, target: Card?, kind: String) async {
+        var r = row
+        if r == nil { r = await pickRow(player, L("Select a card on your side of the board."), validRows(for: card, by: player).map { (player, $0) }) { 0 }?.1 }
+        guard let chosenRow = r else { player.grave.append(card); return }
+        player.row(chosenRow).specials.append(card)
+        await animate(card, kind)
+        sound(kind == "horn" ? "horn" : (kind == "mardroeme" ? "mardroeme" : (kind.hasPrefix("shield") ? "shield" : "moral")))
+        if kind == "mardroeme" { await berserk(player, chosenRow) }
+    }
+
+    /// Dimensional Door: While the door is active, at the end of each of your turns you should draw one card from your deck. If the row of the card matches the row of the door, play it immediatly,…
+    func specialDoor(_ card: Card, by player: Player, row: RowType?, rowOwner: Player?, target: Card?, kind: String) async {
+        var r = row
+        if r == nil { r = await pickRow(player, L("Select a card on your side of the board."), validRows(for: card, by: player).map { (player, $0) }) { 0 }?.1 }
+        let open = RowType.allCases.filter { player.row($0).door }
+        if let chosenRow = r, open.count < maxDoors { player.row(chosenRow).door = true }
+        player.grave.append(card); sound("door")
+    }
+
+    /// Decoy: Swap with a card on the battlefield to return it to your hand.
+    func specialDecoy(_ card: Card, by player: Player, row: RowType?, rowOwner: Player?, target: Card?, kind: String) async {
+        if let t = target, let r = player.rowOf(t), let i = player.row(r).cards.firstIndex(where: { $0 === t }) {
+            player.row(r).cards[i] = card
+            resetCard(t); t.owner = player; player.hand.append(t)
+            sound("decoy")
+        } else { player.grave.append(card) }
+    }
+
+    /// Lock: Lock/cancels the ability of the next unit played in that row (ignores units without abilities and heroes).
+    func specialLock(_ card: Card, by player: Player, row: RowType?, rowOwner: Player?, target: Card?, kind: String) async {
+        let opponent = player.opponent!
+        var r = row
+        if r == nil { r = await pickRow(player, L("Select a card on your side of the board."), enemyRowTargets(for: card, by: player).map { (opponent, $0) }) { Int.random(in: 0..<3) }?.1 }
+        if let chosenRow = r { opponent.row(chosenRow).lock = card } else { player.grave.append(card) }
+        sound("lock")
+    }
+
+    /// Curse: Place on your or opponent's battlefield on any row. Next unit card (not hero) that will be placed on this row will be destroyed and it's abilities will not work
+    func specialCurse(_ card: Card, by player: Player, row: RowType?, rowOwner: Player?, target: Card?, kind: String) async {
+        var dest: (Player, RowType)? = rowOwner.flatMap { q in row.map { (q, $0) } }
+        if dest == nil { dest = await pickRow(player, gameData.abilityName("curse"), curseRows(by: player)) { 3 + Int.random(in: 0..<3) } }
+        if let (q, rowArea) = dest { q.row(rowArea).curse = card } else { player.grave.append(card) }
+        sound("curse")
+    }
+
+    /// Knockback: Pushes all units of the selected row (Melee or Ranged) or row back towards the Siege row, ignores shields.
+    func specialKnockback(_ card: Card, by player: Player, row: RowType?, rowOwner: Player?, target: Card?, kind: String) async {
+        let opponent = player.opponent!
+        var r = row
+        if r == nil { r = await pickRow(player, gameData.abilityName("knockback"), [(opponent, .close), (opponent, .ranged)]) { 0 }?.1 }
+        if let chosenRow = r {
+            let dest: RowType = chosenRow == .close ? .ranged : .siege
+            let moving = opponent.row(chosenRow).cards.filter { !$0.hero }
+            opponent.row(chosenRow).cards.removeAll { m in moving.contains { $0 === m } }
+            opponent.row(dest).cards.append(contentsOf: moving)
+            sound("knockback")
+        }
+        player.grave.append(card)
+    }
+
+    /// Skellige Fleet: Place on your battlefield and either draw from your deck 1 top card instantly OR draw 2 top cards at the end of this round. In one round you can draw by Skellige Fleet no more than…
+    func specialSkelligeFleet(_ card: Card, by player: Player, row: RowType?, rowOwner: Player?, target: Card?, kind: String) async {
+        if player.fleetDrawsRound < 3 {
+            let answer = await pickOption(player, L("Draw now or more later?"), [L("Draw 1 now [E]"), L("Draw 2 later [Q]")]) { 0 }
+            if answer == 0 { draw(player, 1); player.fleetDrawsRound += 1 } else { player.fleetPending += 2; player.fleetDrawsRound += 2 }
+        }
+        player.row(.siege).specials.append(card)
+    }
+
+    /// Royal Decree: Use your leader's ability
+    func specialRoyalDecree(_ card: Card, by player: Player, row: RowType?, rowOwner: Player?, target: Card?, kind: String) async {
+        player.grave.append(card)
+        await leaderEffect(player, free: true)
+    }
+
+    /// Decoration: Promote a friendly unit to Hero status
+    func specialDecoration(_ card: Card, by player: Player, row: RowType?, rowOwner: Player?, target: Card?, kind: String) async {
+        let options = player.rowCards.filter { !$0.hero }
+        if let t = await pickOne(player, L("Choose a unit to promote to Hero."), options, ai: { candidates in candidates.max { $0.power < $1.power } }) { t.heroOverride = true; t.flash = 1; await animate(t, "decoration") }
+        player.grave.append(card); sound("decoration")
+    }
+
+    /// Chernobog: Double the strength of any unit card in your Close combat row. Discard after playing. | Perun: Add +5 strength to any unit card in your Ranged row. Discard after playing.
+    func specialChernobog(_ card: Card, by player: Player, row: RowType?, rowOwner: Player?, target: Card?, kind: String) async {
+        let options = player.row(kind == "chernobog" ? .close : .ranged).cards.filter { !$0.hero }
+        if let t = await pickOne(player, kind == "chernobog" ? L("Choose which unit to double with Chernobog runestone") : L("Choose which unit to grant +5 strength with Perun runestone"), options, ai: { candidates in candidates.max { $0.power < $1.power } }) {
+            if kind == "chernobog" { t.multiplier *= 2 } else { t.bonus += 5 }; t.flash = 1; await animate(t, kind)
+        }
+        player.grave.append(card); sound("rune_call")
+    }
+
+    /// Svarog: Choose an enemy unit in the Siege row and reduce its strength to 1. Discard after playing. | Morana: Choose an enemy unit in the Close row and reduce its strength to 1. Discard after playing.
+    func specialSvarog(_ card: Card, by player: Player, row: RowType?, rowOwner: Player?, target: Card?, kind: String) async {
+        let opponent = player.opponent!
+        let options = opponent.row(kind == "svarog" ? .siege : .close).cards.filter { !$0.hero }
+        if let t = await pickOne(player, kind == "svarog" ? L("Choose which enemy siege unit to reduce to 1 with Svarog.") : L("Choose which enemy close unit to reduce to 1 with Morana."), options, ai: { candidates in candidates.max { $0.power < $1.power } }) { t.setTo = 1; t.flash = 1; await animate(t, kind) }
+        player.grave.append(card); sound("rune_call")
+    }
+
+    /// Triglav's Weaken: Choose an enemy hero card and weaken it by removing its Hero status. Discard after playing.
+    func specialTriglav(_ card: Card, by player: Player, row: RowType?, rowOwner: Player?, target: Card?, kind: String) async {
+        let opponent = player.opponent!
+        let options = opponent.rowCards.filter { $0.hero }
+        if let t = await pickOne(player, L("Choose the enemy hero to weaken."), options, ai: { candidates in candidates.max { $0.power < $1.power } }) { t.heroOverride = false; t.flash = 1; await animate(t, "triglav") }
+        player.grave.append(card); sound("triglav")
+    }
+
+    /// Veles: Move your strongest unit card to the Siege row. While there, its strength is doubled. Discard after playing.
+    func specialVeles(_ card: Card, by player: Player, row: RowType?, rowOwner: Player?, target: Card?, kind: String) async {
+        if let t = player.rowCards.filter({ !$0.hero }).max(by: { $0.power < $1.power }) {
+            if let tr = player.rowOf(t) { player.row(tr).cards.removeAll { $0 === t } }
+            player.row(.siege).cards.append(t); t.siegeMult = 2; await animate(t, "veles")
+        }
+        player.grave.append(card); sound("veles")
+    }
+
+    /// Devana's Hunt: Reduce the strength of all non-hero enemy units in the Ranged row to 2. Discard after playing.
+    func specialDevana(_ card: Card, by player: Player, row: RowType?, rowOwner: Player?, target: Card?, kind: String) async {
+        let opponent = player.opponent!
+        for t in opponent.row(.ranged).cards where !t.hero { t.setTo = 2; t.flash = 1 }
+        player.grave.append(card); sound("rune_call")
+    }
+
+    /// Zoria's Frost: Freeze the opponent's Close combat row. Discard after playing.
+    func specialZoria(_ card: Card, by player: Player, row: RowType?, rowOwner: Player?, target: Card?, kind: String) async {
+        let opponent = player.opponent!
+        opponent.weather[RowType.close.rawValue].insert("frost")
+        player.grave.append(card); sound("cold")
+    }
+
+    /// Stribog: Move the enemy Ranged unit(s) with the lowest strength to your side of the board. Discard after playing.
+    func specialStribog(_ card: Card, by player: Player, row: RowType?, rowOwner: Player?, target: Card?, kind: String) async {
+        let opponent = player.opponent!
+        let units = opponent.row(.ranged).cards.filter { !$0.hero }
+        if let mn = units.map({ $0.power }).min() {
+            for t in units where t.power == mn { opponent.row(.ranged).cards.removeAll { $0 === t }; t.owner = player; player.row(.ranged).cards.append(t) }
+        }
+        player.grave.append(card); sound("rune_call")
     }
 }

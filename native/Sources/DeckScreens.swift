@@ -163,16 +163,16 @@ extension Scene {
         let idx = all.indices.filter { all[$0].faction == f }
         let n = idx.count + 1
         let gap: Float = 26
-        let textWidth = min(300, (1780 - gap * Float(n - 1)) / Float(n))
-        let ch = textWidth / 0.697
-        let x0 = 960 - (Float(n) * textWidth + Float(n - 1) * gap) / 2, y0: Float = 170
+        let tileWidth = min(300, (1780 - gap * Float(n - 1)) / Float(n))
+        let ch = tileWidth / 0.697
+        let x0 = 960 - (Float(n) * tileWidth + Float(n - 1) * gap) / 2, y0: Float = 170
         for (k, i) in idx.enumerated() {
             let d = all[i]
             let custom = i >= gameData.decks.count
             let a = ease((deckSwitchT * 1.5) - Float(k) * 0.08)
-            let x = x0 + Float(k) * (textWidth + gap)
-            let cardR = R(x, y0 + (1 - a) * 30, textWidth, ch)
-            let tile = R(x - 10, cardR.y - 10, textWidth + 20, ch + 250)
+            let x = x0 + Float(k) * (tileWidth + gap)
+            let cardR = R(x, y0 + (1 - a) * 30, tileWidth, ch)
+            let tile = R(x - 10, cardR.y - 10, tileWidth + 20, ch + 250)
             let hovered = tile.contains(mouse)
             let key = "deck_\(i)"
             let hk = cardHover[key, default: 0]
@@ -189,25 +189,25 @@ extension Scene {
             var ty = cardR.y + ch + 14
             let title = gameData.ui(d.title)
             if custom || title != gameData.factionName(f) {
-                ty += renderer.text((custom ? "★ " : "") + title, .serif(20, bold: true), x: x, y: ty, color: RGBA.white.alpha(a), maxWidth: textWidth).h + 4
+                ty += renderer.text((custom ? "★ " : "") + title, .serif(20, bold: true), x: x, y: ty, color: RGBA.white.alpha(a), maxWidth: tileWidth).h + 4
             }
             let desc = d.description.isEmpty ? gameData.abilityDesc(gameData.cards[d.leader]?.abilities.last ?? "") : gameData.ui(d.description)
-            renderer.clip(R(x, ty, textWidth, 100))
-            renderer.text(desc, .ui(16), x: x, y: ty, color: RGBA(r: 0.92, g: 0.86, b: 0.72, a: a), maxWidth: textWidth)
+            renderer.clip(R(x, ty, tileWidth, 100))
+            renderer.text(desc, .ui(16), x: x, y: ty, color: RGBA(r: 0.92, g: 0.86, b: 0.72, a: a), maxWidth: tileWidth)
             renderer.clip(nil)
             var units = 0, total = 0
             for (ck, cn) in d.cards { total += cn; if gameData.cards[ck]?.isUnit == true { units += cn } }
             renderer.text("\(total) " + L("cards") + " · \(units) " + L("units"), .ui(14), x: x, y: tile.y + tile.h - 92, color: RGBA.gold.alpha(0.75 * a))
-            goldButton(R(x, tile.y + tile.h - 66, textWidth, 52), L("Play this deck"), font: .serif(textWidth < 260 ? 18 : 21, bold: true)) { [weak self] in
+            goldButton(R(x, tile.y + tile.h - 66, tileWidth, 52), L("Play this deck"), font: .serif(tileWidth < 260 ? 18 : 21, bold: true)) { [weak self] in
                 self?.myDeckIndex = i; self?.startGame(with: d)
             }
-            let bw = (textWidth - 8) / 2, by = tile.y + tile.h + 10, fs: Float = textWidth < 260 ? 15 : 17
+            let bw = (tileWidth - 8) / 2, by = tile.y + tile.h + 10, fs: Float = tileWidth < 260 ? 15 : 17
             goldButton(R(x, by, bw, 42), L("View cards"), font: .serif(fs, bold: true)) { [weak self] in
                 self?.previewDeck = i; self?.previewScroll = 0; self?.previewTarget = 0; self?.deckSwitchT = 0; self?.audio.play("card", volume: 0.5) }
             goldButton(R(x + bw + 8, by, bw, 42), L("Edit deck"), font: .serif(fs, bold: true)) { [weak self] in
                 guard let s = self else { return }; s.builder.load(d, customIndex: custom ? i - s.gameData.decks.count : nil); s.screen = .builder }
             let fav = favoriteDeckIndex == i
-            let favW = custom ? bw : textWidth
+            let favW = custom ? bw : tileWidth
             let favR = R(x, by + 50, favW, 42)
             if fav { renderer.rect(favR, RGBA(r: 0.55, g: 0.4, b: 0.1, a: 0.55)) }
             goldButton(favR, fav ? "★ " + L("My deck") : "☆ " + L("Set as mine"), font: .serif(fs, bold: true)) { [weak self] in
@@ -221,15 +221,15 @@ extension Scene {
                 }
             }
         }
-        let x = x0 + Float(idx.count) * (textWidth + gap)
+        let x = x0 + Float(idx.count) * (tileWidth + gap)
         let a = ease((deckSwitchT * 1.5) - Float(idx.count) * 0.08)
-        let tile = R(x - 10, y0 - 10 + (1 - a) * 30, textWidth + 20, ch + 250)
+        let tile = R(x - 10, y0 - 10 + (1 - a) * 30, tileWidth + 20, ch + 250)
         let hovered = tile.contains(mouse)
         glassPanel(tile, alpha: 0.45 * a)
         renderer.frame(tile.inset(14), RGBA.gold.alpha((hovered ? 0.9 : 0.35) * a), 1.5)
         renderer.text("+", .gwent(120), x: tile.mid.x, y: tile.y + ch * 0.28, color: RGBA.gold.alpha((hovered ? 1 : 0.7) * a), align: .center)
-        renderer.text(L("Custom deck"), .serif(22, bold: true), x: tile.mid.x, y: tile.y + ch * 0.62, color: RGBA.white.alpha(a), maxWidth: textWidth - 20, align: .center)
-        renderer.text(L("Build a deck from this faction's cards in the deck builder."), .ui(15), x: tile.mid.x, y: tile.y + ch * 0.62 + 34, color: RGBA.gray(0.75, a), maxWidth: textWidth - 30, align: .center)
+        renderer.text(L("Custom deck"), .serif(22, bold: true), x: tile.mid.x, y: tile.y + ch * 0.62, color: RGBA.white.alpha(a), maxWidth: tileWidth - 20, align: .center)
+        renderer.text(L("Build a deck from this faction's cards in the deck builder."), .ui(15), x: tile.mid.x, y: tile.y + ch * 0.62 + 34, color: RGBA.gray(0.75, a), maxWidth: tileWidth - 30, align: .center)
         button(tile) { [weak self] in guard let s = self else { return }; s.builder.newDeck(f); s.screen = .builder }
     }
     /// Text button drawn as an underlined link.
