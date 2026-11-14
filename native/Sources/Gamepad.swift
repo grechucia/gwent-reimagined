@@ -1,7 +1,8 @@
-// Game controller input: virtual cursor, D-pad focus navigation, A/B/X/Menu buttons.
+// Game controller input: focus-based navigation (no cursor) with D-pad / left stick and A/B/X/Menu buttons.
 import GameController
 import simd
 
+/// Polls the active game controller every frame and turns its input into UI actions.
 @MainActor final class Gamepad {
     weak var scene: Scene?
     private var prev: [String: Bool] = [:]
@@ -9,6 +10,7 @@ import simd
 
     init() { GCController.startWirelessControllerDiscovery {} }
 
+    /// Reads the controller state and moves focus or triggers actions.
     func update(_ dt: Float) {
         guard let s = scene, let pad = (GCController.current ?? GCController.controllers().first)?.extendedGamepad else { return }
         let lx = pad.leftThumbstick.xAxis.value, ly = pad.leftThumbstick.yAxis.value
@@ -26,6 +28,7 @@ import simd
         for (n, on, d) in dirs { press(n, on, dt, repeats: true) { if s.padWake() { return }; s.padFocus(d) } }
     }
 
+    /// Edge-detects a button; held directions repeat after 0.4 s, then every 0.12 s.
     private func press(_ name: String, _ on: Bool, _ dt: Float, repeats: Bool, _ action: () -> Void) {
         let was = prev[name] ?? false
         prev[name] = on
@@ -36,6 +39,7 @@ import simd
     }
 }
 
+/// Focus navigation helpers for the scene.
 extension Scene {
     /// First gamepad input only activates focus mode; returns true if the input was consumed.
     func padWake() -> Bool {
@@ -43,12 +47,13 @@ extension Scene {
         padCursor = true; mouse = SIMD2(-1, -1)
         return true
     }
-    private var focusTargets: [R] { clicks.map { $0.0 }.filter { t in t.w < VW * 0.9 && t.h < VH * 0.9 && !padNoFocus.contains { $0 == t } } }
+    private var focusTargets: [R] { clicks.map { $0.0 }.filter { t in t.w < virtualWidth * 0.9 && t.h < virtualHeight * 0.9 && !padNoFocus.contains { $0 == t } } }
 
+    /// Element focused automatically: the screen's primary element, otherwise the one nearest the centre.
     private func autoTarget(_ targets: [R]) -> R? {
         if let p = padPrimary, targets.contains(where: { $0 == p }) { return p }
         let pool = targets.filter { t in !padNoAuto.contains { $0 == t } }
-        return (pool.isEmpty ? targets : pool).min { simd_length($0.mid - SIMD2(VW / 2, VH / 2)) < simd_length($1.mid - SIMD2(VW / 2, VH / 2)) }
+        return (pool.isEmpty ? targets : pool).min { simd_length($0.mid - SIMD2(virtualWidth / 2, virtualHeight / 2)) < simd_length($1.mid - SIMD2(virtualWidth / 2, virtualHeight / 2)) }
     }
 
     /// Moves focus to the nearest interactive element in the given direction.
@@ -68,11 +73,13 @@ extension Scene {
         if let b = best { mouseMoved(b.1.mid) }
     }
 
+    /// The interactive element under the focus point.
     private func focusedRect(_ targets: [R]) -> R? {
         guard mouse.x >= 0 else { return nil }
         return targets.filter { $0.contains(mouse) }.min { $0.w * $0.h < $1.w * $1.h }
     }
 
+    /// Draws the highlight around the focused element.
     func drawPadCursor() {
         guard padCursor else { return }
         let targets = focusTargets
@@ -82,8 +89,8 @@ extension Scene {
             return
         }
         let pulse = 0.75 + 0.25 * sin(time * 5)
-        r.rect(f.inset(-4), RGBA(r: 1, g: 0.8, b: 0.35, a: 0.10 * pulse))
-        r.frame(f.inset(-4), RGBA(r: 1, g: 0.84, b: 0.4, a: pulse), 3)
-        r.frame(f.inset(-9), RGBA(r: 1, g: 0.75, b: 0.3, a: 0.35 * pulse), 2)
+        renderer.rect(f.inset(-4), RGBA(r: 1, g: 0.8, b: 0.35, a: 0.10 * pulse))
+        renderer.frame(f.inset(-4), RGBA(r: 1, g: 0.84, b: 0.4, a: pulse), 3)
+        renderer.frame(f.inset(-9), RGBA(r: 1, g: 0.75, b: 0.3, a: 0.35 * pulse), 2)
     }
 }

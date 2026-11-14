@@ -1,9 +1,13 @@
+// Game rules: cards, rows, players, rounds, turns and every card / leader / faction ability.
 import Foundation
 
+/// Board row: close combat, ranged or siege.
 enum RowType: Int, CaseIterable { case close = 0, ranged = 1, siege = 2
+    /// Parses a row name from the card data.
     static func from(_ s: String) -> RowType? { ["close": .close, "ranged": .ranged, "siege": .siege][s] }
 }
 
+/// A card instance in a game, with its current power and state.
 @MainActor
 final class Card {
     private static var nextId = 1
@@ -32,8 +36,10 @@ final class Card {
     var key: String { data.key }
     var basePower: Int { baseOverride ?? data.strength }
     var hero: Bool { heroOverride ?? data.isHero }
+    /// Whether the card has an ability.
     func has(_ a: String) -> Bool { data.abilities.contains(a) }
     var activeAbilities: [String] { locked ? [] : data.abilities }
+    /// Whether the card's ability is active (it is not locked).
     func act(_ a: String) -> Bool { !locked && data.abilities.contains(a) }
     var groupKey: String { data.target.isEmpty ? data.key : data.target }
     var school: String? { data.abilities.last.flatMap { $0.hasPrefix("witcher_") ? $0 : nil } }
@@ -51,10 +57,13 @@ final class Card {
         }
     }
     var specialKind: String? { (data.isSpecial || data.isWeather) ? data.abilities.first : nil }
+    /// Changes the card into another card (e.g. berserker transformation).
     func transform(into d: CardData) { data = d; baseOverride = nil; setTo = nil; flash = 1 }
+    /// Clears per-round modifiers.
     func resetRoundState() { tempStrength = nil }
 }
 
+/// One row of a player's board side: cards, special slot and row effects.
 @MainActor
 final class Row {
     var cards: [Card] = []
@@ -70,6 +79,7 @@ final class Row {
     var hornCount: Int { specials.filter { $0.specialKind == "horn" }.count + cards.filter { $0.act("horn") }.count + (leaderHorn ? 1 : 0) }
 }
 
+/// A player: deck, hand, graveyard, rows, leader, lives and pass state.
 @MainActor
 final class Player {
     let isAI: Bool
@@ -99,22 +109,27 @@ final class Player {
     var lastRoundWon = false
     init(deck: DeckData, isAI: Bool) {
         self.isAI = isAI; deckData = deck
-        let gd = GameData.shared!
-        leader = Card(gd.cards[deck.leader]!, owner: nil)
+        let gameData = GameData.shared!
+        leader = Card(gameData.cards[deck.leader]!, owner: nil)
         leader.owner = self
         if leader.data.abilities.last == "holger_blakhand" { leaderUses = 2 }
-        for (k, n) in deck.cards { if let d = gd.cards[k] { for _ in 0..<max(1, n) { self.deck.append(Card(d, owner: self)) } } }
+        for (k, n) in deck.cards { if let d = gameData.cards[k] { for _ in 0..<max(1, n) { self.deck.append(Card(d, owner: self)) } } }
         self.deck.shuffle()
     }
     var rowCards: [Card] { rows.flatMap { $0.cards } }
+    /// The given row of this player.
     func row(_ r: RowType) -> Row { rows[r.rawValue] }
+    /// The row a card currently lies in.
     func rowOf(_ c: Card) -> RowType? { for r in RowType.allCases where rows[r.rawValue].cards.contains(where: { $0 === c }) { return r }; return nil }
     var leaderAbility: String { leader.data.abilities.last ?? "" }
 }
 
+/// Events the engine emits for the UI: notifications, sounds and animations.
 enum GameEvent { case notify(String, icon: String?); case sound(String); case flash(Card); case anim(Card, String); case burn(Card); case coin(Bool) }
 
+/// A decision the engine asks a player to make (cards, rows or options).
 struct Choice {
+    /// What kind of selection is requested.
     enum Kind {
         case cards([Card], min: Int, max: Int)
         case rows([(Player, RowType)])
@@ -128,16 +143,18 @@ struct Choice {
     let ai: () -> [Int]
 }
 
+/// The game: two players, rounds, turns and all rule logic.
 @MainActor
 final class Game {
-    let me: Player, op: Player
+    let human: Player, computer: Player
     var weatherCards: [Card] = []
     var current: Player
     var round = 1
     /// AI strength for the computer opponent: 0 = easy, 1 = normal, 2 = hard.
     var aiLevel = 1
     var turn = 0
-    var history: [(me: Int, op: Int, winner: Player?)] = []
+    var history: [(human: Int, computer: Int, winner: Player?)] = []
+    /// Current phase of the match.
     enum Phase { case redraw, play, roundEnd, over }
     var phase: Phase = .redraw
     var events: [GameEvent] = []
@@ -154,25 +171,27 @@ final class Game {
     var medicPicks = 1
     var navigatorShield = false
     var maxDoors = 1
-    var gd: GameData { GameData.shared }
+    var gameData: GameData { GameData.shared }
 
     init(myDeck: DeckData, opDeck: DeckData) {
-        me = Player(deck: myDeck, isAI: false)
-        op = Player(deck: opDeck, isAI: true)
-        me.opponent = op; op.opponent = me
-        current = me
-        for p in [me, op] { applyPassiveLeader(p) }
-        for p in [me, op] {
+        human = Player(deck: myDeck, isAI: false)
+        computer = Player(deck: opDeck, isAI: true)
+        human.opponent = computer; computer.opponent = human
+        current = human
+        for p in [human, computer] { applyPassiveLeader(p) }
+        for p in [human, computer] {
             if p.faction == "syndicate" { summonToBoard(p, key: "sy_sigi_reuven") }
             if p.leaderAbility == "ofir_aamad_crown" { summonToBoard(p, key: "ofir_ofieri_prince") }
             let hand = 10 + (p.faction == "wild_hunt" ? 1 : 0) + (p.leaderAbility == "francesca_daisy" ? 3 : 0)
             draw(p, hand, silent: true)
         }
-        redrawsLeft = redrawCount(me)
-        aiRedraw(op)
+        redrawsLeft = redrawCount(human)
+        aiRedraw(computer)
         recalc()
     }
+    /// How many cards a player may redraw at the start.
     private func redrawCount(_ p: Player) -> Int { 2 + (p.faction == "toussaint" ? 1 : 0) + (p.faction == "novigrad" ? 1 : 0) }
+    /// Applies leader abilities that work passively.
     private func applyPassiveLeader(_ p: Player) {
         switch p.leaderAbility {
         case "eredin_treacherous": spyMult *= 2
@@ -184,15 +203,17 @@ final class Game {
         default: break
         }
     }
+    /// Puts a card with the given key directly on the board.
     private func summonToBoard(_ p: Player, key: String) {
         let c: Card
         if let i = p.deck.firstIndex(where: { $0.key == key }) { c = p.deck.remove(at: i) }
-        else if let d = gd.cards[key] { c = Card(d, owner: p) } else { return }
+        else if let d = gameData.cards[key] { c = Card(d, owner: p) } else { return }
         c.owner = p
         p.row(c.allowedRows.first ?? .close).cards.append(c)
     }
 
     var showChoices = false
+    /// Asks a player to choose; the AI answers automatically, the human through the UI.
     func choose(_ c: Choice) async -> [Int]? {
         if autoHuman && showChoices && !c.player.isAI {
             choice = c
@@ -204,11 +225,13 @@ final class Game {
         choice = c
         return await withCheckedContinuation { cont in choiceCont = cont }
     }
+    /// Called by the UI with the human's answer to the pending choice.
     func resolveChoice(_ r: [Int]?) {
         let k = choiceCont
         choice = nil; choiceCont = nil
         k?.resume(returning: r)
     }
+    /// Asks a player to pick several cards.
     private func pickCards(_ p: Player, _ title: String, _ cards: [Card], min: Int = 1, max: Int = 1, cancel: Bool = false,
                            ai: @escaping ([Card]) -> [Card]) async -> [Card] {
         guard !cards.isEmpty else { return [] }
@@ -217,23 +240,28 @@ final class Game {
         }) ?? []
         return r.compactMap { $0 < cards.count ? cards[$0] : nil }
     }
+    /// Asks a player to pick one card.
     private func pickOne(_ p: Player, _ title: String, _ cards: [Card], cancel: Bool = false, ai: @escaping ([Card]) -> Card?) async -> Card? {
         await pickCards(p, title, cards, max: 1, cancel: cancel) { cs in ai(cs).map { [$0] } ?? [] }.first
     }
+    /// Asks a player to pick a row.
     private func pickRow(_ p: Player, _ title: String, _ rows: [(Player, RowType)], ai: @escaping () -> Int) async -> (Player, RowType)? {
         guard !rows.isEmpty else { return nil }
         if rows.count == 1 { return rows[0] }
         guard let i = await choose(Choice(player: p, title: title, kind: .rows(rows), canCancel: false) { [ai()] })?.first, i < rows.count else { return rows[0] }
         return rows[i]
     }
+    /// Asks a player to pick one of several options.
     private func pickOption(_ p: Player, _ title: String, _ opts: [String], ai: @escaping () -> Int) async -> Int {
         (await choose(Choice(player: p, title: title, kind: .options(opts), canCancel: false) { [ai()] }))?.first ?? 0
     }
+    /// Shows cards to the player (e.g. the opponent's hand).
     private func reveal(_ p: Player, _ title: String, _ cards: [Card]) async {
         guard !cards.isEmpty else { return }
         _ = await choose(Choice(player: p, title: title, kind: .reveal(cards), canCancel: true) { [] })
     }
     var paused = false
+    /// Waits so the UI can show animations.
     func pause(_ s: Double) async {
         try? await Task.sleep(nanoseconds: UInt64((autoHuman ? s * 0.3 : s) * 1_000_000_000))
         while paused { try? await Task.sleep(nanoseconds: 100_000_000) }
@@ -242,6 +270,7 @@ final class Game {
         "doppler", "emissary", "goetia", "horn", "immortal", "invoke", "knockback", "lock", "mardroeme", "medic", "monster_toussaint", "morale", "morana",
         "muster", "necrophage", "ofiri_envoy", "omen", "perun", "resilience", "rune_call", "seize", "shield", "soothsayer", "spy", "stribog",
         "summon_one_of", "svarog", "trade", "triglav", "veles"]
+    /// Animation name used for an ability.
     static func animName(_ a: String) -> String? {
         if a == "toussaint_wine" { return "wine" }
         if a.hasPrefix("wish") { return "wish" }
@@ -249,14 +278,18 @@ final class Game {
         if a.hasPrefix("shield") { return "shield" }
         return animIcons.contains(a) ? a : nil
     }
+    /// Plays a card animation, optionally waiting for it.
     func animate(_ c: Card, _ name: String, wait: Bool = true) async {
         guard let n = Game.animName(name) ?? (name == "hero" ? "hero" : nil) else { return }
         events.append(.anim(c, n))
         if wait { await pause(0.7) }
     }
+    /// Shows a notification banner.
     func note(_ t: String, _ icon: String? = nil) { events.append(.notify(t, icon: icon)) }
+    /// Plays a sound effect.
     func sound(_ s: String) { events.append(.sound(s)) }
 
+    /// Draws `n` cards from the deck into the hand.
     func draw(_ p: Player, _ n: Int, silent: Bool = false) {
         for _ in 0..<n {
             guard !p.deck.isEmpty else { return }
@@ -265,15 +298,17 @@ final class Game {
         }
         if !silent { recalc() }
     }
+    /// Swaps a card in hand for a random card from the deck (redraw phase).
     func redraw(_ c: Card) -> Card? {
-        guard phase == .redraw, redrawsLeft > 0, let i = me.hand.firstIndex(where: { $0 === c }), !me.deck.isEmpty else { return nil }
-        let n = me.deck.removeFirst()
-        me.hand[i] = n
-        me.deck.insert(c, at: Int.random(in: 0...me.deck.count))
+        guard phase == .redraw, redrawsLeft > 0, let i = human.hand.firstIndex(where: { $0 === c }), !human.deck.isEmpty else { return nil }
+        let n = human.deck.removeFirst()
+        human.hand[i] = n
+        human.deck.insert(c, at: Int.random(in: 0...human.deck.count))
         redrawsLeft -= 1
         sound("redraw")
         return n
     }
+    /// AI decision for the redraw phase.
     private func aiRedraw(_ p: Player) {
         if p.leaderAbility == "francesca_daisy" {
             for _ in 0..<2 { if let w = p.hand.min(by: { aiCardValue($0) < aiCardValue($1) }) { p.hand.removeAll { $0 === w }; p.deck.insert(w, at: Int.random(in: 0...p.deck.count)) } }
@@ -286,37 +321,40 @@ final class Game {
             p.deck.insert(w, at: Int.random(in: 0...p.deck.count))
         }
     }
+    /// Handles the Daisy of the Valley ability after the redraw.
     func daisyReturn() async {
-        if me.leaderAbility == "francesca_daisy" {
-            let back = await pickCards(me, L("Choose 2 cards to put back into your deck"), me.hand, min: 2, max: 2) { cs in Array(cs.sorted { self.aiCardValue($0) < self.aiCardValue($1) }.prefix(2)) }
-            for c in back { me.hand.removeAll { $0 === c }; me.deck.insert(c, at: Int.random(in: 0...me.deck.count)) }
+        if human.leaderAbility == "francesca_daisy" {
+            let back = await pickCards(human, L("Choose 2 cards to put back into your deck"), human.hand, min: 2, max: 2) { cs in Array(cs.sorted { self.aiCardValue($0) < self.aiCardValue($1) }.prefix(2)) }
+            for c in back { human.hand.removeAll { $0 === c }; human.deck.insert(c, at: Int.random(in: 0...human.deck.count)) }
         }
     }
+    /// Ends the redraw phase and starts the first round.
     func finishRedraw() {
         guard phase == .redraw, !busy else { return }
         busy = true
         Task { @MainActor in
             await self.daisyReturn()
             self.phase = .play
-            self.current = Bool.random() ? self.me : self.op
+            self.current = Bool.random() ? self.human : self.computer
             self.sound("coin")
-            self.events.append(.coin(self.current === self.me))
+            self.events.append(.coin(self.current === self.human))
             await self.pause(1.6)
-            self.note(self.current === self.me ? L("You will go first") : L("Your opponent will go first"), self.current === self.me ? "notif_me_coin" : "notif_op_coin")
+            self.note(self.current === self.human ? L("You will go first") : L("Your opponent will go first"), self.current === self.human ? "notif_me_coin" : "notif_op_coin")
             await self.startRound()
             self.busy = false
         }
     }
 
+    /// Starts a round: faction bonuses, who goes first, turn loop.
     private func startRound() async {
         turn += 1
-        for p in [me, op] {
+        for p in [human, computer] {
             p.aamadBonus = 0; p.comradeUsedRound = false; p.factionUsedRound = false; p.fleetDrawsRound = 0; p.halfWeather = false
         }
         note(L("Round Start") + " · \(round)", "notif_round_start")
         sound(round == 1 ? "round1_start" : "round_win")
         if round > 1 {
-            for p in [me, op] {
+            for p in [human, computer] {
                 if p.faction == "realms" && lastRoundWinner !== p { draw(p, 1); note(L("Northern Realms faction ability triggered - North draws an additional card."), "notif_north") }
                 if p.faction == "zerrikania" && lastRoundWinner === p.opponent {
                     let opts = p.grave.filter { $0.isUnit }
@@ -329,18 +367,18 @@ final class Game {
                 if p.faction == "skellige" && round == 3 {
                     let opts = p.grave.filter { $0.isUnit }.shuffled().prefix(2)
                     for c in opts { p.grave.removeAll { $0 === c }; await placeUnit(c, by: p, row: c.allowedRows.randomElement() ?? .close) }
-                    if !opts.isEmpty { note(p === me ? L("Skellige Ability Triggered!") : L("Opponent Skellige Ability Triggered!"), "notif_skellige") }
+                    if !opts.isEmpty { note(p === human ? L("Skellige Ability Triggered!") : L("Opponent Skellige Ability Triggered!"), "notif_skellige") }
                 }
             }
         }
-        for p in [me, op] where p.faction == "wild_hunt" {
-            let leaders = gd.cards.values.filter { $0.isLeader && $0.key.hasPrefix("wh_") }.sorted { $0.key < $1.key }
+        for p in [human, computer] where p.faction == "wild_hunt" {
+            let leaders = gameData.cards.values.filter { $0.isLeader && $0.key.hasPrefix("wh_") }.sorted { $0.key < $1.key }
             let cards = leaders.map { Card($0, owner: p) }
             if let c = await pickOne(p, L("Select the next leader to start the round with"), cards, ai: { cs in cs.randomElement() }) {
                 p.leader = c; p.leaderUses = 1; applyPassiveLeader(p)
             }
         }
-        for p in [me, op] {
+        for p in [human, computer] {
             if p.leaderAbility == "king_bran", p.leaderUses > 0 {
                 let yes = await pickOption(p, L("Bring the Skellige Storm?"), [L("Bring the Storm [E]"), L("Maybe later [Q]")]) { (self.round > 1 || p.deck.contains { $0.has("storm") }) ? 0 : 1 }
                 if yes == 0 { p.leaderUses = 0; p.halfWeather = true
@@ -357,33 +395,37 @@ final class Game {
                 }
             }
         }
-        for p in [me, op] where p.faction == "scoiatael" {
+        for p in [human, computer] where p.faction == "scoiatael" {
             let i = await pickOption(p, L("Who should go first?"), [L("Go First [E]"), L("Let Opponent Start [Q]")]) { 1 }
             current = i == 0 ? p : p.opponent
-            if p === op { note(L("Opponent used the Scoia'tael faction perk to go first."), "notif_scoiatael") }
+            if p === computer { note(L("Opponent used the Scoia'tael faction perk to go first."), "notif_scoiatael") }
             break
         }
         await beginTurn()
     }
 
+    /// Starts the current player's turn.
     private func beginTurn() async {
         recalc()
-        if me.passed && op.passed { await endRound(); return }
+        if human.passed && computer.passed { await endRound(); return }
         if current.passed { current = current.opponent }
         if current.hand.isEmpty && !current.passed && !canActWithoutCards(current) { await pass(current); return }
-        if current === me { note(L("Your turn!"), "notif_me_turn"); sound("turn_me") } else { sound("turn_op") }
+        if current === human { note(L("Your turn!"), "notif_me_turn"); sound("turn_me") } else { sound("turn_op") }
     }
+    /// Whether a player can still act without cards in hand.
     private func canActWithoutCards(_ p: Player) -> Bool { leaderAvailable(p) || factionActive(p) != nil }
 
+    /// The player passes for the rest of the round.
     func pass(_ p: Player) async {
         guard phase == .play, !p.passed else { return }
         p.passed = true
         sound("pass")
-        note(p === me ? L("Round passed") : L("Your opponent has passed"), "notif_round_passed")
+        note(p === human ? L("Round passed") : L("Your opponent has passed"), "notif_round_passed")
         if p === current { current = p.opponent }
         await beginTurn()
     }
 
+    /// Ends a turn and gives control to the other player.
     private func endTurn(_ p: Player) async {
         recalc()
         let doors = RowType.allCases.filter { p.row($0).door }
@@ -414,10 +456,11 @@ final class Game {
         await beginTurn()
     }
 
+    /// Scores the round, removes a life from the loser and checks for the end of the match.
     private func endRound() async {
         phase = .roundEnd
         recalc()
-        for p in [me, op] where p.faction == "monsters" && !p.monstersUsed && !p.rowCards.isEmpty {
+        for p in [human, computer] where p.faction == "monsters" && !p.monstersUsed && !p.rowCards.isEmpty {
             let yes = await pickOption(p, L("Would you like to retake one of your cards?"), [L("Retake a card [E]"), L("Not yet [Q]")]) { self.round >= 2 ? 0 : 1 }
             if yes == 0, let c = await pickOne(p, L("Which card to retake?"), p.rowCards, ai: { cs in cs.max { self.aiCardValue($0) < self.aiCardValue($1) } }) {
                 p.monstersUsed = true
@@ -427,46 +470,48 @@ final class Game {
             }
         }
         recalc()
-        let a = me.total, b = op.total
-        var w: Player? = a > b ? me : (b > a ? op : nil)
+        let a = human.total, b = computer.total
+        var w: Player? = a > b ? human : (b > a ? computer : nil)
         if w == nil {
-            let nm = me.faction == "nilfgaard", no = op.faction == "nilfgaard"
-            if nm != no { w = nm ? me : op; note(L("Nilfgaard wins draws"), "notif_nilfgaard") }
+            let nm = human.faction == "nilfgaard", no = computer.faction == "nilfgaard"
+            if nm != no { w = nm ? human : computer; note(L("Nilfgaard wins draws"), "notif_nilfgaard") }
         }
         history.append((a, b, w))
         lastRoundWinner = w
-        if let w = w { w.opponent.gems -= 1 } else { me.gems -= 1; op.gems -= 1 }
-        if w === me { note(L("You won the round!"), "notif_win_round"); sound("round_win") }
-        else if w === op { note(L("Your opponent won the round"), "notif_lose_round"); sound("round_lose") }
+        if let w = w { w.opponent.gems -= 1 } else { human.gems -= 1; computer.gems -= 1 }
+        if w === human { note(L("You won the round!"), "notif_win_round"); sound("round_win") }
+        else if w === computer { note(L("Your opponent won the round"), "notif_lose_round"); sound("round_lose") }
         else { note(L("The round ended in a draw"), "notif_draw_round") }
         await cleanupRound()
-        if me.gems <= 0 || op.gems <= 0 || round >= 3 {
+        if human.gems <= 0 || computer.gems <= 0 || round >= 3 {
             phase = .over
-            winner = me.gems > op.gems ? me : (op.gems > me.gems ? op : nil)
-            sound(winner === me ? "game_win" : "game_lose")
+            winner = human.gems > computer.gems ? human : (computer.gems > human.gems ? computer : nil)
+            sound(winner === human ? "game_win" : "game_lose")
             recalc()
             return
         }
         round += 1
-        me.passed = false; op.passed = false
+        human.passed = false; computer.passed = false
         current = w ?? current
         phase = .play
         await startRound()
     }
 
+    /// Returns a card to its base state when it leaves the board.
     private func resetCard(_ c: Card) {
         c.locked = false; c.setTo = nil; c.tempStrength = nil; c.multiplier = 1; c.bonus = 0; c.siegeMult = 1
         c.baseOverride = nil; c.heroOverride = nil; c.keepNextRound = false
     }
+    /// Clears the board after a round, keeping cards that stay.
     private func cleanupRound() async {
         var avengers: [(Card, Player, RowType)] = []
-        for p in [me, op] {
+        for p in [human, computer] {
             for c in p.rowCards where c.act("resilience") {
                 let key = c.data.abilities.last ?? ""
                 if p.rowCards.filter({ $0 !== c && $0.data.abilities.contains(key) }).count >= 1 { c.keepNextRound = true }
             }
         }
-        for p in [me, op] {
+        for p in [human, computer] {
             for r in RowType.allCases {
                 let row = p.row(r)
                 var stay: [Card] = []
@@ -485,13 +530,13 @@ final class Game {
             for c in p.hand + p.deck { c.tempStrength = nil }
             p.forcedCard = nil
         }
-        for c in weatherCards { (c.owner ?? me).grave.append(c) }
+        for c in weatherCards { (c.owner ?? human).grave.append(c) }
         weatherCards.removeAll()
-        for p in [me, op] where p.fleetPending > 0 { draw(p, p.fleetPending); p.fleetPending = 0 }
+        for p in [human, computer] where p.fleetPending > 0 { draw(p, p.fleetPending); p.fleetPending = 0 }
         if round < 3 {
             for (c, p, r) in avengers {
                 for t in c.data.targets {
-                    guard let d = gd.cards[t], d.isUnit else { continue }
+                    guard let d = gameData.cards[t], d.isUnit else { continue }
                     if let i = p.deck.firstIndex(where: { $0.key == t }) { let n = p.deck.remove(at: i); p.row(RowType.from(d.row) ?? r).cards.append(n); n.flash = 1 }
                     else { let n = Card(d, owner: p); p.row(RowType.from(d.row) ?? r).cards.append(n); n.flash = 1 }
                 }
@@ -500,6 +545,7 @@ final class Game {
         recalc()
     }
 
+    /// Rows where a card may be played.
     func validRows(for c: Card, by p: Player) -> [RowType] {
         if c.isUnit {
             if c.act("ambush") || c.has("ambush") { return RowType.allCases }
@@ -516,6 +562,7 @@ final class Game {
         default: return []
         }
     }
+    /// Enemy rows a card may target.
     func enemyRowTargets(for c: Card, by p: Player) -> [RowType] {
         switch c.specialKind ?? "" {
         case "lock": return RowType.allCases.filter { p.opponent.row($0).lock == nil }
@@ -523,18 +570,23 @@ final class Game {
         default: return []
         }
     }
+    /// Rows that can receive a curse.
     func curseRows(by p: Player) -> [(Player, RowType)] {
         [p, p.opponent].flatMap { q in RowType.allCases.filter { q.row($0).curse == nil }.map { (q, $0) } }
     }
+    /// Cards that a decoy can swap with.
     func decoyTargets(for p: Player) -> [Card] { p.rowCards.filter { !$0.hero && $0.key != "spe_decoy" && $0.immortalRounds == 0 } }
 
+    /// The human plays a card.
     func humanPlay(_ c: Card, row: RowType? = nil, rowOwner: Player? = nil, target: Card? = nil) {
-        guard !busy, phase == .play, current === me, me.hand.contains(where: { $0 === c }) else { return }
+        guard !busy, phase == .play, current === human, human.hand.contains(where: { $0 === c }) else { return }
         busy = true
-        Task { @MainActor in await self.play(c, by: self.me, row: row, rowOwner: rowOwner, target: target); self.busy = false }
+        Task { @MainActor in await self.play(c, by: self.human, row: row, rowOwner: rowOwner, target: target); self.busy = false }
     }
-    func humanPass() { guard !busy, phase == .play, current === me else { return }; busy = true; Task { @MainActor in await self.pass(self.me); self.busy = false } }
+    /// The human passes.
+    func humanPass() { guard !busy, phase == .play, current === human else { return }; busy = true; Task { @MainActor in await self.pass(self.human); self.busy = false } }
 
+    /// Plays a unit, special or weather card for a player.
     func play(_ c: Card, by p: Player, row: RowType? = nil, rowOwner: Player? = nil, target: Card? = nil) async {
         guard phase == .play, current === p, let hi = p.hand.firstIndex(where: { $0 === c }) else { return }
         if let f = p.forcedCard, f !== c, p.hand.contains(where: { $0 === f }) { return }
@@ -548,6 +600,7 @@ final class Game {
         await endTurn(p)
     }
 
+    /// Places a unit on a row and triggers its abilities.
     func placeUnit(_ c: Card, by p: Player, row r0: RowType, side forcedSide: Player? = nil) async {
         var r = r0
         let isSpy = c.has("spy") || c.has("emissary") || c.has("ofiri_envoy")
@@ -560,7 +613,7 @@ final class Game {
         if let curse = row.curse, !c.hero {
             row.curse = nil; (curse.owner ?? p).grave.append(curse)
             side.grave.append(c); c.diedRound = round
-            note(gd.abilityName("curse")); sound("curse")
+            note(gameData.abilityName("curse")); sound("curse")
             return
         }
         row.cards.append(c)
@@ -589,6 +642,7 @@ final class Game {
         recalc()
     }
 
+    /// Resolves the abilities of a unit that was just placed.
     private func unitAbilities(_ c: Card, by p: Player, side: Player, row r: RowType) async {
         let o = p.opponent!
         for a in c.data.abilities {
@@ -676,7 +730,7 @@ final class Game {
                 let opts = p.deck.filter { $0.key.hasPrefix("ofir_") && $0.data.isSpecial }
                 if let t = await pickOne(p, L("Choose 1 runestone from your deck to add to your hand."), opts, ai: { $0.randomElement() }) { p.deck.removeAll { $0 === t }; p.hand.append(t) }
             case "omen":
-                if let d = gd.cards["nv_catanddog"] { p.hand.append(Card(d, owner: p)) }
+                if let d = gameData.cards["nv_catanddog"] { p.hand.append(Card(d, owner: p)) }
             case "wish1", "wish2", "wish3":
                 await djinnWish(a, c, p)
             case "doppler":
@@ -697,6 +751,7 @@ final class Game {
         }
     }
 
+    /// Spy: the player draws cards.
     private func spyDraw(_ p: Player, _ n: Int) async {
         let o = p.opponent!
         for _ in 0..<n {
@@ -707,6 +762,7 @@ final class Game {
             draw(p, 1)
         }
     }
+    /// Lets the player reorder the top cards of the deck.
     private func reorderTop(_ p: Player, _ n: Int) async {
         let top = Array(p.deck.prefix(n))
         guard !top.isEmpty else { return }
@@ -714,6 +770,7 @@ final class Game {
         p.deck.removeFirst(top.count)
         p.deck.insert(contentsOf: order.isEmpty ? top : order, at: 0)
     }
+    /// Medic: revives a unit from the graveyard.
     private func medic(_ p: Player) async {
         sound("med")
         for _ in 0..<medicPicks {
@@ -724,6 +781,7 @@ final class Game {
             await placeUnit(c, by: p, row: c.allowedRows.first ?? .close)
         }
     }
+    /// Muster: plays every copy of the card from deck and hand.
     private func muster(_ c: Card, _ p: Player, _ r: RowType) async {
         let key = c.groupKey
         let fromHand = p.hand.filter { $0 !== c && $0.groupKey == key && $0.isUnit }
@@ -738,13 +796,15 @@ final class Game {
         sound("ally")
         recalc()
     }
+    /// Berserker: transforms berserkers on a row when mardroeme is present.
     private func berserk(_ side: Player, _ r: RowType) async {
         for c in side.row(r).cards where c.act("berserker") {
-            if let t = c.data.targets.first, let d = gd.cards[t] { c.transform(into: d); events.append(.anim(c, "mardroeme")) }
+            if let t = c.data.targets.first, let d = gameData.cards[t] { c.transform(into: d); events.append(.anim(c, "mardroeme")) }
         }
         sound("mardroeme")
         recalc()
     }
+    /// Djinn: grants one of the wishes.
     private func djinnWish(_ a: String, _ c: Card, _ p: Player) async {
         let o = p.opponent!
         let minStr = a == "wish3" ? 7 : 6
@@ -770,6 +830,7 @@ final class Game {
         }
     }
 
+    /// Resolves a special (non-weather) card.
     private func playSpecial(_ c: Card, by p: Player, row: RowType?, rowOwner: Player?, target: Card?) async {
         let o = p.opponent!
         let kind = c.specialKind ?? ""
@@ -804,12 +865,12 @@ final class Game {
             sound("lock")
         case "curse":
             var dest: (Player, RowType)? = rowOwner.flatMap { q in row.map { (q, $0) } }
-            if dest == nil { dest = await pickRow(p, gd.abilityName("curse"), curseRows(by: p)) { 3 + Int.random(in: 0..<3) } }
+            if dest == nil { dest = await pickRow(p, gameData.abilityName("curse"), curseRows(by: p)) { 3 + Int.random(in: 0..<3) } }
             if let (q, rr) = dest { q.row(rr).curse = c } else { p.grave.append(c) }
             sound("curse")
         case "knockback":
             var r = row
-            if r == nil { r = await pickRow(p, gd.abilityName("knockback"), [(o, .close), (o, .ranged)]) { 0 }?.1 }
+            if r == nil { r = await pickRow(p, gameData.abilityName("knockback"), [(o, .close), (o, .ranged)]) { 0 }?.1 }
             if let rr = r {
                 let dest: RowType = rr == .close ? .ranged : .siege
                 let moving = o.row(rr).cards.filter { !$0.hero }
@@ -871,6 +932,7 @@ final class Game {
         recalc()
     }
 
+    /// Seize: steals the weakest enemy unit from a row.
     private func seize(_ p: Player, _ r: RowType) async {
         let o = p.opponent!
         if o.row(r).shielded { return }
@@ -884,6 +946,7 @@ final class Game {
         sound("seize")
     }
 
+    /// Rows affected by a weather ability.
     private func weatherRows(_ a: String, _ c: Card) -> [RowType] {
         switch a {
         case "frost", "spider_web": return [.close]
@@ -895,6 +958,7 @@ final class Game {
         default: return []
         }
     }
+    /// Plays a weather card.
     private func playWeather(_ c: Card, by p: Player, row: RowType?) async {
         let a = c.data.abilities.first ?? ""
         if a == "clear" { await clearWeather(); (c.owner ?? p).grave.append(c); return }
@@ -906,12 +970,12 @@ final class Game {
             }
             rows = i == 0 ? [.close, .ranged] : [.ranged, .siege]
         }
-        if rows.allSatisfy({ me.weather[$0.rawValue].contains(a) && op.weather[$0.rawValue].contains(a) }) { (c.owner ?? p).grave.append(c); return }
-        for q in [me, op] { for r in rows { q.weather[r.rawValue].insert(a) } }
+        if rows.allSatisfy({ human.weather[$0.rawValue].contains(a) && computer.weather[$0.rawValue].contains(a) }) { (c.owner ?? p).grave.append(c); return }
+        for q in [human, computer] { for r in rows { q.weather[r.rawValue].insert(a) } }
         weatherCards.append(c)
         sound(["frost": "cold", "fog": "fog", "rain": "rain", "storm": "rain", "white_frost": "cold", "sandstorm": "sandstorm", "spider_web": "spider_web", "tse_tse": "tse_tse", "dragon_wrath": "dragon_wrath"][a] ?? "rain")
         if a == "fog" {
-            for q in [me, op] {
+            for q in [human, computer] {
                 for x in (q.deck + q.grave).filter({ $0.has("fog_summoning") }) {
                     q.deck.removeAll { $0 === x }; q.grave.removeAll { $0 === x }
                     resetCard(x); x.owner = q; q.row(x.allowedRows.first ?? .ranged).cards.append(x); x.flash = 1
@@ -920,14 +984,16 @@ final class Game {
         }
         recalc()
     }
+    /// Removes all weather.
     private func clearWeather() async {
         for c in weatherCards { c.owner?.grave.append(c) }
         weatherCards.removeAll()
-        for q in [me, op] { for i in 0..<3 { q.weather[i].removeAll() } }
+        for q in [human, computer] { for i in 0..<3 { q.weather[i].removeAll() } }
         sound("clear")
         recalc()
     }
 
+    /// Whether a card is protected from destruction (e.g. by a shield).
     private func protected(_ c: Card, side: Player) async -> Bool {
         if c.immortalRounds > 0 { return true }
         if navigatorShield && c.has("door_o") && (side.leaderAbility == "imlerith_general") { return true }
@@ -938,6 +1004,7 @@ final class Game {
         }
         return false
     }
+    /// Destroys a card and moves it to the graveyard.
     func destroy(_ c: Card, side: Player, burn: Bool = true) async {
         guard let r = side.rowOf(c) else { return }
         if await protected(c, side: side) { c.flash = 1; await animate(c, "comrade"); return }
@@ -949,17 +1016,18 @@ final class Game {
         side.lostUnitThisTurn = true
         if c.data.abilities.contains(where: { $0.hasPrefix("avenger") }) {
             for t in c.data.targets {
-                guard let d = gd.cards[t], d.isUnit else { continue }
+                guard let d = gameData.cards[t], d.isUnit else { continue }
                 let n: Card
                 if let i = side.deck.firstIndex(where: { $0.key == t }) { n = side.deck.remove(at: i) } else { n = Card(d, owner: side) }
                 n.owner = side; side.row(RowType.from(d.row) ?? r).cards.append(n); n.flash = 1
             }
         }
     }
+    /// Scorch: destroys the strongest units on the whole board.
     private func scorch(except: Card?) async {
         recalc()
         var all: [(Card, Player)] = []
-        for p in [me, op] { for r in RowType.allCases where !p.row(r).shielded { for c in p.row(r).cards where !c.hero && c !== except && c.key != "spe_decoy" { all.append((c, p)) } } }
+        for p in [human, computer] { for r in RowType.allCases where !p.row(r).shielded { for c in p.row(r).cards where !c.hero && c !== except && c.key != "spe_decoy" { all.append((c, p)) } } }
         guard let maxP = all.map({ $0.0.power }).max(), maxP > 0 else { return }
         sound("scorch")
         let victims = all.filter { $0.0.power == maxP }
@@ -968,10 +1036,11 @@ final class Game {
         for (c, p) in victims { await destroy(c, side: p, burn: false) }
         recalc()
     }
+    /// Cull: destroys the weakest units on the whole board.
     private func cull(except: Card?) async {
         recalc()
         var all: [(Card, Player)] = []
-        for p in [me, op] { for r in RowType.allCases where !p.row(r).shielded { for c in p.row(r).cards where !c.hero && c !== except && c.key != "spe_decoy" { all.append((c, p)) } } }
+        for p in [human, computer] { for r in RowType.allCases where !p.row(r).shielded { for c in p.row(r).cards where !c.hero && c !== except && c.key != "spe_decoy" { all.append((c, p)) } } }
         guard let mn = all.map({ $0.0.power }).min() else { return }
         sound("cull")
         let victims = all.filter { $0.0.power == mn }
@@ -980,6 +1049,7 @@ final class Game {
         for (c, p) in victims { await destroy(c, side: p, burn: false) }
         recalc()
     }
+    /// Row scorch: destroys the strongest units of one row if the row is strong enough.
     private func rowScorch(_ side: Player, _ t: RowType) async {
         recalc()
         let row = side.row(t)
@@ -997,26 +1067,31 @@ final class Game {
     static let passiveLeaders: Set<String> = ["eredin_treacherous", "vilgefortz_magician_kovir", "emhyr_whiteflame", "imlerith_general", "meve_white_queen",
                                               "novigrad_sigismund", "novigrad_sigismund2", "ofir_aamad", "zerrikanterment", "caranthir_navigator",
                                               "ofir_aamad_crown", "lady_wood_brewess", "francesca_daisy", "king_bran", "madman_lugos"]
+    /// Whether a player's leader ability can still be used.
     func leaderAvailable(_ p: Player) -> Bool { p.leaderUses > 0 && !Game.passiveLeaders.contains(p.leaderAbility) }
+    /// The human uses the leader ability.
     func humanLeader() {
-        guard !busy, phase == .play, current === me, leaderAvailable(me) else { return }
+        guard !busy, phase == .play, current === human, leaderAvailable(human) else { return }
         busy = true
         Task { @MainActor in
-            await self.useLeader(self.me)
+            await self.useLeader(self.human)
             self.busy = false
         }
     }
+    /// Uses a player's leader ability.
     func useLeader(_ p: Player) async {
         guard phase == .play, current === p, leaderAvailable(p) else { return }
         p.leaderUses -= 1
         p.leader.flash = 1
         sound("leader")
-        note(p === me ? gd.cardName(p.leader.data) : L("Opponent uses leader"), p === op ? "notif_\(p.faction)" : nil)
+        note(p === human ? gameData.cardName(p.leader.data) : L("Opponent uses leader"), p === computer ? "notif_\(p.faction)" : nil)
         await leaderEffect(p, free: false)
         await endTurn(p)
     }
+    /// Resolves every leader ability.
     func leaderEffect(_ p: Player, free: Bool) async {
         let o = p.opponent!
+        /// Strongest card of a list.
         func best(_ cs: [Card]) -> Card? { cs.max { self.aiCardValue($0) < self.aiCardValue($1) } }
         switch p.leaderAbility {
         case "foltest_king":
@@ -1065,11 +1140,11 @@ final class Game {
         case "francesca_pureblood", "francesca_hope":
             let target = p.leaderAbility == "francesca_pureblood" ? o : p
             let n = p.leaderAbility == "francesca_pureblood" ? 3 : 4
-            let picks = await pickCards(p, gd.abilityDesc(p.leaderAbility), target.rowCards.filter { !$0.hero }, min: 0, max: n) { cs in Array(cs.prefix(n)) }
+            let picks = await pickCards(p, gameData.abilityDesc(p.leaderAbility), target.rowCards.filter { !$0.hero }, min: 0, max: n) { cs in Array(cs.prefix(n)) }
             for t in picks {
                 guard let from = target.rowOf(t) else { continue }
                 let dests = RowType.allCases.filter { $0 != from }.map { (target, $0) }
-                if let (_, d) = await pickRow(p, gd.cardName(t.data), dests, ai: { target === o ? (o.weather[dests[0].1.rawValue].isEmpty ? 1 : 0) : 0 }) {
+                if let (_, d) = await pickRow(p, gameData.cardName(t.data), dests, ai: { target === o ? (o.weather[dests[0].1.rawValue].isEmpty ? 1 : 0) : 0 }) {
                     target.row(from).cards.removeAll { $0 === t }; target.row(d).cards.append(t)
                 }
             }
@@ -1082,7 +1157,7 @@ final class Game {
             }
         case "birna":
             let opts = p.deck.filter { $0.has("mardroeme") || $0.has("berserker") }
-            if let t = await pickOne(p, gd.abilityDesc("birna"), opts, ai: best) {
+            if let t = await pickOne(p, gameData.abilityDesc("birna"), opts, ai: best) {
                 p.deck.removeAll { $0 === t }
                 if t.isUnit { await placeUnit(t, by: p, row: t.allowedRows.first ?? .close) } else { p.hand.append(t) }
             }
@@ -1112,17 +1187,17 @@ final class Game {
             if let t = await pickOne(p, L("Choose the hero to play"), p.grave.filter { $0.hero && $0.isUnit }, ai: best) { p.grave.removeAll { $0 === t }; await placeUnit(t, by: p, row: t.allowedRows.first ?? .close) }
         case "anna_henrietta_ladyship":
             let opts = (p.rowCards + o.rowCards).filter { $0.revertTo != nil }
-            if let t = await pickOne(p, L("Choose the monster to revert to its primal form."), opts, ai: { $0.first }), let k = t.revertTo, let d = gd.cards[k] { t.transform(into: d); t.revertTo = nil }
+            if let t = await pickOne(p, L("Choose the monster to revert to its primal form."), opts, ai: { $0.first }), let k = t.revertTo, let d = gameData.cards[k] { t.transform(into: d); t.revertTo = nil }
         case "anna_henrietta_little_weasel":
             if let t = await pickOne(p, L("Choose the enemy hero to demote."), o.rowCards.filter { $0.hero }, ai: best) { t.heroOverride = false; t.flash = 1 }
         case "lady_wood_whispess":
             let opts = p.grave.filter { $0.isUnit && $0.diedRound == round }
-            let picks = await pickCards(p, gd.abilityDesc("lady_wood_whispess"), opts, min: 0, max: 3) { cs in Array(cs.sorted { self.aiCardValue($0) > self.aiCardValue($1) }.prefix(3)) }
+            let picks = await pickCards(p, gameData.abilityDesc("lady_wood_whispess"), opts, min: 0, max: 3) { cs in Array(cs.sorted { self.aiCardValue($0) > self.aiCardValue($1) }.prefix(3)) }
             for t in picks { p.grave.removeAll { $0 === t }; p.hand.append(t) }
         case "lady_wood_weavess":
             if let t = p.deck.first(where: { $0.specialKind == "curse" }) {
                 p.deck.removeAll { $0 === t }; t.owner = p
-                if let (q, r) = await pickRow(p, gd.abilityName("curse"), curseRows(by: p), ai: { 3 }) { q.row(r).curse = t }
+                if let (q, r) = await pickRow(p, gameData.abilityName("curse"), curseRows(by: p), ai: { 3 }) { q.row(r).curse = t }
             }
         case "ghost_tree":
             recalc()
@@ -1133,7 +1208,7 @@ final class Game {
             }
         case "auberon_king":
             let navs = (p.deck + p.grave).filter { $0.has("door_o") }
-            let picks = await pickCards(p, gd.abilityDesc("auberon_king"), navs, min: 0, max: navs.count) { $0 }
+            let picks = await pickCards(p, gameData.abilityDesc("auberon_king"), navs, min: 0, max: navs.count) { $0 }
             for t in picks { p.deck.removeAll { $0 === t }; p.grave.removeAll { $0 === t }; p.hand.append(t) }
             if !picks.isEmpty {
                 let back = await pickCards(p, L("Which card to put back into the deck?"), p.hand.filter { c in !picks.contains { $0 === c } }, min: picks.count, max: picks.count) { cs in Array(cs.sorted { self.aiCardValue($0) < self.aiCardValue($1) }.prefix(picks.count)) }
@@ -1146,28 +1221,28 @@ final class Game {
                 if t.data.isWeather { await playWeather(t, by: p, row: nil) } else { await playSpecial(t, by: p, row: nil, rowOwner: nil, target: nil) }
             }
         case "alzur_maker":
-            if let t = await pickOne(p, gd.abilityDesc("alzur_maker"), p.rowCards.filter { !$0.hero }, ai: { cs in cs.min { $0.power < $1.power } }) {
+            if let t = await pickOne(p, gameData.abilityDesc("alzur_maker"), p.rowCards.filter { !$0.hero }, ai: { cs in cs.min { $0.power < $1.power } }) {
                 await destroy(t, side: p)
-                if let d = gd.cards["wu_koshchey"] { await placeUnit(Card(d, owner: p), by: p, row: .close) }
+                if let d = gameData.cards["wu_koshchey"] { await placeUnit(Card(d, owner: p), by: p, row: .close) }
             }
         case "cyprian_wiley": await seize(p, .close)
         case "francis_bedlam":
             for q in [p, o] { for c in q.rowCards where c.has("spy") || c.has("emissary") { await destroy(c, side: q) } }
         case "gudrun_bjornsdottir":
             let crew = (p.deck + p.hand + p.grave).filter { $0.key == "sy_flyndr_crew" }
-            if crew.isEmpty, let d = gd.cards["sy_flyndr_crew"] { await placeUnit(Card(d, owner: p), by: p, row: .close) }
+            if crew.isEmpty, let d = gameData.cards["sy_flyndr_crew"] { await placeUnit(Card(d, owner: p), by: p, row: .close) }
             for t in crew { p.deck.removeAll { $0 === t }; p.hand.removeAll { $0 === t }; p.grave.removeAll { $0 === t }; resetCard(t); await placeUnit(t, by: p, row: .close) }
         case "cyrus_hemmelfart":
-            if let d = gd.cards["spe_dimeritium_shackles"], let (_, r) = await pickRow(p, gd.abilityDesc("cyrus_hemmelfart"), RowType.allCases.map { (o, $0) }, ai: { Int.random(in: 0..<3) }) {
+            if let d = gameData.cards["spe_dimeritium_shackles"], let (_, r) = await pickRow(p, gameData.abilityDesc("cyrus_hemmelfart"), RowType.allCases.map { (o, $0) }, ai: { Int.random(in: 0..<3) }) {
                 o.row(r).lock = Card(d, owner: p)
             }
         case "cyrus_hemmelfart1":
-            if let d = gd.cards["nv_inquisitional_pyres"] { await placeUnit(Card(d, owner: p), by: p, row: .close) }
+            if let d = gameData.cards["nv_inquisitional_pyres"] { await placeUnit(Card(d, owner: p), by: p, row: .close) }
         case "azar_javed":
             recalc()
             if let t = o.rowCards.filter({ $0.hero }).min(by: { $0.power < $1.power }) { await destroy(t, side: o) }
         case "baal_zebuth":
-            let picks = await pickCards(p, gd.abilityDesc("baal_zebuth"), o.grave, min: 0, max: 2) { cs in Array(cs.sorted { self.aiCardValue($0) > self.aiCardValue($1) }.prefix(2)) }
+            let picks = await pickCards(p, gameData.abilityDesc("baal_zebuth"), o.grave, min: 0, max: 2) { cs in Array(cs.sorted { self.aiCardValue($0) > self.aiCardValue($1) }.prefix(2)) }
             for t in picks { o.grave.removeAll { $0 === t }; resetCard(t); o.deck.append(t) }
             o.deck.shuffle()
         case "rarog":
@@ -1188,6 +1263,7 @@ final class Game {
         recalc()
     }
 
+    /// The faction ability that can be activated now, if any.
     func factionActive(_ p: Player) -> String? {
         switch p.faction {
         case "witcher_universe": return p.factionUsedRound ? nil : "skip_round"
@@ -1198,11 +1274,13 @@ final class Game {
         default: return nil
         }
     }
+    /// The human uses the faction ability.
     func humanFaction() {
-        guard !busy, phase == .play, current === me, factionActive(me) != nil else { return }
+        guard !busy, phase == .play, current === human, factionActive(human) != nil else { return }
         busy = true
-        Task { @MainActor in await self.useFaction(self.me); self.busy = false }
+        Task { @MainActor in await self.useFaction(self.human); self.busy = false }
     }
+    /// Uses a player's active faction ability.
     func useFaction(_ p: Player) async {
         guard let f = factionActive(p), current === p else { return }
         switch f {
@@ -1213,7 +1291,7 @@ final class Game {
             p.factionUsedGame = true
             note(L("Redania used its faction ability and skipped a turn"), "notif_redania")
         case "morale":
-            if let (_, r) = await pickRow(p, gd.factionDesc("lyria_rivia"), RowType.allCases.map { (p, $0) }, ai: { RowType.allCases.map { p.row($0).cards.count }.enumerated().max { $0.1 < $1.1 }!.0 }) {
+            if let (_, r) = await pickRow(p, gameData.factionDesc("lyria_rivia"), RowType.allCases.map { (p, $0) }, ai: { RowType.allCases.map { p.row($0).cards.count }.enumerated().max { $0.1 < $1.1 }!.0 }) {
                 p.row(r).factionMorale += 1; p.factionUsedGame = true
                 note(L("Lyria & Rivia ability used - Morale Boost effect applied to a row."), "notif_lyria_rivia"); sound("moral")
             }
@@ -1226,7 +1304,7 @@ final class Game {
             }
         case "transform":
             let opts = p.rowCards.filter { $0.act("monster_toussaint") && $0.playedTurn < turn - 1 }
-            if let t = await pickOne(p, L("Choose which monster to transform."), opts, ai: best1), let k = t.data.targets.first, let d = gd.cards[k] {
+            if let t = await pickOne(p, L("Choose which monster to transform."), opts, ai: best1), let k = t.data.targets.first, let d = gameData.cards[k] {
                 t.revertTo = t.key
                 t.transform(into: d); t.playedTurn = turn
                 sound("monster_toussaint")
@@ -1237,10 +1315,12 @@ final class Game {
         recalc()
         await endTurn(p)
     }
+    /// Strongest card of a list.
     private func best1(_ cs: [Card]) -> Card? { cs.max { aiCardValue($0) < aiCardValue($1) } }
 
+    /// Recalculates the power of every card on the board.
     func recalc() {
-        for p in [me, op] {
+        for p in [human, computer] {
             let side = p.rowCards
             let inspires = side.filter { $0.act("inspire") }
             let maxInspire = inspires.map { $0.basePower }.max() ?? 0
@@ -1265,6 +1345,7 @@ final class Game {
             p.total = p.rows.reduce(0) { $0 + $1.total } + p.aamadBonus
         }
     }
+    /// Power of a single card on a row after weather, horns, bonds and morale.
     func cardScore(_ c: Card, _ r: RowType, _ p: Player, bondCounts: [String: Int], morale: Int, wine: Int, horns: Int, weather w: Set<String>,
                    inspire: Int?, whorshippers: Int, schools: [String: Int]) -> Int {
         if c.key == "spe_decoy" { return 0 }
@@ -1291,12 +1372,14 @@ final class Game {
         return t
     }
 
+    /// The human gives up the match.
     func surrender() {
         guard phase != .over else { return }
-        phase = .over; me.gems = 0; winner = op
+        phase = .over; human.gems = 0; winner = computer
         sound("game_lose")
         if choiceCont != nil { resolveChoice(nil) }
     }
+    /// Rough value of a card used by AI heuristics.
     func aiCardValue(_ c: Card) -> Int {
         c.basePower + (c.hero ? 3 : 0) + (c.has("spy") ? 6 : 0) + (c.has("medic") ? 5 : 0) + (c.has("muster") ? 4 : 0) +
             (c.data.isSpecial || c.data.isWeather ? 4 : 0)

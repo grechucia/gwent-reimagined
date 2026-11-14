@@ -1,5 +1,7 @@
+// Static game data loaded from JSON (cards, decks, factions, abilities) and localisation helpers.
 import Foundation
 
+/// Static definition of a card loaded from cards.json.
 struct CardData {
     let key: String
     let name: String
@@ -21,8 +23,10 @@ struct CardData {
     var image: String { "img/sm/\(faction)_\(filename).jpg" }
 }
 
+/// A deck: title, description, leader, faction and card counts.
 struct DeckData { let title: String; let description: String; let leader: String; let faction: String; let cards: [(String, Int)] }
 
+/// All static game data and the active translation.
 final class GameData {
     static var shared: GameData!
     var cards: [String: CardData] = [:]
@@ -33,15 +37,20 @@ final class GameData {
     var language = "en"
     static let languages: [(code: String, name: String)] = [("de", "Deutsch"), ("en", "English"), ("es", "Español"), ("fr", "Français"),
         ("it", "Italiano"), ("pl", "Polski"), ("pt", "Português"), ("ru", "Русский"), ("zh", "中文"), ("ja", "日本語"), ("ko", "한국어")]
+    /// Whether a translation exists for a language code.
     func hasTranslation(_ code: String) -> Bool { code == "en" || lang[code] != nil }
+    /// Native name of a language.
     static func languageName(_ code: String) -> String { languages.first { $0.code == code }?.name ?? code }
 
     init(dir: URL) {
+        /// Loads a JSON file from the data folder.
         func json(_ n: String) -> Any? {
             guard let d = try? Data(contentsOf: dir.appendingPathComponent(n)) else { return nil }
             return try? JSONSerialization.jsonObject(with: d)
         }
+        /// Reads a JSON value as a string.
         func str(_ v: Any?) -> String { if let s = v as? String { return s }; if let n = v as? NSNumber { return n.stringValue }; return "" }
+        /// Reads a JSON value as an integer.
         func int(_ v: Any?) -> Int { if let n = v as? NSNumber { return n.intValue }; return Int(str(v)) ?? 0 }
         if let c = json("cards.json") as? [String: [String: Any]] {
             for (k, v) in c {
@@ -65,14 +74,22 @@ final class GameData {
         for (code, _) in GameData.languages { if let l = json("lang_\(code).json") as? [String: Any] { lang[code] = l } }
     }
 
+    /// Section of the active translation file.
     private func section(_ s: String) -> [String: Any] { (lang[language]?[s] as? [String: Any]) ?? [:] }
 
+    /// Localised card name.
     func cardName(_ c: CardData) -> String { ((section("cards")[c.key] as? [String: String])?["name"]).flatMap { $0.isEmpty ? nil : $0 } ?? c.name }
+    /// Localised card quote.
     func cardQuote(_ c: CardData) -> String { ((section("cards")[c.key] as? [String: String])?["quote"]).flatMap { $0.isEmpty ? nil : $0 } ?? c.quote }
+    /// Localised ability name.
     func abilityName(_ k: String) -> String { ((section("abilities")[k] as? [String: String])?["name"]) ?? abilities[k]?["name"] ?? k }
+    /// Localised ability description.
     func abilityDesc(_ k: String) -> String { ((section("abilities")[k] as? [String: String])?["description"]) ?? abilities[k]?["description"] ?? "" }
+    /// Localised faction name.
     func factionName(_ k: String) -> String { ((section("factions")[k] as? [String: String])?["name"]) ?? factions[k]?["name"] ?? k }
+    /// Localised faction description.
     func factionDesc(_ k: String) -> String { ((section("factions")[k] as? [String: String])?["description"]) ?? factions[k]?["description"] ?? "" }
+    /// Localised rules text, split into headings and paragraphs.
     func rules() -> [(text: String, heading: Bool)] {
         guard let blocks = (lang[language]?["blocks"] ?? lang["en"]?["blocks"]) as? [String: String] else { return [] }
         var out: [(String, Bool)] = []
@@ -88,11 +105,14 @@ final class GameData {
         }
         return out
     }
+    /// Translates an English UI string into the active language.
     func ui(_ en: String) -> String {
         if language == "en" { return en }
         return (section("ui")[en] as? String) ?? en
     }
 }
 
+/// Translates an English UI string (shorthand used across the UI).
 func L(_ en: String) -> String { GameData.shared.ui(en) }
+/// Returns the Polish text in Polish, otherwise the translation of the English text.
 func L2(_ pl: String, _ en: String) -> String { GameData.shared.language == "pl" ? pl : GameData.shared.ui(en) }

@@ -1,20 +1,28 @@
+// Computer opponent: generates every legal move, scores it by simulating the board, and decides when to pass.
 import Foundation
 
+/// A candidate AI action with its evaluated value and the point gain it produces.
 struct AIMove { let card: Card?; let row: RowType?; let rowOwner: Player?; let target: Card?; let value: Double; let gain: Int; let kind: Kind
+    /// Whether the move plays a card, uses the leader or uses the faction ability.
     enum Kind { case card, leader, faction }
 }
 
+/// AI logic implemented as an extension of the game engine.
 @MainActor
 extension Game {
+    /// Snapshot of the board used to try a move and roll it back.
     private struct Snap { var rows: [[Card]]; var specials: [[Card]]; var weather: [[Set<String>]]; var horns: [Bool] }
+    /// Captures the current board state.
     private func snap() -> Snap {
-        let rs = me.rows + op.rows
-        return Snap(rows: rs.map { $0.cards }, specials: rs.map { $0.specials }, weather: [me.weather, op.weather], horns: rs.map { $0.leaderHorn })
+        let rs = human.rows + computer.rows
+        return Snap(rows: rs.map { $0.cards }, specials: rs.map { $0.specials }, weather: [human.weather, computer.weather], horns: rs.map { $0.leaderHorn })
     }
+    /// Restores a board state captured with snap().
     private func restore(_ s: Snap) {
-        for (i, r) in (me.rows + op.rows).enumerated() { r.cards = s.rows[i]; r.specials = s.specials[i]; r.leaderHorn = s.horns[i] }
-        me.weather = s.weather[0]; op.weather = s.weather[1]
+        for (i, r) in (human.rows + computer.rows).enumerated() { r.cards = s.rows[i]; r.specials = s.specials[i]; r.leaderHorn = s.horns[i] }
+        human.weather = s.weather[0]; computer.weather = s.weather[1]
     }
+    /// Returns how much the score difference changes for `ai` if `apply` is executed (the board is restored afterwards).
     private func diffAfter(_ ai: Player, _ apply: () -> Void) -> Int {
         let s = snap()
         apply(); recalc()
@@ -22,17 +30,20 @@ extension Game {
         restore(s); recalc()
         return d
     }
+    /// Simulates removing the strongest non-hero units from the given rows (scorch-like effects).
     private func killMax(_ cards: [Card], in rows: [Row]) {
         guard let mx = cards.filter({ !$0.hero }).map({ $0.power }).max(), mx > 0 else { return }
         for r in rows where !r.shielded { r.cards.removeAll { !$0.hero && $0.power == mx && $0.immortalRounds == 0 } }
     }
 
+    /// Lists every possible move for the AI player together with its estimated value.
     func aiMoves(for ai: Player) -> [AIMove] {
         let foe: Player = ai.opponent
         recalc()
         let base = ai.total - foe.total
         var moves: [AIMove] = []
         let hand = ai.forcedCard.map { f in ai.hand.filter { $0 === f } } ?? ai.hand
+        /// Records one candidate move.
         func add(_ c: Card?, _ r: RowType?, _ ro: Player?, _ t: Card?, _ d: Int, _ extra: Double, _ kind: AIMove.Kind = .card) {
             let cost = c.map { Double($0.basePower) * 0.35 + ($0.hero ? 2 : 0) } ?? 0
             moves.append(AIMove(card: c, row: r, rowOwner: ro, target: t, value: Double(d - base) + extra - cost, gain: d - base, kind: kind))
@@ -84,8 +95,8 @@ extension Game {
                 var bestD = Int.min
                 for o in options {
                     let d = diffAfter(ai) {
-                        if a == "clear" { for q in [me, op] { for i in 0..<3 { q.weather[i].removeAll() } } }
-                        else { for q in [me, op] { for r in o { q.weather[r.rawValue].insert(a) } } }
+                        if a == "clear" { for q in [human, computer] { for i in 0..<3 { q.weather[i].removeAll() } } }
+                        else { for q in [human, computer] { for r in o { q.weather[r.rawValue].insert(a) } } }
                     }
                     bestD = max(bestD, d)
                 }
@@ -135,7 +146,7 @@ extension Game {
                     }
                     add(c, nil, nil, nil, d, -1)
                 case "clear":
-                    let d = diffAfter(ai) { for q in [me, op] { for i in 0..<3 { q.weather[i].removeAll() } } }
+                    let d = diffAfter(ai) { for q in [human, computer] { for i in 0..<3 { q.weather[i].removeAll() } } }
                     add(c, nil, nil, nil, d, -1)
                 case "decoy":
                     for t in decoyTargets(for: ai) {
@@ -177,7 +188,7 @@ extension Game {
             switch la {
             case "foltest_siegemaster": d = diffAfter(ai) { ai.row(.siege).leaderHorn = true }
             case "francesca_beautiful": d = diffAfter(ai) { ai.row(.ranged).leaderHorn = true }
-            case "foltest_lord", "vilgefortz_sorcerer": d = diffAfter(ai) { for q in [me, op] { for i in 0..<3 { q.weather[i].removeAll() } } }
+            case "foltest_lord", "vilgefortz_sorcerer": d = diffAfter(ai) { for q in [human, computer] { for i in 0..<3 { q.weather[i].removeAll() } } }
             case "foltest_son", "foltest_steelforged", "francesca_queen", "cosimo_malaspina":
                 let t: RowType = la == "foltest_son" ? .ranged : (la == "foltest_steelforged" ? .siege : .close)
                 d = foe.row(t).total >= 10 ? diffAfter(ai) { killMax(foe.row(t).cards, in: [foe.row(t)]) } : base - 5
@@ -203,15 +214,16 @@ extension Game {
         return moves
     }
 
+    /// Chooses the move to play, or nil to pass, using round state and the configured difficulty.
     func aiDecide(for ai0: Player? = nil) -> AIMove? {
-        let ai = ai0 ?? op, foe: Player = ai.opponent
+        let ai = ai0 ?? computer, foe: Player = ai.opponent
         recalc()
         if ai.hand.isEmpty && !leaderAvailable(ai) { return nil }
         let lead = ai.total - foe.total
         let moves = aiMoves(for: ai).sorted { $0.value > $1.value }
         guard let best = moves.first else { return nil }
         if let f = ai.forcedCard, let m = moves.first(where: { $0.card === f }) { return m }
-        if ai === op && aiLevel < 2, let m = weakenedChoice(moves, ai: ai, foe: foe, lead: lead) { return m }
+        if ai === computer && aiLevel < 2, let m = weakenedChoice(moves, ai: ai, foe: foe, lead: lead) { return m }
         let mustWin = ai.gems == 1
         if foe.passed {
             if lead > 0 { return nil }
@@ -235,6 +247,7 @@ extension Game {
         return pool.randomElement()
     }
 
+    /// Performs the AI player's turn.
     func aiTurn(_ ai: Player) async {
         guard phase == .play, current === ai, !busy else { return }
         busy = true

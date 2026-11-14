@@ -1,3 +1,4 @@
+// Metal 2D renderer: batched textured quads in a virtual 1920x1080 space, CoreText text and the title-screen shader.
 import Metal
 import MetalKit
 import CoreText
@@ -8,27 +9,36 @@ import AppKit
 import UIKit
 #endif
 
-let VW: Float = 1920, VH: Float = 1080
+let virtualWidth: Float = 1920, virtualHeight: Float = 1080
 
+/// RGBA colour.
 struct RGBA { var r, g, b, a: Float
     static let white = RGBA(r: 1, g: 1, b: 1, a: 1), black = RGBA(r: 0, g: 0, b: 0, a: 1)
+    /// Grey colour.
     static func gray(_ v: Float, _ a: Float = 1) -> RGBA { RGBA(r: v, g: v, b: v, a: a) }
+    /// Same colour with alpha multiplied.
     func alpha(_ m: Float) -> RGBA { RGBA(r: r, g: g, b: b, a: a * m) }
     static let gold = RGBA(r: 0.95, g: 0.80, b: 0.45, a: 1), goldDark = RGBA(r: 0.79, g: 0.63, b: 0.29, a: 1)
 }
 
+/// Rectangle in virtual 1920x1080 coordinates.
 struct R: Equatable { var x, y, w, h: Float
     init(_ x: Float, _ y: Float, _ w: Float, _ h: Float) { self.x = x; self.y = y; self.w = w; self.h = h }
+    /// Whether a point lies inside the rectangle.
     func contains(_ p: SIMD2<Float>) -> Bool { p.x >= x && p.x <= x + w && p.y >= y && p.y <= y + h }
+    /// Rectangle shrunk (positive) or grown (negative) on every side.
     func inset(_ d: Float) -> R { R(x + d, y + d, w - 2 * d, h - 2 * d) }
     var mid: SIMD2<Float> { SIMD2(x + w / 2, y + h / 2) }
 }
 
+/// Vertex sent to the GPU.
 private struct Vtx { var pos: SIMD2<Float>; var uv: SIMD2<Float>; var color: SIMD4<Float>; var mode: Float; var pad: SIMD3<Float> = .zero }
 
+/// Rendered text texture with its size in virtual units.
 final class TextTex { let tex: MTLTexture; let w: Float; let h: Float
     init(tex: MTLTexture, w: Float, h: Float) { self.tex = tex; self.w = w; self.h = h } }
 
+/// Batches textured quads into Metal draw calls, letterboxed to 16:9.
 final class Renderer {
     let device: MTLDevice
     let queue: MTLCommandQueue
@@ -63,6 +73,7 @@ final class Renderer {
         let lib: MTLLibrary
         do { lib = try d.makeLibrary(source: Renderer.shaderSource, options: nil) }
         catch { fatalError("Metal: \(error)") }
+        /// Creates a render pipeline.
         func pipe(_ v: String, _ f: String) -> MTLRenderPipelineState {
             let p = MTLRenderPipelineDescriptor()
             p.vertexFunction = lib.makeFunction(name: v); p.fragmentFunction = lib.makeFunction(name: f)
@@ -87,6 +98,7 @@ final class Renderer {
         white.replace(region: MTLRegionMake2D(0, 0, 1, 1), mipmapLevel: 0, withBytes: &px, bytesPerRow: 4)
     }
 
+    /// Loads (and caches) an image from the game folder as a texture.
     func texture(_ rel: String) -> MTLTexture? {
         if let t = texCache[rel] { return t }
         let url = gameDir.appendingPathComponent(rel)
@@ -95,7 +107,9 @@ final class Renderer {
         texCache[rel] = t
         return t
     }
+    /// Loads textures in advance.
     func preload(_ rels: [String]) { for r in rels { _ = texture(r) } }
+    /// Decodes an image file into a mipmapped texture.
     private func decode(_ url: URL) -> MTLTexture? {
         guard let src = CGImageSourceCreateWithURL(url as CFURL, nil),
               let img = CGImageSourceCreateImageAtIndex(src, 0, [kCGImageSourceShouldCache: false] as CFDictionary) else { return nil }
@@ -123,19 +137,20 @@ final class Renderer {
         return t
     }
 
+    /// Starts a frame: computes the letterboxed viewport and opens a render pass.
     func begin(view: MTKView) -> MTLCommandBuffer? {
         inflight.wait()
         guard let rpd = view.currentRenderPassDescriptor, let cb = queue.makeCommandBuffer() else { inflight.signal(); return nil }
         let ds = view.drawableSize
         let dw = Float(ds.width), dh = Float(ds.height)
-        var w = dw, h = dw * VH / VW
-        if h > dh { h = dh; w = dh * VW / VH }
+        var w = dw, h = dw * virtualHeight / virtualWidth
+        if h > dh { h = dh; w = dh * virtualWidth / virtualHeight }
         viewportPx = R(((dw - w) / 2).rounded(), ((dh - h) / 2).rounded(), w.rounded(), h.rounded())
-        pxScale = viewportPx.w / VW
+        pxScale = viewportPx.w / virtualWidth
         guard let e = cb.makeRenderCommandEncoder(descriptor: rpd) else { inflight.signal(); return nil }
         enc = e
         e.setViewport(MTLViewport(originX: Double(viewportPx.x), originY: Double(viewportPx.y), width: Double(viewportPx.w), height: Double(viewportPx.h), znear: 0, zfar: 1))
-        projection = float4x4(rows: [SIMD4(2 / VW, 0, 0, -1), SIMD4(0, -2 / VH, 0, 1), SIMD4(0, 0, 1, 0), SIMD4(0, 0, 0, 1)])
+        projection = float4x4(rows: [SIMD4(2 / virtualWidth, 0, 0, -1), SIMD4(0, -2 / virtualHeight, 0, 1), SIMD4(0, 0, 1, 0), SIMD4(0, 0, 0, 1)])
         verts = buffers[bufIndex].contents().bindMemory(to: Vtx.self, capacity: maxVerts)
         vcount = 0; flushedFrom = 0; curTex = nil
         e.setRenderPipelineState(pipeline)
@@ -143,6 +158,7 @@ final class Renderer {
         frameNo += 1
         return cb
     }
+    /// Finishes the frame and presents it.
     func end(_ cb: MTLCommandBuffer, view: MTKView) {
         flush()
         enc?.endEncoding(); enc = nil
@@ -153,6 +169,7 @@ final class Renderer {
         bufIndex = (bufIndex + 1) % 3
         if frameNo % 600 == 0 { trimTextCache() }
     }
+    /// Sends the queued quads to the GPU.
     private func flush() {
         guard let e = enc, vcount > flushedFrom, let t = curTex else { return }
         e.setVertexBuffer(buffers[bufIndex], offset: 0, index: 0)
@@ -162,6 +179,7 @@ final class Renderer {
         flushedFrom = vcount
     }
 
+    /// Queues a textured quad.
     func quad(_ t: MTLTexture, _ r: R, uv: R = R(0, 0, 1, 1), color c: RGBA = .white, mode: Float = 0, rotation: Float = 0) {
         if vcount + 6 > maxVerts { return }
         if t !== curTex { flush(); curTex = t }
@@ -174,10 +192,12 @@ final class Renderer {
         let u = [SIMD2<Float>(uv.x, uv.y), SIMD2(uv.x + uv.w, uv.y), SIMD2(uv.x, uv.y + uv.h), SIMD2(uv.x + uv.w, uv.y + uv.h)]
         for i in [0, 1, 2, 1, 3, 2] { verts[vcount] = Vtx(pos: p[i], uv: u[i], color: col, mode: mode); vcount += 1 }
     }
+    /// Draws an image stretched into a rectangle.
     func image(_ rel: String, _ r: R, color: RGBA = .white, rotation: Float = 0) {
         guard let t = texture(rel) else { return }
         quad(t, r, color: color, rotation: rotation)
     }
+    /// Draws an image filling a rectangle, cropping to keep its aspect ratio.
     func imageCover(_ rel: String, _ r: R, color: RGBA = .white) {
         guard let t = texture(rel) else { return }
         let ta = Float(t.width) / Float(t.height), ra = r.w / r.h
@@ -185,6 +205,7 @@ final class Renderer {
         if ta > ra { uv.w = ra / ta; uv.x = (1 - uv.w) / 2 } else { uv.h = ta / ra; uv.y = (1 - uv.h) / 2 }
         quad(t, r, uv: uv, color: color)
     }
+    /// Draws an image fitted inside a rectangle.
     func imageContain(_ rel: String, _ r: R, color: RGBA = .white, alignTop: Bool = false) {
         guard let t = texture(rel) else { return }
         let ta = Float(t.width) / Float(t.height), ra = r.w / r.h
@@ -192,6 +213,7 @@ final class Renderer {
         if ta > ra { d.h = r.w / ta; if !alignTop { d.y = r.y + (r.h - d.h) / 2 } } else { d.w = r.h * ta; d.x = r.x + (r.w - d.w) / 2 }
         quad(t, d, color: color)
     }
+    /// Restricts drawing to a rectangle (nil removes the clip).
     func clip(_ r: R?) {
         flush()
         guard let e = enc else { return }
@@ -204,11 +226,14 @@ final class Renderer {
             e.setScissorRect(MTLScissorRect(x: Int(vp.x), y: Int(vp.y), width: Int(vp.w), height: Int(vp.h)))
         }
     }
+    /// Draws a filled rectangle.
     func rect(_ r: R, _ c: RGBA) { quad(white, r, color: c) }
+    /// Draws a rectangle outline.
     func frame(_ r: R, _ c: RGBA, _ t: Float = 2) {
         rect(R(r.x, r.y, r.w, t), c); rect(R(r.x, r.y + r.h - t, r.w, t), c)
         rect(R(r.x, r.y + t, t, r.h - 2 * t), c); rect(R(r.x + r.w - t, r.y + t, t, r.h - 2 * t), c)
     }
+    /// Draws a vertical gradient.
     func gradient(_ r: R, _ top: RGBA, _ bottom: RGBA, steps: Int = 24) {
         let n = max(1, steps)
         for i in 0..<n {
@@ -219,13 +244,19 @@ final class Renderer {
         }
     }
 
+    /// Font description: family, size and style.
     struct Font: Hashable { let name: String; let size: Float; let bold: Bool; let italic: Bool
+        /// System sans-serif font.
         static func ui(_ s: Float, bold: Bool = false) -> Font { Font(name: "Helvetica Neue", size: s, bold: bold, italic: false) }
+        /// Serif font (Georgia).
         static func serif(_ s: Float, bold: Bool = false, italic: Bool = false) -> Font { Font(name: "Georgia", size: s, bold: bold, italic: italic) }
+        /// The Gwent logo font.
         static func gwent(_ s: Float) -> Font { Font(name: "GWENT-ExtraBold", size: s, bold: false, italic: false) }
     }
+    /// Text alignment.
     enum Align { case left, center, right }
 
+    /// Creates the CoreText font for a given pixel scale.
     private func ctFont(_ f: Font, scale: Float) -> CTFont {
         var font = CTFontCreateWithName(f.name as CFString, CGFloat(f.size * scale), nil)
         var traits: CTFontSymbolicTraits = []
@@ -234,6 +265,7 @@ final class Renderer {
         if !traits.isEmpty, let t = CTFontCreateCopyWithSymbolicTraits(font, 0, nil, traits, traits) { font = t }
         return font
     }
+    /// Renders text into a cached greyscale texture.
     func textTex(_ s: String, _ f: Font, maxWidth: Float = 0, align: Align = .left, lineSpacing: Float = 0) -> TextTex? {
         if s.isEmpty { return nil }
         let scale = max(0.5, pxScale)
@@ -267,9 +299,11 @@ final class Renderer {
         textCache[key] = (tt, frameNo)
         return tt
     }
+    /// Drops text textures that were not used recently.
     private func trimTextCache() { textCache = textCache.filter { frameNo - $0.value.1 < 600 } }
 
     @discardableResult
+    /// Draws text and returns its size.
     func text(_ s: String, _ f: Font, x: Float, y: Float, color: RGBA = .white, maxWidth: Float = 0, align: Align = .left,
               shadow: RGBA? = RGBA(r: 0, g: 0, b: 0, a: 0.85), lineSpacing: Float = 0) -> (w: Float, h: Float) {
         guard let t = textTex(s, f, maxWidth: maxWidth, align: align, lineSpacing: lineSpacing) else { return (0, 0) }
@@ -284,13 +318,17 @@ final class Renderer {
         quad(t.tex, R(x0, y, t.w, t.h), color: color, mode: 1)
         return (t.w, t.h)
     }
+    /// Measures text without drawing it.
     func measure(_ s: String, _ f: Font, maxWidth: Float = 0) -> (w: Float, h: Float) {
         guard let t = textTex(s, f, maxWidth: maxWidth) else { return (0, 0) }
         return (t.w, t.h)
     }
 
+    /// Uniforms for the title-screen shader.
     struct BgParams { var time: Float; var mouse: SIMD2<Float>; var texel: SIMD2<Float>; var pad: Float = 0 }
+    /// An animated region of the title background (position/size and motion).
     struct BgRegion { var reg: SIMD4<Float>; var mot: SIMD4<Float> }
+    /// Draws the animated title background with the dedicated shader.
     func titleBackground(_ rel: String, time: Float, mouse: SIMD2<Float>, regions: [BgRegion], glints: [SIMD2<Float>], candles: [SIMD2<Float>]) {
         guard let t = texture(rel), let e = enc else { return }
         flush()

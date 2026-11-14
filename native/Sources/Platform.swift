@@ -1,3 +1,4 @@
+// Platform abstraction shared by macOS and iOS: host settings, dialogs, links and the folder picker.
 import Foundation
 #if os(macOS)
 import AppKit
@@ -6,6 +7,7 @@ import UIKit
 import UniformTypeIdentifiers
 #endif
 
+/// Settings provided by the platform-specific app delegate and shown in Options.
 @MainActor protocol GameHost: AnyObject {
     var renderRes: Int { get }
     func setRenderRes(_ px: Int)
@@ -18,6 +20,7 @@ import UniformTypeIdentifiers
     func refreshMenus()
 }
 
+/// Platform-specific helpers used by the shared game code.
 @MainActor enum Platform {
     #if os(macOS)
     static let isDesktop = true
@@ -25,6 +28,7 @@ import UniformTypeIdentifiers
     static let isDesktop = false
     #endif
 
+    /// Opens a URL in the default browser.
     static func openURL(_ u: URL) {
         #if os(macOS)
         NSWorkspace.shared.open(u)
@@ -33,12 +37,14 @@ import UniformTypeIdentifiers
         #endif
     }
 
+    /// Quits the app (macOS only).
     static func quit() {
         #if os(macOS)
         NSApp.terminate(nil)
         #endif
     }
 
+    /// Asks the user for a line of text; `done` receives nil when cancelled.
     static func askText(title: String, message: String, placeholder: String, current: String, done: @escaping (String?) -> Void) {
         #if os(macOS)
         DispatchQueue.main.async {
@@ -63,6 +69,7 @@ import UniformTypeIdentifiers
         #endif
     }
 
+    /// Lets the user choose a folder; on iOS access to it is kept with a security-scoped bookmark.
     static func pickFolder(message: String, done: @escaping (URL?) -> Void) {
         #if os(macOS)
         DispatchQueue.main.async {
@@ -97,6 +104,7 @@ import UniformTypeIdentifiers
         return vc
     }
     private static var pickerDelegate: PickerDelegate?
+    /// Receives the result of the iOS document picker.
     final class PickerDelegate: NSObject, UIDocumentPickerDelegate {
         let done: (URL?) -> Void
         init(_ done: @escaping (URL?) -> Void) { self.done = done }
@@ -104,6 +112,7 @@ import UniformTypeIdentifiers
         func documentPickerWasCancelled(_ c: UIDocumentPickerViewController) { done(nil) }
     }
 
+    /// Restores access to the save folder chosen earlier on iOS.
     static func restoreBookmarkedFolder() {
         guard let b = UserDefaults.standard.data(forKey: "saveDirBookmark") else { return }
         var stale = false

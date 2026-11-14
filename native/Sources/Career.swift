@@ -1,7 +1,9 @@
+// Persistent save file (SaveStore) and the career mode: generated chapters, opponents, rewards and the player's collection.
 import CoreGraphics
 import Foundation
 
 
+/// Single JSON save file holding the career, custom decks, favourite deck and player name.
 @MainActor final class SaveStore {
     static let shared = SaveStore()
     private(set) var data: [String: Any] = [:]
@@ -42,9 +44,11 @@ import Foundation
         if data["customDecks"] == nil, let a = UserDefaults.standard.array(forKey: "customDecks") { data["customDecks"] = a }
         if data["favoriteDeck"] == nil, let f = UserDefaults.standard.string(forKey: "favoriteDeck") { data["favoriteDeck"] = f }
     }
+    /// Reads the save file from the current location.
     func load() {
         if let d = try? Data(contentsOf: fileURL), let o = try? JSONSerialization.jsonObject(with: d) as? [String: Any] { data = o }
     }
+    /// Writes the save file to the current location.
     func save() {
         try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
         if let d = try? JSONSerialization.data(withJSONObject: data, options: [.prettyPrinted, .sortedKeys]) { try? d.write(to: fileURL, options: .atomic) }
@@ -53,6 +57,7 @@ import Foundation
         get { data[key] }
         set { data[key] = newValue; save() }
     }
+    /// Switches to a new save folder: loads an existing save there, otherwise moves the current one.
     func choose(_ url: URL) {
         let current = data
         if SaveStore.testDir != nil { return }
@@ -62,12 +67,14 @@ import Foundation
 }
 
 
+/// Deterministic xorshift random generator, so a career seed always produces the same chapters.
 struct SeededRNG: RandomNumberGenerator {
     var s: UInt64
     init(_ seed: Int) { s = UInt64(bitPattern: Int64(seed)) &* 0x9E3779B97F4A7C15 | 1 }
     mutating func next() -> UInt64 { s ^= s << 13; s ^= s >> 7; s ^= s << 17; return s }
 }
 
+/// One career opponent: display name, portrait card, faction, card strength cap, hero count and boss flag.
 struct CareerFight {
     let name: String
     let portrait: String
@@ -77,9 +84,10 @@ struct CareerFight {
     let boss: Bool
 }
 
+/// Career mode state and generation.
 @MainActor final class Career {
     static let shared = Career()
-    var gd: GameData { GameData.shared }
+    var gameData: GameData { GameData.shared }
 
     var faction = ""
     var difficulty = 1
@@ -102,12 +110,14 @@ struct CareerFight {
     private var rngBase: Int { seed &* 31 &+ difficulty }
     private var cache: [Int: (title: String, fights: [CareerFight])] = [:]
     private var cacheKey = ""
+    /// Returns the title and the four fights of chapter `c` (cached per seed, difficulty and language).
     func chapter(_ c: Int) -> (title: String, fights: [CareerFight]) {
-        let key = "\(seed)|\(difficulty)|\(gd.language)"
+        let key = "\(seed)|\(difficulty)|\(gameData.language)"
         if key != cacheKey { cache = [:]; cacheKey = key }
         if let v = cache[c] { return v }
         let v = makeChapter(c); cache[c] = v; return v
     }
+    /// Generates a chapter: three regular opponents and a boss whose strength grows with progress.
     private func makeChapter(_ c: Int) -> (title: String, fights: [CareerFight]) {
         var rng = SeededRNG(rngBase &+ c &* 1_000_003)
         var orng = SeededRNG(rngBase)
@@ -127,13 +137,15 @@ struct CareerFight {
             let heroes = boss ? min(7, h + 1 + (last ? 2 : 0)) : max(0, h - 1 + (k == 2 ? 1 : 0))
             let tmp = CareerFight(name: "", portrait: "", faction: fac, cap: max(2, cap), heroes: heroes, boss: boss)
             let dk = opponentDeck(index(c, k), tmp)
-            let pk: String = boss ? dk.leader : (dk.cards.compactMap { gd.cards[$0.0] }.filter { $0.isUnit }.max { $0.strength < $1.strength }?.key ?? dk.leader)
-            let nm = gd.cards[pk].map { gd.cardName($0) } ?? fac
+            let pk: String = boss ? dk.leader : (dk.cards.compactMap { gameData.cards[$0.0] }.filter { $0.isUnit }.max { $0.strength < $1.strength }?.key ?? dk.leader)
+            let nm = gameData.cards[pk].map { gameData.cardName($0) } ?? fac
             fights.append(CareerFight(name: nm, portrait: pk, faction: fac, cap: tmp.cap, heroes: heroes, boss: boss))
         }
         return (L2(place.0, place.1), fights)
     }
+    /// Global index of fight `k` in chapter `c`.
     func index(_ c: Int, _ k: Int) -> Int { c * 4 + k }
+    /// Whether fight `k` of chapter `c` can be played.
     func unlocked(_ c: Int, _ k: Int) -> Bool {
         if c > 0 && !beaten.contains(index(c - 1, 3)) { return false }
         return k < 3 || (0..<3).allSatisfy { beaten.contains(index(c, $0)) }
@@ -143,6 +155,7 @@ struct CareerFight {
     var totalFights: Int { chapterCount * 4 }
 
     init() { load() }
+    /// Loads the career from the save file.
     func load() {
         faction = ""; leaders = []; leader = ""; collection = [:]; deck = [:]; beaten = []
         guard let o = SaveStore.shared["career"] as? [String: Any] else { return }
@@ -155,18 +168,22 @@ struct CareerFight {
         seed = o["seed"] as? Int ?? 0
         difficulty = o["difficulty"] as? Int ?? 1
     }
+    /// Stores the career in the save file.
     func save() {
         SaveStore.shared["career"] = active ? ["faction": faction, "leaders": leaders, "leader": leader, "collection": collection,
                                                "deck": deck, "beaten": Array(beaten).sorted(), "seed": seed, "difficulty": difficulty] as [String: Any] : nil
     }
+    /// Abandons the current career.
     func reset() { faction = ""; leaders = []; leader = ""; collection = [:]; deck = [:]; beaten = []; save() }
 
+    /// All cards of a faction that can appear in decks.
     func pool(_ f: String) -> [CardData] { let b = DeckBuilder(); b.faction = f; return b.collection() }
 
+    /// Starts a new career: random seed, first leader and a starter deck of weak units.
     func start(_ f: String, difficulty dif: Int = 1) {
         faction = f; difficulty = dif; beaten = []; seed = Int.random(in: 1...999_999)
         let p = pool(f)
-        let ls = gd.cards.values.filter { $0.isLeader && $0.faction == f }.sorted { $0.key < $1.key }
+        let ls = gameData.cards.values.filter { $0.isLeader && $0.faction == f }.sorted { $0.key < $1.key }
         leaders = ls.first.map { [$0.key] } ?? []; leader = leaders.first ?? ""
         var cap = 6 - (difficulty - 1), units: [CardData] = []
         while true {
@@ -178,7 +195,7 @@ struct CareerFight {
         var n = 0
         for u in units.sorted(by: { $0.strength > $1.strength }) where n < 22 { let c = min(u.count, 22 - n); collection[u.key] = c; n += c }
         for w in p.filter({ $0.isWeather }).prefix(2) { collection[w.key] = 1 }
-        for k in ["spe_horn", "spe_decoy"] where gd.cards[k] != nil { collection[k] = 1 }
+        for k in ["spe_horn", "spe_decoy"] where gameData.cards[k] != nil { collection[k] = 1 }
         deck = collection
         save()
     }
@@ -186,12 +203,13 @@ struct CareerFight {
         DeckData(title: L2("Talia kariery", "Career deck"), description: "", leader: leader, faction: faction,
                  cards: deck.sorted { $0.key < $1.key }.map { ($0.key, $0.value) })
     }
-    var deckUnits: Int { deck.reduce(0) { $0 + ((gd.cards[$1.key]?.isUnit ?? false) ? $1.value : 0) } }
+    var deckUnits: Int { deck.reduce(0) { $0 + ((gameData.cards[$1.key]?.isUnit ?? false) ? $1.value : 0) } }
 
+    /// Builds the opponent's deck for a fight (premade deck for the final boss).
     func opponentDeck(_ fi: Int, _ f: CareerFight) -> DeckData {
         if f.boss && f.cap >= 99 {
             var r = SeededRNG(rngBase &+ fi)
-            let pre = gd.decks.filter { $0.faction == f.faction }
+            let pre = gameData.decks.filter { $0.faction == f.faction }
             if let d = pre.randomElement(using: &r) { return d }
         }
         var rng = SeededRNG(rngBase &+ fi &* 7919)
@@ -206,11 +224,12 @@ struct CareerFight {
         var n = cards.count
         for u in units where n < 20 { let c = min(u.count, 20 - n); cards.append((u.key, c)); n += c }
         cards += specials.map { ($0.key, 1) }
-        let ls = gd.cards.values.filter { $0.isLeader && $0.faction == f.faction }.sorted { $0.key < $1.key }
+        let ls = gameData.cards.values.filter { $0.isLeader && $0.faction == f.faction }.sorted { $0.key < $1.key }
         let lead = f.boss ? (ls.last ?? ls.first) : ls.first
         return DeckData(title: f.name, description: "", leader: lead?.key ?? "", faction: f.faction, cards: cards)
     }
 
+    /// Three cards offered as a reward after winning a fight.
     func rewardOptions(_ fi: Int) -> [String] {
         let c = fi / 4, boss = fi % 4 == 3
         let progress = Float(c) / Float(max(1, chapterCount - 1))
@@ -223,20 +242,22 @@ struct CareerFight {
         let top = Array(cand.prefix(max(6, cand.count / 2))).shuffled(using: &rng)
         return Array(top.prefix(3)).map { $0.key }
     }
+    /// Marks a fight as won; bosses also unlock a new leader, whose key is returned.
     func win(_ fi: Int) -> String? {
         beaten.insert(fi)
         var newLeader: String?
         if fi % 4 == 3 {
-            let ls = gd.cards.values.filter { $0.isLeader && $0.faction == faction }.sorted { $0.key < $1.key }
+            let ls = gameData.cards.values.filter { $0.isLeader && $0.faction == faction }.sorted { $0.key < $1.key }
             if let l = ls.first(where: { !leaders.contains($0.key) }) { leaders.append(l.key); newLeader = l.key }
         }
         save()
         return newLeader
     }
+    /// Adds a reward card to the collection and, if possible, to the deck.
     func take(_ key: String) {
         collection[key, default: 0] += 1
-        let specials = deck.reduce(0) { $0 + ((gd.cards[$1.key]?.isUnit ?? true) ? 0 : $1.value) }
-        if gd.cards[key]?.isUnit == true || specials < 10 { deck[key, default: 0] += 1 }
+        let specials = deck.reduce(0) { $0 + ((gameData.cards[$1.key]?.isUnit ?? true) ? 0 : $1.value) }
+        if gameData.cards[key]?.isUnit == true || specials < 10 { deck[key, default: 0] += 1 }
         save()
     }
 }

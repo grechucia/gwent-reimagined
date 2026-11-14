@@ -1,5 +1,7 @@
+// Music and sound effects: menu theme, random in-game tracks, and low-latency sound effect playback.
 import AVFoundation
 
+/// Plays the music (AVAudioPlayer) and sound effects (AVAudioEngine with a small pool of player nodes).
 final class Audio: NSObject, AVAudioPlayerDelegate {
     private let engine = AVAudioEngine()
     private var players: [AVAudioPlayerNode] = []
@@ -28,6 +30,7 @@ final class Audio: NSObject, AVAudioPlayerDelegate {
             .filter { $0.pathExtension.lowercased() == "mp3" }.sorted { $0.lastPathComponent < $1.lastPathComponent }
     }
 
+    /// Loads and caches a sound effect as a PCM buffer.
     private func buffer(_ name: String) -> AVAudioPCMBuffer? {
         if let b = buffers[name] { return b }
         let url = dir.appendingPathComponent("sfx/\(name).mp3")
@@ -48,8 +51,10 @@ final class Audio: NSObject, AVAudioPlayerDelegate {
         buffers[name] = out
         return out
     }
+    /// Loads the given sound effects in advance.
     func preload(_ names: [String]) { DispatchQueue.global(qos: .utility).async { for n in names { _ = self.buffer(n) } } }
 
+    /// Plays a sound effect by name.
     func play(_ name: String, volume: Float = 0.9) {
         guard !muted, let b = buffer(name) else { return }
         if !engine.isRunning { try? engine.start() }
@@ -61,10 +66,12 @@ final class Audio: NSObject, AVAudioPlayerDelegate {
     }
 
     private(set) var menuMode = true
+    /// Switches between the menu theme (true) and random in-game music (false).
     func setMenuMode(_ m: Bool) {
         guard m != menuMode else { return }
         menuMode = m; music?.stop(); music = nil; playMusic()
     }
+    /// Starts the music for the current mode.
     func playMusic() {
         guard musicOn, !muted, !tracks.isEmpty else { return }
         if menuMode {
@@ -84,6 +91,8 @@ final class Audio: NSObject, AVAudioPlayerDelegate {
         music?.volume = 0.35
         music?.play()
     }
+    /// Skips to another music track.
     func skipTrack() { guard !menuMode else { return }; music?.stop(); playMusic() }
+    /// Starts the next track when one finishes.
     func audioPlayerDidFinishPlaying(_ p: AVAudioPlayer, successfully: Bool) { if !menuMode { playMusic() } }
 }
