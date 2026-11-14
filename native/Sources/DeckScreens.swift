@@ -48,89 +48,87 @@ extension Scene {
     }
     /// Header shown above each deck selection step.
     private func stepHeader(_ step: Int, _ title: String, _ hint: String) {
-        renderer.text(L2("Krok", "Step") + " \(step) / 2", .ui(16, bold: true), x: 960, y: 22, color: RGBA.gold.alpha(0.8), align: .center)
+        renderer.text(L("Step") + " \(step) / 2", .ui(16, bold: true), x: 960, y: 22, color: RGBA.gold.alpha(0.8), align: .center)
         renderer.text(title, .gwent(52), x: 960, y: 44, color: RGBA.gold, align: .center)
         renderer.text(hint, .serif(19, italic: true), x: 960, y: 112, color: .gray(0.85), align: .center)
     }
 
     /// First step: My deck, Career or Choose a faction.
     private func drawStartStep(_ dt: Float) {
-        renderer.text(L2("Jak chcesz zagrać?", "How do you want to play?"), .gwent(52), x: 960, y: 44, color: RGBA.gold, align: .center)
-        renderer.text(L2("Zagraj swoją talią jednym kliknięciem albo wybierz frakcję.", "Play your own deck with one click, or choose a faction."), .serif(19, italic: true), x: 960, y: 112, color: .gray(0.85), align: .center)
-        goldButton(R(40, 24, 190, 50), "‹  " + L2("Wróć", "Back"), font: .serif(22, bold: true)) { [weak self] in self?.screen = .title }
+        renderer.text(L("How do you want to play?"), .gwent(52), x: 960, y: 44, color: RGBA.gold, align: .center)
+        renderer.text(L("Play your own deck with one click, or choose a faction."), .serif(19, italic: true), x: 960, y: 112, color: .gray(0.85), align: .center)
+        goldButton(R(40, 24, 190, 50), "‹  " + L("Back"), font: .serif(22, bold: true)) { [weak self] in self?.screen = .title }
         let a = ease(deckSwitchT * 1.4)
-        let L = R(110, 170 + (1 - a) * 24, 540, 780)
-        let hovL = L.contains(mouse)
-        if hovL { renderer.quad(glowTex, R(L.x - 50, L.y - 50, L.w + 100, L.h + 100), color: RGBA(r: 1, g: 0.72, b: 0.3, a: 0.25)) }
-        glassPanel(L, alpha: 0.75 * a)
-        renderer.frame(L, RGBA.gold.alpha(hovL ? 0.9 : 0.4), 1.5)
-        renderer.text("★ " + L2("Moja talia", "My deck"), .gwent(40), x: L.mid.x, y: L.y + 26, color: RGBA.gold.alpha(a), align: .center)
+        let myDeckPanel = R(110, 170 + (1 - a) * 24, 540, 780)
+        let hovL = myDeckPanel.contains(mouse)
+        if hovL { renderer.quad(glowTex, R(myDeckPanel.x - 50, myDeckPanel.y - 50, myDeckPanel.w + 100, myDeckPanel.h + 100), color: RGBA(r: 1, g: 0.72, b: 0.3, a: 0.25)) }
+        glassPanel(myDeckPanel, alpha: 0.75 * a)
+        renderer.frame(myDeckPanel, RGBA.gold.alpha(hovL ? 0.9 : 0.4), 1.5)
+        renderer.text("★ " + L("My deck"), .gwent(40), x: myDeckPanel.mid.x, y: myDeckPanel.y + 26, color: RGBA.gold.alpha(a), align: .center)
         if let i = favoriteDeckIndex {
             let d = allDecks[i]
             if let lc = gameData.cards[d.leader] {
-                let cr = R(L.mid.x - 135, L.y + 90, 270, 270 / 0.697)
+                let cr = R(myDeckPanel.mid.x - 135, myDeckPanel.y + 90, 270, 270 / 0.697)
                 drawCardLarge(Card(lc, owner: nil), cr)
                 if cr.contains(mouse) { builderHover = Card(lc, owner: nil) }
             }
             let sub = i >= gameData.decks.count ? gameData.ui(d.title) : gameData.factionName(d.faction)
-            renderer.text(sub, .serif(20, bold: true), x: L.mid.x, y: L.y + 90 + 270 / 0.697 + 14, color: RGBA.white.alpha(a), maxWidth: L.w - 60, align: .center)
-            goldButton(R(L.x + 70, L.y + L.h - 130, L.w - 140, 64), L2("Graj moją talią", "Play my deck"), font: .serif(26, bold: true)) { [weak self] in
+            renderer.text(sub, .serif(20, bold: true), x: myDeckPanel.mid.x, y: myDeckPanel.y + 90 + 270 / 0.697 + 14, color: RGBA.white.alpha(a), maxWidth: myDeckPanel.w - 60, align: .center)
+            goldButton(R(myDeckPanel.x + 70, myDeckPanel.y + myDeckPanel.h - 130, myDeckPanel.w - 140, 64), L("Play my deck"), font: .serif(26, bold: true)) { [weak self] in
                 self?.myDeckIndex = i; self?.startGame(with: d)
             }
-            smallLink(R(L.x + 70, L.y + L.h - 56, (L.w - 140) / 2, 32), L2("Pokaż karty", "View cards")) { [weak self] in
+            smallLink(R(myDeckPanel.x + 70, myDeckPanel.y + myDeckPanel.h - 56, (myDeckPanel.w - 140) / 2, 32), L("View cards")) { [weak self] in
                 self?.selFaction = d.faction; self?.deckStage = 1; self?.previewDeck = i; self?.previewScroll = 0; self?.previewTarget = 0; self?.deckSwitchT = 0 }
-            smallLink(R(L.mid.x, L.y + L.h - 56, (L.w - 140) / 2, 32), L2("Zmień talię", "Change deck")) { [weak self] in self?.deckStage = 0; self?.deckSwitchT = 0 }
+            smallLink(R(myDeckPanel.mid.x, myDeckPanel.y + myDeckPanel.h - 56, (myDeckPanel.w - 140) / 2, 32), L("Change deck")) { [weak self] in self?.deckStage = 0; self?.deckSwitchT = 0 }
         } else {
-            renderer.text("☆", .gwent(140), x: L.mid.x, y: L.y + 150, color: RGBA.gold.alpha(0.5 * a), align: .center)
-            renderer.text(L2("Nie masz jeszcze swojej talii.", "You haven't picked your deck yet."), .serif(24, bold: true), x: L.mid.x, y: L.y + 360, color: RGBA.white.alpha(a), maxWidth: L.w - 80, align: .center)
-            renderer.text(L2("Wybierz frakcję, a potem pod wybraną talią kliknij „☆ Ustaw jako moją talię”. Od tej chwili zagrasz nią jednym kliknięciem.",
-                      "Choose a faction, then click “☆ Set as my deck” under the deck you like. From then on you can play it with one click."),
-                   .ui(18), x: L.mid.x, y: L.y + 410, color: RGBA.gray(0.85, a), maxWidth: L.w - 100, align: .center)
-            goldButton(R(L.x + 70, L.y + L.h - 130, L.w - 140, 64), L2("Wybierz swoją talię", "Pick your deck"), font: .serif(24, bold: true)) { [weak self] in self?.deckStage = 0; self?.deckSwitchT = 0 }
+            renderer.text("☆", .gwent(140), x: myDeckPanel.mid.x, y: myDeckPanel.y + 150, color: RGBA.gold.alpha(0.5 * a), align: .center)
+            renderer.text(L("You haven't picked your deck yet."), .serif(24, bold: true), x: myDeckPanel.mid.x, y: myDeckPanel.y + 360, color: RGBA.white.alpha(a), maxWidth: myDeckPanel.w - 80, align: .center)
+            renderer.text(L("Choose a faction, then click “☆ Set as my deck” under the deck you like. From then on you can play it with one click."),
+                   .ui(18), x: myDeckPanel.mid.x, y: myDeckPanel.y + 410, color: RGBA.gray(0.85, a), maxWidth: myDeckPanel.w - 100, align: .center)
+            goldButton(R(myDeckPanel.x + 70, myDeckPanel.y + myDeckPanel.h - 130, myDeckPanel.w - 140, 64), L("Pick your deck"), font: .serif(24, bold: true)) { [weak self] in self?.deckStage = 0; self?.deckSwitchT = 0 }
         }
         let M = R(690, 170 + (1 - ease(deckSwitchT * 1.4 - 0.1)) * 24, 540, 780)
         let hovM = M.contains(mouse)
         if hovM { renderer.quad(glowTex, R(M.x - 50, M.y - 50, M.w + 100, M.h + 100), color: RGBA(r: 1, g: 0.72, b: 0.3, a: 0.25)) }
         glassPanel(M, alpha: 0.75 * a)
         renderer.frame(M, RGBA.gold.alpha(hovM ? 0.9 : 0.4), 1.5)
-        renderer.text("⚔ " + L2("Kariera", "Career"), .gwent(40), x: M.mid.x, y: M.y + 26, color: RGBA.gold.alpha(a), align: .center)
+        renderer.text("⚔ " + L("Career"), .gwent(40), x: M.mid.x, y: M.y + 26, color: RGBA.gold.alpha(a), align: .center)
         let car = Career.shared
         if car.active {
             renderer.image("img/icons/deck_shield_\(car.faction).png", R(M.mid.x - 60, M.y + 110, 120, 134), color: .white.alpha(a))
             renderer.text(gameData.factionName(car.faction), .gwent(30), x: M.mid.x, y: M.y + 262, color: RGBA.gold.alpha(a), align: .center)
             let cc = car.chapter(car.currentChapter)
-            renderer.text(L2("Rozdział", "Chapter") + " \(car.currentChapter + 1)/\(car.chapterCount): " + cc.title, .serif(22, bold: true), x: M.mid.x, y: M.y + 320, color: RGBA.white.alpha(a), maxWidth: M.w - 60, align: .center)
-            renderer.text(L2("Pokonani przeciwnicy", "Opponents defeated") + ": \(car.beaten.count)/\(car.totalFights)", .ui(18), x: M.mid.x, y: M.y + 362, color: RGBA.gray(0.85, a), align: .center)
+            renderer.text(L("Chapter") + " \(car.currentChapter + 1)/\(car.chapterCount): " + cc.title, .serif(22, bold: true), x: M.mid.x, y: M.y + 320, color: RGBA.white.alpha(a), maxWidth: M.w - 60, align: .center)
+            renderer.text(L("Opponents defeated") + ": \(car.beaten.count)/\(car.totalFights)", .ui(18), x: M.mid.x, y: M.y + 362, color: RGBA.gray(0.85, a), align: .center)
             let pr = R(M.x + 70, M.y + 400, M.w - 140, 8)
             renderer.rect(pr, RGBA.white.alpha(0.12)); renderer.rect(R(pr.x, pr.y, pr.w * min(1, Float(car.beaten.count) / Float(car.totalFights)), pr.h), RGBA.gold)
         } else {
             renderer.text("⚔", .gwent(130), x: M.mid.x, y: M.y + 130, color: RGBA.gold.alpha(0.5 * a), align: .center)
-            renderer.text(L2("Zacznij od słabych kart, wygrywaj nowe i pokonuj kolejnych bossów. Każda kariera jest losowana od nowa.",
-                      "Start with weak cards, win new ones and defeat boss after boss. Every career is generated anew."),
+            renderer.text(L("Start with weak cards, win new ones and defeat boss after boss. Every career is generated anew."),
                    .ui(18), x: M.mid.x, y: M.y + 340, color: RGBA.gray(0.85, a), maxWidth: M.w - 90, align: .center)
         }
-        goldButton(R(M.x + 70, M.y + M.h - 130, M.w - 140, 64), car.active ? L2("Kontynuuj karierę", "Continue career") : L2("Rozpocznij karierę", "Start career"),
+        goldButton(R(M.x + 70, M.y + M.h - 130, M.w - 140, 64), car.active ? L("Continue career") : L("Start career"),
                    font: .serif(24, bold: true)) { [weak self] in self?.careerChapter = nil; self?.deckSwitchT = 0; self?.screen = .career }
         let Rr = R(1270, 170 + (1 - ease(deckSwitchT * 1.4 - 0.2)) * 24, 540, 780)
         let hovR = Rr.contains(mouse)
         if hovR { renderer.quad(glowTex, R(Rr.x - 50, Rr.y - 50, Rr.w + 100, Rr.h + 100), color: RGBA(r: 1, g: 0.72, b: 0.3, a: 0.25)) }
         glassPanel(Rr, alpha: 0.75 * a)
         renderer.frame(Rr, RGBA.gold.alpha(hovR ? 0.9 : 0.4), 1.5)
-        renderer.text(L2("Wybierz frakcję", "Choose a faction"), .gwent(40), x: Rr.mid.x, y: Rr.y + 26, color: RGBA.gold.alpha(a), align: .center)
+        renderer.text(L("Choose a faction"), .gwent(40), x: Rr.mid.x, y: Rr.y + 26, color: RGBA.gold.alpha(a), align: .center)
         let facs = DeckBuilder.factionsOrder
         for (k, f) in facs.enumerated() {
             let col = k % 5, row = k / 5
             let s = R(Rr.x + 34 + Float(col) * 96, Rr.y + 110 + Float(row) * 116, 78, 87)
             renderer.image("img/icons/deck_shield_\(f).png", s, color: .white.alpha(a * (hovR ? 1 : 0.85)))
         }
-        renderer.text(L2("Wybierz jedną z 15 frakcji i jej gotową talię albo zbuduj własną.", "Pick one of 15 factions and one of its decks, or build your own."),
+        renderer.text(L("Pick one of 15 factions and one of its decks, or build your own."),
                .ui(18), x: Rr.mid.x, y: Rr.y + 520, color: RGBA.gray(0.85, a), maxWidth: Rr.w - 100, align: .center)
-        goldButton(R(Rr.x + 70, Rr.y + Rr.h - 130, Rr.w - 140, 64), L2("Wybierz frakcję", "Choose a faction"), font: .serif(26, bold: true)) { [weak self] in self?.deckStage = 0; self?.deckSwitchT = 0 }
+        goldButton(R(Rr.x + 70, Rr.y + Rr.h - 130, Rr.w - 140, 64), L("Choose a faction"), font: .serif(26, bold: true)) { [weak self] in self?.deckStage = 0; self?.deckSwitchT = 0 }
     }
     /// Faction grid.
     private func drawFactionStep(_ dt: Float) {
-        stepHeader(1, L2("Wybierz frakcję", "Choose a faction"), L2("Kliknij frakcję, którą chcesz grać.", "Click the faction you want to play."))
-        goldButton(R(40, 24, 190, 50), "‹  " + L2("Wróć", "Back"), font: .serif(22, bold: true)) { [weak self] in self?.deckStage = -1; self?.deckSwitchT = 0 }
+        stepHeader(1, L("Choose a faction"), L("Click the faction you want to play."))
+        goldButton(R(40, 24, 190, 50), "‹  " + L("Back"), font: .serif(22, bold: true)) { [weak self] in self?.deckStage = -1; self?.deckSwitchT = 0 }
         let facs = DeckBuilder.factionsOrder
         let cols = 5, tw: Float = 340, th: Float = 250, gx: Float = 22, gy: Float = 22
         let x0 = 960 - (Float(cols) * tw + Float(cols - 1) * gx) / 2, y0: Float = 160
@@ -149,7 +147,7 @@ extension Scene {
             renderer.image("img/icons/deck_shield_\(f).png", R(t.x + 22, t.y + 22, 74, 82), color: .white.alpha(k))
             let nh = renderer.text(gameData.factionName(f), .gwent(30), x: t.x + 112, y: t.y + 30, color: RGBA.gold.alpha(k), maxWidth: t.w - 126).h
             let n = allDecks.filter { $0.faction == f }.count
-            renderer.text(n == 1 ? L2("1 talia", "1 deck") : "\(n) " + L2("talie", "decks"), .ui(15), x: t.x + 112, y: t.y + 34 + nh, color: RGBA.gray(0.7, k))
+            renderer.text(n == 1 ? L("1 deck") : "\(n) " + L("decks"), .ui(15), x: t.x + 112, y: t.y + 34 + nh, color: RGBA.gray(0.7, k))
             renderer.text(gameData.factionDesc(f), .ui(16), x: t.x + 22, y: t.y + 122, color: RGBA(r: 0.92, g: 0.86, b: 0.72, a: k), maxWidth: t.w - 44)
             button(t) { [weak self] in
                 guard let s = self else { return }
@@ -160,8 +158,8 @@ extension Scene {
     /// Premade and custom decks of the chosen faction.
     private func drawDeckStep(_ dt: Float) {
         let f = selFaction
-        stepHeader(2, L2("Wybierz talię", "Choose a deck"), gameData.factionName(f) + " — " + L2("kliknij „Graj tą talią” pod wybraną talią.", "click “Play this deck” under the deck you want."))
-        goldButton(R(40, 24, 220, 50), "‹  " + L2("Frakcje", "Factions"), font: .serif(22, bold: true)) { [weak self] in self?.deckStage = 0; self?.deckSwitchT = 0 }
+        stepHeader(2, L("Choose a deck"), gameData.factionName(f) + " — " + L("click “Play this deck” under the deck you want."))
+        goldButton(R(40, 24, 220, 50), "‹  " + L("Factions"), font: .serif(22, bold: true)) { [weak self] in self?.deckStage = 0; self?.deckSwitchT = 0 }
         let all = allDecks
         let idx = all.indices.filter { all[$0].faction == f }
         let n = idx.count + 1
@@ -200,23 +198,23 @@ extension Scene {
             renderer.clip(nil)
             var units = 0, total = 0
             for (ck, cn) in d.cards { total += cn; if gameData.cards[ck]?.isUnit == true { units += cn } }
-            renderer.text("\(total) " + L2("kart", "cards") + " · \(units) " + L2("jednostek", "units"), .ui(14), x: x, y: tile.y + tile.h - 92, color: RGBA.gold.alpha(0.75 * a))
-            goldButton(R(x, tile.y + tile.h - 66, tw, 52), L2("Graj tą talią", "Play this deck"), font: .serif(tw < 260 ? 18 : 21, bold: true)) { [weak self] in
+            renderer.text("\(total) " + L("cards") + " · \(units) " + L("units"), .ui(14), x: x, y: tile.y + tile.h - 92, color: RGBA.gold.alpha(0.75 * a))
+            goldButton(R(x, tile.y + tile.h - 66, tw, 52), L("Play this deck"), font: .serif(tw < 260 ? 18 : 21, bold: true)) { [weak self] in
                 self?.myDeckIndex = i; self?.startGame(with: d)
             }
             let bw = (tw - 8) / 2, by = tile.y + tile.h + 10, fs: Float = tw < 260 ? 15 : 17
-            goldButton(R(x, by, bw, 42), L2("Pokaż karty", "View cards"), font: .serif(fs, bold: true)) { [weak self] in
+            goldButton(R(x, by, bw, 42), L("View cards"), font: .serif(fs, bold: true)) { [weak self] in
                 self?.previewDeck = i; self?.previewScroll = 0; self?.previewTarget = 0; self?.deckSwitchT = 0; self?.audio.play("card", volume: 0.5) }
-            goldButton(R(x + bw + 8, by, bw, 42), L2("Edytuj talię", "Edit deck"), font: .serif(fs, bold: true)) { [weak self] in
+            goldButton(R(x + bw + 8, by, bw, 42), L("Edit deck"), font: .serif(fs, bold: true)) { [weak self] in
                 guard let s = self else { return }; s.builder.load(d, customIndex: custom ? i - s.gameData.decks.count : nil); s.screen = .builder }
             let fav = favoriteDeckIndex == i
             let favW = custom ? bw : tw
             let favR = R(x, by + 50, favW, 42)
             if fav { renderer.rect(favR, RGBA(r: 0.55, g: 0.4, b: 0.1, a: 0.55)) }
-            goldButton(favR, fav ? "★ " + L2("Moja talia", "My deck") : "☆ " + L2("Ustaw jako moją", "Set as mine"), font: .serif(fs, bold: true)) { [weak self] in
+            goldButton(favR, fav ? "★ " + L("My deck") : "☆ " + L("Set as mine"), font: .serif(fs, bold: true)) { [weak self] in
                 guard let s = self else { return }; s.favoriteDeckIndex = fav ? nil : i; s.audio.play("card", volume: 0.5) }
             if custom {
-                goldButton(R(x + bw + 8, by + 50, bw, 42), L2("Usuń talię", "Delete deck"), font: .serif(fs, bold: true)) { [weak self] in
+                goldButton(R(x + bw + 8, by + 50, bw, 42), L("Delete deck"), font: .serif(fs, bold: true)) { [weak self] in
                     guard let s = self else { return }
                     var cd = DeckBuilder.loadCustom(); let ci = i - s.gameData.decks.count
                     if ci >= 0 && ci < cd.count { cd.remove(at: ci); DeckBuilder.saveCustom(cd) }
@@ -231,8 +229,8 @@ extension Scene {
         glassPanel(tile, alpha: 0.45 * a)
         renderer.frame(tile.inset(14), RGBA.gold.alpha((hov ? 0.9 : 0.35) * a), 1.5)
         renderer.text("+", .gwent(120), x: tile.mid.x, y: tile.y + ch * 0.28, color: RGBA.gold.alpha((hov ? 1 : 0.7) * a), align: .center)
-        renderer.text(L2("Własna talia", "Custom deck"), .serif(22, bold: true), x: tile.mid.x, y: tile.y + ch * 0.62, color: RGBA.white.alpha(a), maxWidth: tw - 20, align: .center)
-        renderer.text(L2("Zbuduj talię z kart tej frakcji w kreatorze.", "Build a deck from this faction's cards in the deck builder."), .ui(15), x: tile.mid.x, y: tile.y + ch * 0.62 + 34, color: RGBA.gray(0.75, a), maxWidth: tw - 30, align: .center)
+        renderer.text(L("Custom deck"), .serif(22, bold: true), x: tile.mid.x, y: tile.y + ch * 0.62, color: RGBA.white.alpha(a), maxWidth: tw - 20, align: .center)
+        renderer.text(L("Build a deck from this faction's cards in the deck builder."), .ui(15), x: tile.mid.x, y: tile.y + ch * 0.62 + 34, color: RGBA.gray(0.75, a), maxWidth: tw - 30, align: .center)
         button(tile) { [weak self] in guard let s = self else { return }; s.builder.newDeck(f); s.screen = .builder }
     }
     /// Text button drawn as an underlined link.
@@ -273,7 +271,7 @@ extension Scene {
     func drawBuilder(_ b: DeckBuilder, _ dt: Float) {
         drawMenuBackground(dt, dim: 0.72)
         if leaderPickerOpen { drawLeaderPicker(b); return }
-        renderer.text(L2("Kreator talii", "Deck builder"), .gwent(46), x: 960, y: 14, color: RGBA.gold, align: .center)
+        renderer.text(L("Deck builder"), .gwent(46), x: 960, y: 14, color: RGBA.gold, align: .center)
         let fi = DeckBuilder.factionsOrder.firstIndex(of: b.faction) ?? 0
         renderer.quad(glowTex, R(960 - 240, 60, 100, 100), color: RGBA(r: 1, g: 0.75, b: 0.3, a: 0.3))
         renderer.image("img/icons/deck_shield_\(b.faction).png", R(960 - 212, 78, 44, 48))
@@ -292,12 +290,12 @@ extension Scene {
         renderer.text(L("Card Collection"), .serif(22, bold: true), x: colL.x + 14, y: 168, color: RGBA.gold)
         renderer.text(L("Cards in Deck"), .serif(22, bold: true), x: colR.x + 14, y: 168, color: RGBA.gold)
         let filters: [(String, (CardData) -> Bool)] = [
-            (L2("Wszystkie", "All"), { _ in true }),
-            (L2("Wręcz", "Melee"), { $0.isUnit && $0.row.contains("c") && ($0.row == "close" || $0.row.hasPrefix("agile")) }),
-            (L2("Dystans", "Ranged"), { $0.isUnit && ($0.row == "ranged" || ($0.row.hasPrefix("agile") && $0.row.contains("r"))) }),
-            (L2("Oblężenie", "Siege"), { $0.isUnit && ($0.row == "siege" || $0.row.hasSuffix("s")) }),
+            (L("All"), { _ in true }),
+            (L("Melee"), { $0.isUnit && $0.row.contains("c") && ($0.row == "close" || $0.row.hasPrefix("agile")) }),
+            (L("Ranged"), { $0.isUnit && ($0.row == "ranged" || ($0.row.hasPrefix("agile") && $0.row.contains("r"))) }),
+            (L("Siege"), { $0.isUnit && ($0.row == "siege" || $0.row.hasSuffix("s")) }),
             (L("Hero"), { $0.isHero }),
-            (L2("Specjalne", "Special"), { $0.isSpecial || $0.isWeather })]
+            (L("Special"), { $0.isSpecial || $0.isWeather })]
         var fx: Float = colL.x + 240
         for (i, (n, _)) in filters.enumerated() {
             let w = renderer.measure(n, .ui(15, bold: true)).w + 22
@@ -330,7 +328,7 @@ extension Scene {
             renderer.frame(lr.inset(-2), RGBA.gold.alpha(0.6), 2)
             if lr.contains(mouse) { builderHover = lc }
             let lb = R(875, 386, 170, 28)
-            renderer.text(L2("Zmień dowódcę", "Change leader") + " ▾", .serif(17, bold: true), x: 960, y: 388, color: lb.contains(mouse) ? .white : RGBA.gold, align: .center)
+            renderer.text(L("Change leader") + " ▾", .serif(17, bold: true), x: 960, y: 388, color: lb.contains(mouse) ? .white : RGBA.gold, align: .center)
             renderer.rect(R(lb.x + 14, lb.y + 25, lb.w - 28, 1), RGBA.gold.alpha(lb.contains(mouse) ? 1 : 0.5))
             button(lb) { [weak self] in self?.leaderPickerOpen = true }
             button(lr) { [weak self] in self?.leaderPickerOpen = true }
@@ -361,7 +359,7 @@ extension Scene {
             b.save(); self.customDecks = DeckBuilder.loadCustom(); self.startGame(with: b.asDeck())
         }
         }
-        goldButton(R(40, 24, 190, 50), "‹  " + L2("Wróć", "Back"), font: .serif(22, bold: true)) { [weak self] in
+        goldButton(R(40, 24, 190, 50), "‹  " + L("Back"), font: .serif(22, bold: true)) { [weak self] in
             if b.careerMode { b.save(); self?.screen = .career; return }
             self?.customDecks = DeckBuilder.loadCustom(); self?.selFaction = b.faction; self?.deckStage = 1; self?.deckSwitchT = 0; self?.screen = .decks }
         if builderSaved > 0 { renderer.text(L("Deck Saved!"), .serif(22, bold: true), x: 960, y: 760, color: RGBA(r: 0.5, g: 1, b: 0.5, a: min(1, builderSaved)), align: .center); builderSaved -= dt }
@@ -386,10 +384,10 @@ extension Scene {
     private func drawDeckPreview(_ i: Int, _ dt: Float) {
         let d = allDecks[i]
         let a = ease(deckSwitchT * 1.4)
-        renderer.text(L2("Karty talii", "Deck cards"), .gwent(52), x: 960, y: 34, color: RGBA.gold.alpha(a), align: .center)
+        renderer.text(L("Deck cards"), .gwent(52), x: 960, y: 34, color: RGBA.gold.alpha(a), align: .center)
         renderer.text(gameData.factionName(d.faction) + (gameData.ui(d.title) != gameData.factionName(d.faction) || i >= gameData.decks.count ? " — " + gameData.ui(d.title) : ""),
                .serif(20, italic: true), x: 960, y: 102, color: RGBA.gray(0.85, a), align: .center)
-        goldButton(R(40, 24, 200, 50), "‹  " + L2("Talie", "Decks"), font: .serif(22, bold: true)) { [weak self] in self?.previewDeck = nil; self?.deckSwitchT = 0 }
+        goldButton(R(40, 24, 200, 50), "‹  " + L("Decks"), font: .serif(22, bold: true)) { [weak self] in self?.previewDeck = nil; self?.deckSwitchT = 0 }
         let left = R(60, 150, 400, 830)
         glassPanel(left, alpha: 0.7 * a)
         if let lc = gameData.cards[d.leader] {
@@ -409,30 +407,30 @@ extension Scene {
         func kind(_ c: CardData) -> Int { c.isWeather ? 1 : c.isSpecial ? 0 : 2 }
         list.sort { kind($0) != kind($1) ? kind($0) < kind($1) : ($0.strength != $1.strength ? $0.strength > $1.strength : $0.name < $1.name) }
         var y = left.y + 30 + 280 / 0.697 + 24
-        for (t, v) in [(L2("Wszystkie karty", "Total cards"), total), (L2("Jednostki", "Units"), units), (L2("Karty specjalne", "Special cards"), specials),
-                       (L2("Bohaterowie", "Heroes"), heroes), (L2("Łączna siła jednostek", "Total unit strength"), power)] {
+        for (t, v) in [(L("Total cards"), total), (L("Units"), units), (L("Special cards"), specials),
+                       (L("Heroes"), heroes), (L("Total unit strength"), power)] {
             renderer.text(t, .ui(17), x: left.x + 30, y: y, color: RGBA.gray(0.8, a))
             renderer.text("\(v)", .ui(17, bold: true), x: left.x + left.w - 30, y: y, color: RGBA.gold.alpha(a), align: .right)
             y += 30
         }
         let fav = favoriteDeckIndex == i
-        smallLink(R(left.x + 30, left.y + left.h - 122, left.w - 60, 32), fav ? "★ " + L2("Moja talia", "My deck") : "☆ " + L2("Ustaw jako moją talię", "Set as my deck")) { [weak self] in
+        smallLink(R(left.x + 30, left.y + left.h - 122, left.w - 60, 32), fav ? "★ " + L("My deck") : "☆ " + L("Set as my deck")) { [weak self] in
             guard let s = self else { return }; s.favoriteDeckIndex = fav ? nil : i; s.audio.play("card", volume: 0.5) }
-        goldButton(R(left.x + 30, left.y + left.h - 76, left.w - 60, 56), L2("Graj tą talią", "Play this deck")) { [weak self] in
+        goldButton(R(left.x + 30, left.y + left.h - 76, left.w - 60, 56), L("Play this deck")) { [weak self] in
             self?.previewDeck = nil; self?.myDeckIndex = i; self?.startGame(with: d)
         }
         let area = R(490, 150, 1370, 830)
         glassPanel(area, alpha: 0.55 * a)
         builderGrid(list, in: area.inset(6), scroll: &previewScroll, target: &previewTarget, dt: dt, cardW: 150, count: { cnt[$0.key] ?? 0 }) { _, _ in }
-        renderer.text(L2("Najedź na kartę, aby zobaczyć opis. Kółko myszy przewija.", "Hover a card to see its description. Scroll with the mouse wheel."),
+        renderer.text(L("Hover a card to see its description. Scroll with the mouse wheel."),
                .serif(17, italic: true), x: area.mid.x, y: area.y + area.h + 14, color: RGBA.gray(0.7, a), align: .center)
     }
 
     /// Overlay for choosing the deck's leader.
     private func drawLeaderPicker(_ b: DeckBuilder) {
-        renderer.text(L2("Wybierz dowódcę", "Choose a leader"), .gwent(52), x: 960, y: 40, color: RGBA.gold, align: .center)
-        renderer.text(gameData.factionName(b.faction) + " — " + L2("kliknij dowódcę, którym chcesz grać.", "click the leader you want to play with."), .serif(19, italic: true), x: 960, y: 108, color: .gray(0.85), align: .center)
-        goldButton(R(40, 24, 190, 50), "‹  " + L2("Wróć", "Back"), font: .serif(22, bold: true)) { [weak self] in self?.leaderPickerOpen = false }
+        renderer.text(L("Choose a leader"), .gwent(52), x: 960, y: 40, color: RGBA.gold, align: .center)
+        renderer.text(gameData.factionName(b.faction) + " — " + L("click the leader you want to play with."), .serif(19, italic: true), x: 960, y: 108, color: .gray(0.85), align: .center)
+        goldButton(R(40, 24, 190, 50), "‹  " + L("Back"), font: .serif(22, bold: true)) { [weak self] in self?.leaderPickerOpen = false }
         let ls = b.leaders()
         guard !ls.isEmpty else { return }
         let n = ls.count, gap: Float = 24
@@ -448,7 +446,7 @@ extension Scene {
             let c = Card(l, owner: nil)
             drawCardLarge(c, cr)
             renderer.frame(cr.inset(-3), sel ? RGBA.gold : RGBA.gold.alpha(hov ? 0.7 : 0.25), sel ? 3 : 1.5)
-            if sel { renderer.text("★ " + L2("Wybrany", "Selected"), .serif(18, bold: true), x: cr.mid.x, y: cr.y + cr.h + 10, color: RGBA.gold, align: .center) }
+            if sel { renderer.text("★ " + L("Selected"), .serif(18, bold: true), x: cr.mid.x, y: cr.y + cr.h + 10, color: RGBA.gold, align: .center) }
             if hov { hovered = c }
             button(base) { [weak self] in b.leaderKey = l.key; self?.leaderPickerOpen = false; self?.audio.play("card", volume: 0.5) }
         }

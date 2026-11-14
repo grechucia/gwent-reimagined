@@ -55,7 +55,7 @@ import UniformTypeIdentifiers
             tf.stringValue = current
             tf.placeholderString = placeholder
             a.accessoryView = tf
-            a.addButton(withTitle: "OK"); a.addButton(withTitle: L2("Anuluj", "Cancel"))
+            a.addButton(withTitle: "OK"); a.addButton(withTitle: L("Cancel"))
             a.window.initialFirstResponder = tf
             done(a.runModal() == .alertFirstButtonReturn ? tf.stringValue : nil)
         }
@@ -63,7 +63,7 @@ import UniformTypeIdentifiers
         guard let vc = rootViewController else { done(nil); return }
         let a = UIAlertController(title: title, message: message, preferredStyle: .alert)
         a.addTextField { $0.text = current; $0.placeholder = placeholder; $0.autocapitalizationType = .words }
-        a.addAction(UIAlertAction(title: L2("Anuluj", "Cancel"), style: .cancel) { _ in done(nil) })
+        a.addAction(UIAlertAction(title: L("Cancel"), style: .cancel) { _ in done(nil) })
         a.addAction(UIAlertAction(title: "OK", style: .default) { _ in done(a.textFields?.first?.text) })
         vc.present(a, animated: true)
         #endif
@@ -75,7 +75,7 @@ import UniformTypeIdentifiers
         DispatchQueue.main.async {
             let p = NSOpenPanel()
             p.canChooseDirectories = true; p.canChooseFiles = false; p.canCreateDirectories = true; p.allowsMultipleSelection = false
-            p.prompt = L2("Wybierz", "Choose"); p.message = message
+            p.prompt = L("Choose"); p.message = message
             done(p.runModal() == .OK ? p.url : nil)
         }
         #else

@@ -51,7 +51,6 @@ cat > $APP/Info.plist <<'PLIST'
   <key>UISupportedInterfaceOrientations~ipad</key><array><string>UIInterfaceOrientationLandscapeLeft</string><string>UIInterfaceOrientationLandscapeRight</string></array>
   <key>UIFileSharingEnabled</key><true/>
   <key>LSSupportsOpeningDocumentsInPlace</key><true/>
-  <key>CADisableMinimumFrameDurationOnPhone</key><true/>
   <key>GCSupportsControllerUserInteraction</key><true/>
   <key>GCSupportedGameControllers</key><array><dict><key>ProfileName</key><string>ExtendedGamepad</string></dict></array>
 </dict></plist>

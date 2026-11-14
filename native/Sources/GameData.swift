@@ -71,7 +71,15 @@ final class GameData {
         }
         factions = (json("factions.json") as? [String: [String: String]]) ?? [:]
         abilities = (json("abilities.json") as? [String: [String: String]]) ?? [:]
-        for (code, _) in GameData.languages { if let l = json("lang_\(code).json") as? [String: Any] { lang[code] = l } }
+        for (code, _) in GameData.languages {
+            guard var l = json("lang_\(code).json") as? [String: Any] else { continue }
+            if let extra = json("ui_\(code).json") as? [String: String] {
+                var ui = (l["ui"] as? [String: Any]) ?? [:]
+                for (k, v) in extra { ui[k] = v }
+                l["ui"] = ui
+            }
+            lang[code] = l
+        }
     }
 
     /// Section of the active translation file.
@@ -114,5 +122,3 @@ final class GameData {
 
 /// Translates an English UI string (shorthand used across the UI).
 func L(_ en: String) -> String { GameData.shared.ui(en) }
-/// Returns the Polish text in Polish, otherwise the translation of the English text.
-func L2(_ pl: String, _ en: String) -> String { GameData.shared.language == "pl" ? pl : GameData.shared.ui(en) }

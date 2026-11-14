@@ -70,12 +70,12 @@ final class Scene {
     var careerConfirmReset = false
     var careerDiffPick = 1
     var careerFightName: String?
-    var playerName: String { (SaveStore.shared["playerName"] as? String).flatMap { $0.isEmpty ? nil : $0 } ?? L2("Gracz 1", "Player 1") }
+    var playerName: String { (SaveStore.shared["playerName"] as? String).flatMap { $0.isEmpty ? nil : $0 } ?? L("Player 1") }
     /// Asks for the player's name and stores it in the save file.
     func askPlayerName(then: (() -> Void)? = nil) {
-        Platform.askText(title: L2("Jak masz na imię?", "What's your name?"),
-                         message: L2("Twoja nazwa będzie widoczna na planszy. Możesz ją zmienić w Opcjach.", "Your name is shown on the board. You can change it in Options."),
-                         placeholder: L2("Gracz 1", "Player 1"), current: (SaveStore.shared["playerName"] as? String) ?? "") { text in
+        Platform.askText(title: L("What's your name?"),
+                         message: L("Your name is shown on the board. You can change it in Options."),
+                         placeholder: L("Player 1"), current: (SaveStore.shared["playerName"] as? String) ?? "") { text in
             if let n = text?.trimmingCharacters(in: .whitespacesAndNewlines) { SaveStore.shared["playerName"] = String(n.prefix(24)) }
             then?()
         }
@@ -198,7 +198,7 @@ final class Scene {
         let total = wG + wM + wT - 24
         var x = 960 - total / 2
         let y: Float = 34
-        let w3 = L2("Wiedźmin 3", "The Witcher 3").uppercased()
+        let w3 = L("The Witcher 3").uppercased()
         renderer.text(w3, .gwent(26), x: 962, y: 16, color: RGBA(r: 0, g: 0, b: 0, a: 0.7), align: .center, shadow: nil)
         renderer.text(w3, .gwent(26), x: 960, y: 14, color: RGBA(r: 0.96, g: 0.85, b: 0.6, a: 0.7), align: .center, shadow: nil)
         for (s, f, dy) in [("G", big, Float(0)), (mid, small, Float(30)), ("T", big, Float(0))] {
@@ -222,11 +222,11 @@ final class Scene {
             let named: () -> Void = { [weak s] in if SaveStore.shared["playerName"] == nil { s?.askPlayerName(then: go) } else { go() } }
             if SaveStore.shared.chosen { named() } else { s.askSaveLocation(then: named) }
         }
-        goldButton(R(960 + 200, 917, 220, 46), L2("Zasady gry", "How to play"), font: .serif(20, bold: true)) { [weak self] in self?.openRules() }
-        goldButton(R(960 - 420, 917, 220, 46), L2("Opcje", "Options"), font: .serif(20, bold: true)) { [weak self] in self?.optionsOpen = true }
+        goldButton(R(960 + 200, 917, 220, 46), L("How to play"), font: .serif(20, bold: true)) { [weak self] in self?.openRules() }
+        goldButton(R(960 - 420, 917, 220, 46), L("Options"), font: .serif(20, bold: true)) { [weak self] in self?.optionsOpen = true }
         if Platform.isDesktop {
             padNoAuto.append(R(1690, 24, 190, 46))
-            goldButton(R(1690, 24, 190, 46), L2("Wyjdź z gry", "Quit game"), font: .serif(19, bold: true)) { Platform.quit() }
+            goldButton(R(1690, 24, 190, 46), L("Quit game"), font: .serif(19, bold: true)) { Platform.quit() }
         }
         renderer.text("v" + appVersion, .serif(17), x: 1880, y: 1044, color: RGBA(r: 0.91, g: 0.86, b: 0.74, a: 0.6), align: .right)
         languageToggle(y: 995)
@@ -541,7 +541,7 @@ final class Scene {
         }
         exitConfirmT = max(0, exitConfirmT - dt)
         padNoAuto.append(R(1680, 1018, 180, 46))
-        smallButton(R(1680, 1018, 180, 46), exitConfirmT > 0 ? L2("Na pewno?", "Are you sure?") : L2("Wyjdź do menu", "Exit to menu"), enabled: true) { [weak self] in
+        smallButton(R(1680, 1018, 180, 46), exitConfirmT > 0 ? L("Are you sure?") : L("Exit to menu"), enabled: true) { [weak self] in
             guard let s = self else { return }
             if s.exitConfirmT > 0 { s.exitConfirmT = 0; s.game = nil; s.screen = .title } else { s.exitConfirmT = 3 }
         }
@@ -610,7 +610,7 @@ final class Scene {
         renderer.image("img/icons/deck_shield_\(p.faction).png", shield)
         if shield.contains(mouse) { hoverText = gameData.factionName(p.faction) + "\n" + gameData.factionDesc(p.faction) }
         let nameY: Float = mine ? 728 : 271
-        renderer.text(mine ? playerName : (careerFightName ?? L2("Gracz 2", "Player 2")), .gwent(24), x: 239, y: nameY, color: RGBA(r: 0.96, g: 0.85, b: 0.56, a: 1))
+        renderer.text(mine ? playerName : (careerFightName ?? L("Player 2")), .gwent(24), x: 239, y: nameY, color: RGBA(r: 0.96, g: 0.85, b: 0.56, a: 1))
         renderer.text(gameData.factionName(p.faction), .ui(17), x: 239, y: nameY + 27, color: .gray(0.85), maxWidth: 190)
         let hcY: Float = mine ? 680 : 356
         renderer.image("img/icons/icon_card_count.png", R(240, hcY + 4, 30, 32))
@@ -637,7 +637,7 @@ final class Scene {
         }
         if mine, let f = g.factionActive(p) {
             let b = R(160, 612, 150, 34)
-            let title = f == "transform" ? L2("Przemiana", "Transform") : (f.hasPrefix("skip") ? L2("Pomiń turę", "Skip turn") : L("Faction ability"))
+            let title = f == "transform" ? L("Transform") : (f.hasPrefix("skip") ? L("Skip turn") : L("Faction ability"))
             smallButton(b, title, enabled: canAct) { [weak self] in self?.game?.humanFaction() }
         }
         let dr = deckRect(p)
@@ -756,7 +756,7 @@ final class Scene {
     /// Selects or plays a card from the hand.
     private func clickHand(_ c: Card) {
         guard let g = game, g.phase == .play, g.current === g.human, !g.busy, g.choice == nil else { return }
-        if let f = g.human.forcedCard, f !== c { notes.append((L2("Musisz zagrać wskazaną kartę.", "You must play the marked card."), nil)); return }
+        if let f = g.human.forcedCard, f !== c { notes.append((L("You must play the marked card."), nil)); return }
         if selected === c {
             if isFreeSpecial(c) { playSelected(c); return }
             if c.isUnit, g.validRows(for: c, by: g.human).count == 1 { playSelected(c, row: g.validRows(for: c, by: g.human)[0]); return }
@@ -846,13 +846,13 @@ final class Scene {
     }
     /// Redraw phase overlay.
     private func drawRedraw(_ g: Game) {
-        let end = overlayCards(g.human.hand, title: L2("Kliknij kartę, którą chcesz wymienić", "Click a card to redraw it"),
-                               info: L2("Pozostało wymian: ", "Redraws left: ") + "\(g.redrawsLeft)") { [weak self] c in
+        let end = overlayCards(g.human.hand, title: L("Click a card to redraw it"),
+                               info: L("Redraws left: ") + "\(g.redrawsLeft)") { [weak self] c in
             guard let g = self?.game, g.redrawsLeft > 0, !g.busy else { return }
             if let n = g.redraw(c) { n.hasPos = false }
             if g.redrawsLeft == 0 { g.finishRedraw() }
         }
-        goldButton(R(960 - 150, min(990, end.y + 10), 300, 60), L2("Gotowe", "Done"), font: .gwent(30)) { [weak self] in self?.game?.finishRedraw() }
+        goldButton(R(960 - 150, min(990, end.y + 10), 300, 60), L("Done"), font: .gwent(30)) { [weak self] in self?.game?.finishRedraw() }
         if let h = hover { drawPreview(h) }
     }
     /// Overlay for a pending choice of the human player.
@@ -860,7 +860,7 @@ final class Scene {
         switch ch.kind {
         case .cards(let cards, let mn, let mx):
             let multi = mx > 1 || mn != 1
-            let end = overlayCards(cards, title: ch.title, info: multi ? L2("Wybrano: ", "Selected: ") + "\(multiSel.count) / \(mx)" : nil, marked: multiSel) { [weak self] c in
+            let end = overlayCards(cards, title: ch.title, info: multi ? L("Selected: ") + "\(multiSel.count) / \(mx)" : nil, marked: multiSel) { [weak self] c in
                 guard let s = self else { return }
                 if !multi { g.resolveChoice([cards.firstIndex { $0 === c }!]); return }
                 if let i = s.multiSel.firstIndex(where: { $0 === c }) { s.multiSel.remove(at: i) }
@@ -869,14 +869,14 @@ final class Scene {
             var bx: Float = 960 - 150
             if multi {
                 let ok = multiSel.count >= mn && multiSel.count <= mx
-                goldButton(R(ch.canCancel ? 960 - 320 : bx, min(990, end.y + 10), 300, 60), L2("Gotowe", "Done"), font: .gwent(30), enabled: ok) { [weak self] in
+                goldButton(R(ch.canCancel ? 960 - 320 : bx, min(990, end.y + 10), 300, 60), L("Done"), font: .gwent(30), enabled: ok) { [weak self] in
                     guard let s = self else { return }
                     let idx = s.multiSel.compactMap { m in cards.firstIndex { $0 === m } }
                     s.multiSel = []; g.resolveChoice(idx)
                 }
                 bx = 960 + 20
             }
-            if ch.canCancel { goldButton(R(multi ? bx : 960 - 150, min(990, end.y + 10), 300, 60), L2("Pomiń", "Skip"), font: .serif(24, bold: true)) { [weak self] in self?.multiSel = []; g.resolveChoice(nil) } }
+            if ch.canCancel { goldButton(R(multi ? bx : 960 - 150, min(990, end.y + 10), 300, 60), L("Skip"), font: .serif(24, bold: true)) { [weak self] in self?.multiSel = []; g.resolveChoice(nil) } }
             if let h = hover { drawPreview(h) }
         case .reveal(let cards):
             let end = overlayCards(cards, title: ch.title, info: nil) { _ in g.resolveChoice(nil) }
@@ -910,9 +910,9 @@ final class Scene {
         renderer.rect(R(0, 0, virtualWidth, virtualHeight), RGBA.black.alpha(0.8))
         let img = g.winner === g.human ? "end_win" : (g.winner === g.computer ? "end_lose" : "end_draw")
         renderer.imageContain("img/icons/\(img).png", R(660, 90, 600, 360))
-        renderer.text(L2("Runda", "Round"), .serif(24, bold: true), x: 760, y: 500, color: .gray(0.8), align: .center)
+        renderer.text(L("Round"), .serif(24, bold: true), x: 760, y: 500, color: .gray(0.8), align: .center)
         renderer.text(playerName, .serif(24, bold: true), x: 960, y: 500, color: RGBA.gold, maxWidth: 190, align: .center)
-        renderer.text(careerFightName ?? L2("Gracz 2", "Player 2"), .serif(24, bold: true), x: 1160, y: 500, color: RGBA.gold, maxWidth: 190, align: .center)
+        renderer.text(careerFightName ?? L("Player 2"), .serif(24, bold: true), x: 1160, y: 500, color: RGBA.gold, maxWidth: 190, align: .center)
         for (i, h) in g.history.enumerated() {
             let y = 545 + Float(i) * 44
             renderer.text("\(i + 1)", .ui(26, bold: true), x: 760, y: y, color: .white, align: .center)
@@ -921,18 +921,18 @@ final class Scene {
         }
         if let fi = careerFight {
             if g.winner === g.human {
-                goldButton(R(960 - 160, 760, 320, 64), L2("Odbierz nagrodę", "Claim reward"), font: .serif(26, bold: true)) { [weak self] in
+                goldButton(R(960 - 160, 760, 320, 64), L("Claim reward"), font: .serif(26, bold: true)) { [weak self] in
                     guard let s = self else { return }
                     s.careerRewards = s.career.rewardOptions(fi); s.careerNewLeader = s.career.win(fi)
                     s.careerFight = nil; s.game = nil; s.careerChapter = nil; s.screen = .career
                 }
             } else {
-                goldButton(R(960 - 330, 760, 300, 64), L2("Spróbuj ponownie", "Try again"), font: .serif(26, bold: true)) { [weak self] in self?.startCareerFight(fi) }
-                goldButton(R(960 + 30, 760, 300, 64), L2("Kariera", "Career"), font: .serif(26, bold: true)) { [weak self] in self?.careerFight = nil; self?.game = nil; self?.screen = .career }
+                goldButton(R(960 - 330, 760, 300, 64), L("Try again"), font: .serif(26, bold: true)) { [weak self] in self?.startCareerFight(fi) }
+                goldButton(R(960 + 30, 760, 300, 64), L("Career"), font: .serif(26, bold: true)) { [weak self] in self?.careerFight = nil; self?.game = nil; self?.screen = .career }
             }
             return
         }
         goldButton(R(960 - 330, 760, 300, 64), L("Replay"), font: .serif(26, bold: true)) { [weak self] in self?.startGame() }
-        goldButton(R(960 + 30, 760, 300, 64), L2("Menu główne", "Main menu"), font: .serif(26, bold: true)) { [weak self] in self?.game = nil; self?.screen = .title }
+        goldButton(R(960 + 30, 760, 300, 64), L("Main menu"), font: .serif(26, bold: true)) { [weak self] in self?.game = nil; self?.screen = .title }
     }
 }

@@ -40,7 +40,7 @@
 - **Deck builder**: premade decks, custom decks, a favourite "My deck", and leader selection.
 - **Gamepad support**: any controller supported by Apple's GameController framework (Xbox, PlayStation, MFi). The focused element is highlighted, with no cursor.
 - **11 languages**: English, Polish, German, French, Italian, Spanish, Portuguese, Russian, Chinese, Japanese and Korean.
-- **In-app options**: music, sound, render resolution, frame limit (30/40/60/120 FPS, depending on the display), full screen, language, save location and player name.
+- **In-app options**: music, sound, render resolution, frame limit (30/40/60 FPS, depending on the display), AI difficulty, full screen, language, save location and player name.
 - **Synced saves**: a single JSON save file that can live in iCloud Drive or any folder.
 
 ## Screenshots

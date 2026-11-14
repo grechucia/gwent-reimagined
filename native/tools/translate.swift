@@ -15,7 +15,7 @@ func stripHTML(_ s: String) -> String {
 
     static func main() async {
         let args = CommandLine.arguments
-        guard args.count >= 3 else { print("użycie: translate <katalog data> <kod> [kod...]"); exit(1) }
+        guard args.count >= 3 else { print("usage: translate <data dir> <code> [code...]"); exit(1) }
         let dir = args[1]
         let en = readJSON(dir + "/lang_en.json")
         let extra = (try? JSONSerialization.jsonObject(with: Data(contentsOf: URL(fileURLWithPath: dir + "/ui_extra_en.json")))) as? [String] ?? []
@@ -33,7 +33,7 @@ func stripHTML(_ s: String) -> String {
         var plainBlocks: [String: String] = [:]
         for (k, h) in blocks { let p = stripHTML(h); if !p.isEmpty { plainBlocks[k] = p; texts.insert(p) } }
         let list = Array(texts).sorted()
-        print("» tekstów do tłumaczenia: \(list.count)")
+        print("» strings to translate: \(list.count)")
 
         for code in args.dropFirst(2) {
             guard let target = targets[code] else { print("! nieznany kod \(code)"); continue }
@@ -51,7 +51,7 @@ func stripHTML(_ s: String) -> String {
                     print("  \(code): \(min(i, list.count))/\(list.count)", terminator: "\r"); fflush(stdout)
                 }
             } catch {
-                print("\n! \(code): \(error) — pobierz pakiet językowy w Ustawieniach systemowych (Język i region → Języki tłumaczenia)")
+                print("\n! \(code): \(error) — download the language pack in System Settings (Language & Region → Translation Languages)")
                 continue
             }
             func t(_ s: String) -> String { map[s] ?? s }

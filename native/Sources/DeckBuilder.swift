@@ -78,7 +78,7 @@ final class DeckBuilder {
     func remove(_ d: CardData) { let n = (counts[d.key] ?? 0) - 1; counts[d.key] = n > 0 ? n : nil }
     /// Converts the builder state into a playable deck.
     func asDeck() -> DeckData {
-        DeckData(title: title.isEmpty ? L2("Moja talia", "My deck") + " — " + gameData.factionName(faction) : title, description: "", leader: leaderKey, faction: faction,
+        DeckData(title: title.isEmpty ? L("My deck") + " — " + gameData.factionName(faction) : title, description: "", leader: leaderKey, faction: faction,
                  cards: counts.sorted { $0.key < $1.key }.map { ($0.key, $0.value) })
     }
 

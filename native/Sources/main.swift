@@ -2,9 +2,9 @@
 import MetalKit
 import CoreText
 
-let resolutions: [(px: Int, title: String)] = [(0, "Natywna (rozmiar okna)"), (720, "720p (1280×720)"), (1080, "1080p (1920×1080)"),
+let resolutions: [(px: Int, title: String)] = [(0, "Native (window size)"), (720, "720p (1280×720)"), (1080, "1080p (1920×1080)"),
                                                (1440, "1440p (2560×1440)"), (2160, "2160p (3840×2160)")]
-let frameLimits: [Int] = [30, 40, 60, 120]
+let frameLimits: [Int] = [30, 40, 60]
 
 #if os(macOS)
 import Cocoa
@@ -87,8 +87,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, MTKViewDelegate, NSMen
         if let h = try? FileHandle(forWritingTo: logURL) { h.seekToEndOfFile(); h.write(line.data(using: .utf8)!); try? h.close() }
         else { try? line.write(to: logURL, atomically: true, encoding: .utf8) }
     }
-    let resMenu = NSMenu(title: "Rozdzielczość renderowania"), fpsMenu = NSMenu(title: "Limit klatek"), langMenu = NSMenu(title: "Język")
-    let soundMenu = NSMenu(title: "Dźwięk")
+    let resMenu = NSMenu(title: "Render resolution"), fpsMenu = NSMenu(title: "Frame limit"), langMenu = NSMenu(title: "Language")
+    let soundMenu = NSMenu(title: "Sound")
     let res = Bundle.main.resourceURL!
 
     var renderRes: Int { get { UserDefaults.standard.integer(forKey: "renderRes") } set { UserDefaults.standard.set(newValue, forKey: "renderRes") } }
@@ -208,13 +208,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate, MTKViewDelegate, NSMen
             let i = NSMenuItem(title: t, action: a, keyEquivalent: k); i.keyEquivalentModifierMask = mods; return i
         }
         func submenuItem(_ t: String, _ m: NSMenu) -> NSMenuItem { let i = NSMenuItem(title: t, action: nil, keyEquivalent: ""); i.submenu = m; return i }
-        sub("GwentReimagined", [item("O programie GwentReimagined", #selector(showAbout)), item("Licencje…", #selector(showCredits)), .separator(),
-                      item("Ukryj GwentReimagined", #selector(NSApplication.hide(_:)), "h"),
-                      item("Zakończ GwentReimagined", #selector(NSApplication.terminate(_:)), "q")])
+        sub("GwentReimagined", [item(L("About") + " GwentReimagined", #selector(showAbout)), item(L("Licenses") + "…", #selector(showCredits)), .separator(),
+                      item(L("Hide") + " GwentReimagined", #selector(NSApplication.hide(_:)), "h"),
+                      item(L("Quit") + " GwentReimagined", #selector(NSApplication.terminate(_:)), "q")])
         for r in resolutions { let it = item(r.title, #selector(pickResolution(_:)), "", []); it.tag = r.px; resMenu.addItem(it) }
         for f in frameLimits { let it = item("\(f) FPS", #selector(pickFrameLimit(_:)), "", []); it.tag = f; fpsMenu.addItem(it) }
-        sub("Okno", [item("Pełny ekran", #selector(NSWindow.toggleFullScreen(_:)), "f", [.command, .control]),
-                     item("Minimalizuj", #selector(NSWindow.performMiniaturize(_:)), "m"), item("Zamknij", #selector(NSWindow.performClose(_:)), "w")])
+        sub(L("Window"), [item(L("Full screen"), #selector(NSWindow.toggleFullScreen(_:)), "f", [.command, .control]),
+                     item(L("Minimize"), #selector(NSWindow.performMiniaturize(_:)), "m"), item(L("Close"), #selector(NSWindow.performClose(_:)), "w")])
         NSApp.mainMenu = main
         refreshMenus()
     }
@@ -224,7 +224,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, MTKViewDelegate, NSMen
     func refreshMenus() {
         for it in resMenu.items { it.state = it.tag == renderRes ? .on : .off }
         let hz = screenFPS
-        for it in fpsMenu.items { it.state = it.tag == frameLimit ? .on : .off; it.title = it.tag > hz ? "\(it.tag) FPS (ekran: \(hz) Hz)" : "\(it.tag) FPS" }
+        for it in fpsMenu.items { it.state = it.tag == frameLimit ? .on : .off; it.title = it.tag > hz ? "\(it.tag) FPS (display: \(hz) Hz)" : "\(it.tag) FPS" }
         for it in langMenu.items { it.state = (it.representedObject as? String) == lang ? .on : .off }
         for it in soundMenu.items where it.tag == 1 { it.state = audio?.musicOn == true ? .on : .off }
     }

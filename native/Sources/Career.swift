@@ -15,7 +15,7 @@ import Foundation
     var displayPath: String {
         if ProcessInfo.processInfo.environment["GWENT_SHOT"] == "1" { return "~/Library/Application Support/GwentReimagined" }
         #if os(iOS)
-        if dir.path == SaveStore.localDir.path { return L2("Pliki → Na moim iPhonie → GwentReimagined", "Files → On My iPhone → GwentReimagined") }
+        if dir.path == SaveStore.localDir.path { return L("Files → On My iPhone → GwentReimagined") }
         return dir.lastPathComponent
         #else
         return (dir.path as NSString).abbreviatingWithTildeInPath
@@ -99,13 +99,9 @@ struct CareerFight {
     var seed = 0
     var active: Bool { !faction.isEmpty }
 
-    static let difficultyNames: [(String, String)] = [("Łatwy", "Easy"), ("Normalny", "Normal"), ("Trudny", "Hard")]
+    static let difficultyNames: [String] = ["Easy", "Normal", "Hard"]
     var chapterCount: Int { [6, 8, 10][difficulty] }
-    static let places: [(String, String)] = [
-        ("Biały Sad", "White Orchard"), ("Velen", "Velen"), ("Novigrad", "Novigrad"), ("Oxenfurt", "Oxenfurt"), ("Wyzima", "Vizima"),
-        ("Kaer Morhen", "Kaer Morhen"), ("Skellige", "Skellige"), ("Toussaint", "Toussaint"), ("Beauclair", "Beauclair"), ("Cintra", "Cintra"),
-        ("Mahakam", "Mahakam"), ("Brokilon", "Brokilon"), ("Kovir", "Kovir"), ("Vengerberg", "Vengerberg"), ("Zerrikania", "Zerrikania"),
-        ("Ofir", "Ofir"), ("Mirt", "Crow's Perch"), ("Gors Velen", "Gors Velen"), ("Lyria", "Lyria"), ("Rivia", "Rivia"), ("Nilfgaard", "Nilfgaard")]
+    static let places: [String] = ["White Orchard", "Velen", "Novigrad", "Oxenfurt", "Vizima", "Kaer Morhen", "Skellige", "Toussaint", "Beauclair", "Cintra", "Mahakam", "Brokilon", "Kovir", "Vengerberg", "Zerrikania", "Ofir", "Crow's Perch", "Gors Velen", "Lyria", "Rivia", "Nilfgaard"]
 
     private var rngBase: Int { seed &* 31 &+ difficulty }
     private var cache: [Int: (title: String, fights: [CareerFight])] = [:]
@@ -141,7 +137,7 @@ struct CareerFight {
             let nm = gameData.cards[pk].map { gameData.cardName($0) } ?? fac
             fights.append(CareerFight(name: nm, portrait: pk, faction: fac, cap: tmp.cap, heroes: heroes, boss: boss))
         }
-        return (L2(place.0, place.1), fights)
+        return (L(place), fights)
     }
     /// Global index of fight `k` in chapter `c`.
     func index(_ c: Int, _ k: Int) -> Int { c * 4 + k }
@@ -200,7 +196,7 @@ struct CareerFight {
         save()
     }
     var playerDeck: DeckData {
-        DeckData(title: L2("Talia kariery", "Career deck"), description: "", leader: leader, faction: faction,
+        DeckData(title: L("Career deck"), description: "", leader: leader, faction: faction,
                  cards: deck.sorted { $0.key < $1.key }.map { ($0.key, $0.value) })
     }
     var deckUnits: Int { deck.reduce(0) { $0 + ((gameData.cards[$1.key]?.isUnit ?? false) ? $1.value : 0) } }

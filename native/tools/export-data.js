@@ -36,6 +36,6 @@ function run(argv) {
         var json = t.slice(t.indexOf('= {') + 2).replace(/;\s*$/, '');
         wr('lang_' + code + '.json', JSON.parse(json));
     });
-    return 'kart: ' + Object.keys(cards).length + ', talii: ' + R.decks.length + ', umiejętności: ' +
-        Object.keys(R.abilities).length + ', frakcji: ' + Object.keys(R.factions).length;
+    return 'cards: ' + Object.keys(cards).length + ', decks: ' + R.decks.length + ', abilities: ' +
+        Object.keys(R.abilities).length + ', factions: ' + Object.keys(R.factions).length;
 }

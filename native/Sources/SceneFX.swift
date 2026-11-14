@@ -136,7 +136,7 @@ extension Scene {
         renderer.frame(panel.inset(6), RGBA.goldDark.alpha(0.4), 1)
         renderer.text(L("Rules of Gwent"), .gwent(48), x: 960, y: 22, color: RGBA.gold, align: .center)
         let back = R(40, 24, 190, 50)
-        goldButton(back, "‹  " + L2("Wróć", "Back"), font: .serif(22, bold: true)) { [weak self] in self?.closeRules() }
+        goldButton(back, "‹  " + L("Back"), font: .serif(22, bold: true)) { [weak self] in self?.closeRules() }
         let content = R(panel.x + 50, panel.y + 30, panel.w - 100, panel.h - 60)
         let blocks = gameData.rules()
         var heights: [Float] = []
@@ -166,7 +166,7 @@ extension Scene {
             let th = content.h * content.h / total
             renderer.rect(R(panel.x + panel.w - 14, content.y + (content.h - th) * rulesScroll / maxScroll, 5, th), RGBA.gold.alpha(0.6))
         }
-        renderer.text(L2("Przewijaj kółkiem myszy · Esc — powrót", "Scroll with the mouse wheel · Esc — back"), .ui(16), x: 960, y: 1040, color: .gray(0.6), align: .center)
+        renderer.text(L("Scroll with the mouse wheel · Esc — back"), .ui(16), x: 960, y: 1040, color: .gray(0.6), align: .center)
     }
 }
 
@@ -179,8 +179,8 @@ extension Scene {
         renderer.rect(R(0, 0, virtualWidth, virtualHeight), RGBA.black.alpha(0.85))
         let panel = R(360, 110, 1200, 860)
         glassPanel(panel, alpha: 0.95)
-        renderer.text(L2("Licencje", "Licenses"), .gwent(52), x: 960, y: 24, color: RGBA.gold, align: .center)
-        goldButton(R(40, 24, 190, 50), "‹  " + L2("Wróć", "Back"), font: .serif(22, bold: true)) { [weak self] in self?.creditsOpen = false; self?.game?.paused = false }
+        renderer.text(L("Licenses"), .gwent(52), x: 960, y: 24, color: RGBA.gold, align: .center)
+        goldButton(R(40, 24, 190, 50), "‹  " + L("Back"), font: .serif(22, bold: true)) { [weak self] in self?.creditsOpen = false; self?.game?.paused = false }
         let x = panel.x + 60, w = panel.w - 120
         var y = panel.y + 40
         /// Section heading.
@@ -197,25 +197,21 @@ extension Scene {
             button(b) { if let u = URL(string: url) { Platform.openURL(u) } }
             y += sz.h + 12
         }
-        head(L2("Właściciel praw: CD PROJEKT RED", "Rights holder: CD PROJEKT RED"))
-        para(L2("Wszystkie postacie, uniwersum Wiedźmina, gwint, nazwy, ilustracje kart, muzyka, dźwięki i znaki towarowe są własnością CD PROJEKT S.A. / CD PROJEKT RED. Wiedźmin 3: Dziki Gon © CD PROJEKT S.A.",
-                "All characters, the Witcher universe, Gwent, names, card art, music, sounds and trademarks are the property of CD PROJEKT S.A. / CD PROJEKT RED. The Witcher 3: Wild Hunt © CD PROJEKT S.A."))
+        head(L("Rights holder: CD PROJEKT RED"))
+        para(L("All characters, the Witcher universe, Gwent, names, card art, music, sounds and trademarks are the property of CD PROJEKT S.A. / CD PROJEKT RED. The Witcher 3: Wild Hunt © CD PROJEKT S.A."))
         para("This is an unofficial fan work and is not approved/endorsed by CD PROJEKT RED.", RGBA(r: 1, g: 0.9, b: 0.6, a: 1))
-        para(L2("Projekt jest niekomercyjny i darmowy. Zasady twórczości fanowskiej CD PROJEKT RED (Fan Content Guidelines):",
-                "The project is non-commercial and free. CD PROJEKT RED Fan Content Guidelines:"), .gray(0.7))
+        para(L("The project is non-commercial and free. CD PROJEKT RED Fan Content Guidelines:"), .gray(0.7))
         link("cdprojektred.com/en/fan-content", "https://www.cdprojektred.com/en/fan-content")
         y += 10
-        head(L2("Fork projektu Gwent Classic v5.0", "Fork of Gwent Classic v5.0"))
-        para(L2("Ta aplikacja jest forkiem projektu open source Gwent Classic v5.0 z GitHuba (autorzy: Arun Sundaram, Reynolds Costa, Sylver, Iván Mtz; wersja 5.0: ia2904).",
-                "This app is a fork of the open-source Gwent Classic v5.0 project from GitHub (authors: Arun Sundaram, Reynolds Costa, Sylver, Iván Mtz; version 5.0: ia2904)."))
-        link(L2("Oryginał: Gwent Classic (Arun Sundaram)", "Original: Gwent Classic (Arun Sundaram)"), "https://github.com/asundr/gwent-classic")
+        head(L("Fork of Gwent Classic v5.0"))
+        para(L("This app is a fork of the open-source Gwent Classic v5.0 project from GitHub (authors: Arun Sundaram, Reynolds Costa, Sylver, Iván Mtz; version 5.0: ia2904)."))
+        link(L("Original: Gwent Classic (Arun Sundaram)"), "https://github.com/asundr/gwent-classic")
         link("github.com/ia2904/gwent-classic-v5.0", "https://github.com/ia2904/gwent-classic-v5.0")
-        link(L2("Licencja (MIT + Commons Clause)", "License (MIT + Commons Clause)"), "https://github.com/ia2904/gwent-classic-v5.0?tab=License-1-ov-file")
-        para("“Commons Clause” License Condition v1.0 — " + L2("licencja nie daje prawa do sprzedaży oprogramowania. Software: Gwent Classic · License: MIT · Licensor: Arun Sundaram.",
-                "the license does not grant the right to sell the Software. Software: Gwent Classic · License: MIT · Licensor: Arun Sundaram."), .gray(0.75))
+        link(L("License (MIT + Commons Clause)"), "https://github.com/ia2904/gwent-classic-v5.0?tab=License-1-ov-file")
+        para("“Commons Clause” License Condition v1.0 — " + L("the license does not grant the right to sell the Software. Software: Gwent Classic · License: MIT · Licensor: Arun Sundaram."), .gray(0.75))
         y += 10
-        head(L2("Port", "Port"))
-        para("Reimagined / ported by grechucia. " + L2("Kod portu na tej samej licencji (MIT + Commons Clause).", "Port code under the same license (MIT + Commons Clause)."))
+        head(L("Port"))
+        para("Reimagined / ported by grechucia. " + L("Port code under the same license (MIT + Commons Clause)."))
         link("github.com/grechucia/gwent-reimagined", "https://github.com/grechucia/gwent-reimagined")
     }
 }
