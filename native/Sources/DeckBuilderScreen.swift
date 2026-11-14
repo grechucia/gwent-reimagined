@@ -23,7 +23,7 @@ extension Scene {
             }
         }
         renderer.text(gameData.factionDesc(builder.faction), .ui(16), x: 960, y: 134, color: .gray(0.78), maxWidth: 900, align: .center)
-        let colL = R(40, 222, 800, 818), colR = R(1080, 222, 800, 818)
+        let colL = BuilderLayout.collectionColumn, colR = BuilderLayout.deckColumn
         glassPanel(colL, alpha: 0.55); glassPanel(colR, alpha: 0.55)
         renderer.text(L("Card Collection"), .serif(22, bold: true), x: colL.x + 14, y: 168, color: RGBA.gold)
         renderer.text(L("Cards in Deck"), .serif(22, bold: true), x: colR.x + 14, y: 168, color: RGBA.gold)
@@ -60,12 +60,12 @@ extension Scene {
         if let li = leaderCards.firstIndex(where: { $0.key == builder.leaderKey }) ?? (leaderCards.isEmpty ? nil : 0) {
             if builder.leaderKey.isEmpty { builder.leaderKey = leaderCards[li].key }
             let lc = Card(leaderCards[li], owner: nil)
-            let leaderArea = R(895, 196, 130, 187)
+            let leaderArea = BuilderLayout.leaderCard
             renderer.quad(glowTex, R(leaderArea.x - 40, leaderArea.y - 40, leaderArea.w + 80, leaderArea.h + 80), color: RGBA(r: 1, g: 0.72, b: 0.3, a: 0.22 + 0.06 * sin(time * 2)))
             drawCard(lc, leaderArea)
             renderer.frame(leaderArea.inset(-2), RGBA.gold.alpha(0.6), 2)
             if leaderArea.contains(mouse) { builderHover = lc }
-            let lb = R(875, 386, 170, 28)
+            let lb = BuilderLayout.changeLeaderButton
             renderer.text(L("Change leader") + " ▾", .serif(17, bold: true), x: 960, y: 388, color: lb.contains(mouse) ? .white : RGBA.gold, align: .center)
             renderer.rect(R(lb.x + 14, lb.y + 25, lb.w - 28, 1), RGBA.gold.alpha(lb.contains(mouse) ? 1 : 0.5))
             button(lb) { [weak self] in self?.leaderPickerOpen = true }
@@ -90,14 +90,14 @@ extension Scene {
         renderer.rect(R(area.x, area.y, area.w * min(1, Float(stats.units) / 22), area.h), stats.units >= 22 ? RGBA(r: 0.45, g: 0.85, b: 0.4, a: 1) : RGBA.gold)
         y += 18
         if stats.units < 22 { renderer.text(L("Your deck must have at least 22 unit cards."), .ui(13), x: 960, y: y, color: RGBA(r: 1, g: 0.55, b: 0.45, a: 1), maxWidth: 200, align: .center) }
-        goldButton(R(865, 800, 190, 52), L("Save"), font: .serif(22, bold: true), enabled: builder.valid) { [weak self] in builder.save(); self?.audio.play("game_buy"); self?.builderSaved = 1.5 }
+        goldButton(BuilderLayout.saveButton, L("Save"), font: .serif(22, bold: true), enabled: builder.valid) { [weak self] in builder.save(); self?.audio.play("game_buy"); self?.builderSaved = 1.5 }
         if !builder.careerMode {
-        goldButton(R(865, 862, 190, 52), L("Start game"), font: .serif(20, bold: true), enabled: builder.valid) { [weak self] in
+        goldButton(BuilderLayout.startButton, L("Start game"), font: .serif(20, bold: true), enabled: builder.valid) { [weak self] in
             guard let self = self else { return }
             builder.save(); self.customDecks = DeckBuilder.loadCustom(); self.startGame(with: builder.asDeck())
         }
         }
-        goldButton(R(40, 24, 190, 50), "‹  " + L("Back"), font: .serif(22, bold: true)) { [weak self] in
+        goldButton(ScreenLayout.backButton, "‹  " + L("Back"), font: .serif(22, bold: true)) { [weak self] in
             if builder.careerMode { builder.save(); self?.screen = .career; return }
             self?.customDecks = DeckBuilder.loadCustom(); self?.selFaction = builder.faction; self?.deckStage = 1; self?.deckSwitchT = 0; self?.screen = .decks }
         if builderSaved > 0 { renderer.text(L("Deck Saved!"), .serif(22, bold: true), x: 960, y: 760, color: RGBA(r: 0.5, g: 1, b: 0.5, a: min(1, builderSaved)), align: .center); builderSaved -= dt }
@@ -121,7 +121,7 @@ extension Scene {
     func drawLeaderPicker(_ builder: DeckBuilder) {
         renderer.text(L("Choose a leader"), .gwent(52), x: 960, y: 40, color: RGBA.gold, align: .center)
         renderer.text(gameData.factionName(builder.faction) + " — " + L("click the leader you want to play with."), .serif(19, italic: true), x: 960, y: 108, color: .gray(0.85), align: .center)
-        goldButton(R(40, 24, 190, 50), "‹  " + L("Back"), font: .serif(22, bold: true)) { [weak self] in self?.leaderPickerOpen = false }
+        goldButton(ScreenLayout.backButton, "‹  " + L("Back"), font: .serif(22, bold: true)) { [weak self] in self?.leaderPickerOpen = false }
         let leaderCards = builder.leaders()
         guard !leaderCards.isEmpty else { return }
         let leaderCount = leaderCards.count, gap: Float = 24

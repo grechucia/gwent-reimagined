@@ -11,7 +11,7 @@ extension Scene {
         drawMenuBackground(dt, dim: 0.7)
         deckSwitchT = min(1, deckSwitchT + dt / 0.5)
         renderer.text(L("Career"), .gwent(52), x: 960, y: 30, color: RGBA.gold, align: .center)
-        goldButton(R(40, 24, 190, 50), "‹  " + L("Back"), font: .serif(22, bold: true)) { [weak self] in
+        goldButton(ScreenLayout.backButton, "‹  " + L("Back"), font: .serif(22, bold: true)) { [weak self] in
             self?.deckStage = -1; self?.deckSwitchT = 0; self?.screen = .decks }
         if !career.active { drawCareerStart(); return }
         drawCareerLadder()
@@ -56,7 +56,7 @@ extension Scene {
         let dn = Career.difficultyNames[career.difficulty]
         renderer.text(gameData.factionName(career.faction) + " · " + L(dn) + " · " + L("opponents defeated") + ": \(career.beaten.count)/\(career.totalFights)",
                .serif(20, italic: true), x: 960, y: 98, color: .gray(0.85), align: .center)
-        let colL = R(40, 150, 380, 640)
+        let colL = CareerLayout.chaptersColumn
         glassPanel(colL, alpha: 0.7)
         renderer.text(L("Chapters"), .gwent(30), x: colL.mid.x, y: colL.y + 14, color: RGBA.gold, align: .center)
         let first = max(0, min(career.currentChapter - 2, chapterCount - 5))
@@ -114,7 +114,7 @@ extension Scene {
             renderer.text("★ " + L("Career complete! You are a Gwent master.") + " ★",
                    .serif(26, bold: true), x: 980, y: 900, color: RGBA.gold, align: .center)
         }
-        let colR = R(1520, 150, 360, 640)
+        let colR = CareerLayout.deckColumn
         glassPanel(colR, alpha: 0.7)
         renderer.text(L("Your deck"), .gwent(30), x: colR.mid.x, y: colR.y + 14, color: RGBA.gold, align: .center)
         if let cardData = gameData.cards[career.leader] {

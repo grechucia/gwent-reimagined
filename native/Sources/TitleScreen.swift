@@ -44,8 +44,8 @@ extension Scene {
         goldButton(R(960 + 200, 917, 220, 46), L("How to play"), font: .serif(20, bold: true)) { [weak self] in self?.openRules() }
         goldButton(R(960 - 420, 917, 220, 46), L("Options"), font: .serif(20, bold: true)) { [weak self] in self?.optionsOpen = true }
         if Platform.isDesktop {
-            padNoAuto.append(R(1690, 24, 190, 46))
-            goldButton(R(1690, 24, 190, 46), L("Quit game"), font: .serif(19, bold: true)) { Platform.quit() }
+            padNoAuto.append(ScreenLayout.quitButton)
+            goldButton(ScreenLayout.quitButton, L("Quit game"), font: .serif(19, bold: true)) { Platform.quit() }
         }
         renderer.text("v" + appVersion, .serif(17), x: 1880, y: 1044, color: RGBA(r: 0.91, g: 0.86, b: 0.74, a: 0.6), align: .right)
         languageToggle(y: 995)

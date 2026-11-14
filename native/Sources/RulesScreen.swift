@@ -14,12 +14,12 @@ extension Scene {
     /// Rules screen.
     func drawRules() {
         renderer.rect(R(0, 0, virtualWidth, virtualHeight), RGBA.black.alpha(0.82))
-        let panel = R(260, 90, 1400, 940)
+        let panel = ScreenLayout.rulesPanel
         renderer.gradient(panel, RGBA(r: 0.13, g: 0.1, b: 0.06, a: 0.98), RGBA(r: 0.07, g: 0.05, b: 0.03, a: 0.98), steps: 12)
         renderer.frame(panel, RGBA.goldDark, 2)
         renderer.frame(panel.inset(6), RGBA.goldDark.alpha(0.4), 1)
         renderer.text(L("Rules of Gwent"), .gwent(48), x: 960, y: 22, color: RGBA.gold, align: .center)
-        let back = R(40, 24, 190, 50)
+        let back = ScreenLayout.backButton
         goldButton(back, "‹  " + L("Back"), font: .serif(22, bold: true)) { [weak self] in self?.closeRules() }
         let content = R(panel.x + 50, panel.y + 30, panel.w - 100, panel.h - 60)
         let blocks = gameData.rules()

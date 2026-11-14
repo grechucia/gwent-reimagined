@@ -56,7 +56,7 @@ extension Scene {
     func drawStartStep(_ dt: Float) {
         renderer.text(L("How do you want to play?"), .gwent(52), x: 960, y: 44, color: RGBA.gold, align: .center)
         renderer.text(L("Play your own deck with one click, or choose a faction."), .serif(19, italic: true), x: 960, y: 112, color: .gray(0.85), align: .center)
-        goldButton(R(40, 24, 190, 50), "‹  " + L("Back"), font: .serif(22, bold: true)) { [weak self] in self?.screen = .title }
+        goldButton(ScreenLayout.backButton, "‹  " + L("Back"), font: .serif(22, bold: true)) { [weak self] in self?.screen = .title }
         let progress = ease(deckSwitchT * 1.4)
         let myDeckPanel = R(110, 170 + (1 - progress) * 24, 540, 780)
         let hovered = myDeckPanel.contains(mouse)
@@ -127,7 +127,7 @@ extension Scene {
     /// Faction grid.
     func drawFactionStep(_ dt: Float) {
         stepHeader(1, L("Choose a faction"), L("Click the faction you want to play."))
-        goldButton(R(40, 24, 190, 50), "‹  " + L("Back"), font: .serif(22, bold: true)) { [weak self] in self?.deckStage = -1; self?.deckSwitchT = 0 }
+        goldButton(ScreenLayout.backButton, "‹  " + L("Back"), font: .serif(22, bold: true)) { [weak self] in self?.deckStage = -1; self?.deckSwitchT = 0 }
         let facs = DeckBuilder.factionsOrder
         let cols = 5, tw: Float = 340, th: Float = 250, gx: Float = 22, gy: Float = 22
         let x0 = 960 - (Float(cols) * tw + Float(cols - 1) * gx) / 2, y0: Float = 160
@@ -158,7 +158,7 @@ extension Scene {
     func drawDeckStep(_ dt: Float) {
         let faction = selFaction
         stepHeader(2, L("Choose a deck"), gameData.factionName(faction) + " — " + L("click “Play this deck” under the deck you want."))
-        goldButton(R(40, 24, 220, 50), "‹  " + L("Factions"), font: .serif(22, bold: true)) { [weak self] in self?.deckStage = 0; self?.deckSwitchT = 0 }
+        goldButton(ScreenLayout.wideBackButton, "‹  " + L("Factions"), font: .serif(22, bold: true)) { [weak self] in self?.deckStage = 0; self?.deckSwitchT = 0 }
         let all = allDecks
         let idx = all.indices.filter { all[$0].faction == faction }
         let tileCount = idx.count + 1
@@ -275,8 +275,8 @@ extension Scene {
         renderer.text(L("Deck cards"), .gwent(52), x: 960, y: 34, color: RGBA.gold.alpha(progress), align: .center)
         renderer.text(gameData.factionName(deck.faction) + (gameData.ui(deck.title) != gameData.factionName(deck.faction) || i >= gameData.decks.count ? " — " + gameData.ui(deck.title) : ""),
                .serif(20, italic: true), x: 960, y: 102, color: RGBA.gray(0.85, progress), align: .center)
-        goldButton(R(40, 24, 200, 50), "‹  " + L("Decks"), font: .serif(22, bold: true)) { [weak self] in self?.previewDeck = nil; self?.deckSwitchT = 0 }
-        let left = R(60, 150, 400, 830)
+        goldButton(ScreenLayout.deckBackButton, "‹  " + L("Decks"), font: .serif(22, bold: true)) { [weak self] in self?.previewDeck = nil; self?.deckSwitchT = 0 }
+        let left = DeckPreviewLayout.infoPanel
         glassPanel(left, alpha: 0.7 * progress)
         if let leaderData = gameData.cards[deck.leader] {
             let cardRect = R(left.x + 60, left.y + 30 + (1 - progress) * 20, 280, 280 / 0.697)
@@ -307,7 +307,7 @@ extension Scene {
         goldButton(R(left.x + 30, left.y + left.h - 76, left.w - 60, 56), L("Play this deck")) { [weak self] in
             self?.previewDeck = nil; self?.myDeckIndex = i; self?.startGame(with: deck)
         }
-        let area = R(490, 150, 1370, 830)
+        let area = DeckPreviewLayout.cardsArea
         glassPanel(area, alpha: 0.55 * progress)
         builderGrid(list, in: area.inset(6), scroll: &previewScroll, target: &previewTarget, dt: dt, cardW: 150, count: { cnt[$0.key] ?? 0 }) { _, _ in }
         renderer.text(L("Hover a card to see its description. Scroll with the mouse wheel."),

@@ -11,7 +11,7 @@ extension Scene {
     /// Save-location prompt: this device, iCloud Drive or a custom folder.
     func drawSavePrompt() {
         renderer.rect(R(0, 0, virtualWidth, virtualHeight), RGBA.black.alpha(0.82))
-        let area = R(360, 120, 1200, 840)
+        let area = ScreenLayout.savePromptPanel
         glassPanel(area, alpha: 0.96)
         renderer.text(L("Where should your progress be saved?"), .gwent(44), x: 960, y: area.y + 30, color: RGBA.gold, align: .center)
         renderer.text(L("Your decks and career are kept in one file. Choose a location – you can change it later in Options."),

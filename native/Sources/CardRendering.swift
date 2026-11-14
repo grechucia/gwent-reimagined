@@ -82,7 +82,7 @@ extension Scene {
 
     /// Card preview with the ability description.
     func drawPreview(_ card: Card) {
-        let cardRect = R(1538, 232, 330, 474)
+        let cardRect = ScreenLayout.cardPreviewCard
         renderer.rect(cardRect.inset(-6), RGBA.black.alpha(0.55))
         drawCardLarge(card, cardRect)
         var lines: [(String, String)] = []
@@ -94,7 +94,7 @@ extension Scene {
         }
         guard !lines.isEmpty else { return }
         var y: Float = 720
-        let box = R(1528, 714, 350, 360)
+        let box = ScreenLayout.cardPreviewText
         var h: Float = 12
         for (title, description) in lines { h += renderer.measure(title, .serif(19, bold: true), maxWidth: 326).h + renderer.measure(description, .ui(16), maxWidth: 326).h + 10 }
         renderer.rect(R(box.x, box.y, box.w, min(box.h, h)), RGBA(r: 0.06, g: 0.05, b: 0.03, a: 0.92))

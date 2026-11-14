@@ -181,6 +181,7 @@ native/
 │   ├── DeckBuilder.swift         # deck-building model
 │   │
 │   ├── Scene.swift               # UI core: screens, input routing, immediate-mode buttons
+│   ├── Layout.swift              # named positions of fixed UI elements (ScreenLayout, BoardLayout...)
 │   ├── TitleScreen.swift         # title screen and menu background
 │   ├── DeckScreens.swift         # start menu, faction and deck selection, deck preview
 │   ├── DeckBuilderScreen.swift   # deck builder and leader picker

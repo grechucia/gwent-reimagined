@@ -8,10 +8,10 @@ extension Scene {
     /// Options overlay: player name, audio, graphics, difficulty, save location and language.
     func drawOptions() {
         renderer.rect(R(0, 0, virtualWidth, virtualHeight), RGBA.black.alpha(0.82))
-        let panel = R(360, 40, 1200, 1000)
+        let panel = ScreenLayout.optionsPanel
         glassPanel(panel, alpha: 0.96)
         renderer.text(L("Options"), .gwent(52), x: 960, y: panel.y + 24, color: RGBA.gold, align: .center)
-        goldButton(R(40, 24, 190, 50), "‹  " + L("Back"), font: .serif(22, bold: true)) { [weak self] in self?.optionsOpen = false; self?.game?.paused = false }
+        goldButton(ScreenLayout.backButton, "‹  " + L("Back"), font: .serif(22, bold: true)) { [weak self] in self?.optionsOpen = false; self?.game?.paused = false }
         goldButton(R(panel.x + panel.w - 250, panel.y + 30, 210, 46), L("Licenses"), font: .serif(18, bold: true)) { [weak self] in self?.creditsOpen = true }
         var y = panel.y + 110
         let labelX = panel.x + 60, bx = panel.x + 420

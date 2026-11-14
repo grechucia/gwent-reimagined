@@ -8,10 +8,10 @@ extension Scene {
     /// Draws the licenses and credits.
     func drawCredits() {
         renderer.rect(R(0, 0, virtualWidth, virtualHeight), RGBA.black.alpha(0.85))
-        let panel = R(360, 110, 1200, 860)
+        let panel = ScreenLayout.licensesPanel
         glassPanel(panel, alpha: 0.95)
         renderer.text(L("Licenses"), .gwent(52), x: 960, y: 24, color: RGBA.gold, align: .center)
-        goldButton(R(40, 24, 190, 50), "‹  " + L("Back"), font: .serif(22, bold: true)) { [weak self] in self?.creditsOpen = false; self?.game?.paused = false }
+        goldButton(ScreenLayout.backButton, "‹  " + L("Back"), font: .serif(22, bold: true)) { [weak self] in self?.creditsOpen = false; self?.game?.paused = false }
         let x = panel.x + 60, w = panel.w - 120
         var y = panel.y + 40
         /// Section heading.

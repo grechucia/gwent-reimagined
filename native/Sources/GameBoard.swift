@@ -4,22 +4,6 @@ import Metal
 import CoreGraphics
 import simd
 
-/// Fixed positions of board elements in the virtual 1920x1080 space (they match the board image).
-enum BoardLayout {
-    static let rowsLeft: Float = 567
-    static let rowsWidth: Float = 946
-    static let allRows = R(567, 5, 946, 816)
-    static let rowScoreX: Float = 534
-    static let humanPanel = R(0, 666, 450, 135)
-    static let computerPanel = R(0, 263, 450, 135)
-    static let rulesButton = R(1540, 16, 190, 46)
-    static let passButton = R(292, 848, 150, 50)
-    static let giveUpButton = R(292, 944, 150, 50)
-    static let exitButton = R(1680, 1018, 180, 46)
-    static let musicButtonsX: Float = 1570
-    static let bottomButtonsY: Float = 1018
-}
-
 extension Scene {
     /// Board background.
     func drawModernBoard(_ match: Game) {
@@ -44,7 +28,7 @@ extension Scene {
     func graveRect(_ player: Player) -> R { player === game?.human ? R(1556, 836, cardWidth, cardHeight) : R(1556, 80, cardWidth, cardHeight) }
 
     /// Position of a player's leader card.
-    func leaderRect(_ player: Player) -> R { player === game?.human ? R(142, 835, 96, 132) : R(142, 83, 96, 132) }
+    func leaderRect(_ player: Player) -> R { player === game?.human ? BoardLayout.humanLeader : BoardLayout.computerLeader }
 
     /// Positions for `n` cards spread across an area.
     func layout(_ count: Int, in area: R, w width: Float = cardWidth, gap: Float = 4) -> [SIMD2<Float>] {
@@ -347,7 +331,7 @@ extension Scene {
             button(R(260, leaderArea.y + 51, 38, 38)) { [weak self] in self?.game?.humanLeader() }
         }
         if mine, let factionAbility = match.factionActive(player) {
-            let box = R(160, 612, 150, 34)
+            let box = BoardLayout.factionAbilityButton
             let title = factionAbility == "transform" ? L("Transform") : (factionAbility.hasPrefix("skip") ? L("Skip turn") : L("Faction ability"))
             smallButton(box, title, enabled: canAct) { [weak self] in self?.game?.humanFaction() }
         }
@@ -516,7 +500,7 @@ extension Scene {
                 goldButton(R(x0 + Float(col) * (bw + 16), box.y + 120 + Float(row) * (bh + 16), bw, bh), option, font: .serif(22, bold: true)) { match.resolveChoice([i]) }
             }
         case .rows:
-            let box = R(560, 820, 960, 46)
+            let box = BoardLayout.rowChoiceBar
             renderer.rect(box, RGBA.black.alpha(0.8)); renderer.frame(box, RGBA.goldDark.alpha(0.7), 1)
             renderer.text(choice.title, .serif(22, bold: true), x: box.mid.x, y: box.y + 10, color: RGBA.gold, maxWidth: 940, align: .center)
         }
@@ -526,7 +510,7 @@ extension Scene {
     func drawEnd(_ match: Game) {
         renderer.rect(R(0, 0, virtualWidth, virtualHeight), RGBA.black.alpha(0.8))
         let image = match.winner === match.human ? "end_win" : (match.winner === match.computer ? "end_lose" : "end_draw")
-        renderer.imageContain("img/icons/\(image).png", R(660, 90, 600, 360))
+        renderer.imageContain("img/icons/\(image).png", BoardLayout.endOfMatchBanner)
         renderer.text(L("Round"), .serif(24, bold: true), x: 760, y: 500, color: .gray(0.8), align: .center)
         renderer.text(playerName, .serif(24, bold: true), x: 960, y: 500, color: RGBA.gold, maxWidth: 190, align: .center)
         renderer.text(careerFightName ?? L("Player 2"), .serif(24, bold: true), x: 1160, y: 500, color: RGBA.gold, maxWidth: 190, align: .center)

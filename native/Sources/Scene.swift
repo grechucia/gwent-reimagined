@@ -220,8 +220,8 @@ final class Scene {
         audio.play("game_start")
     }
 
-    let handRect = R(580, 843, 932, 128)
-    let weatherRect = R(141, 448, 279, 138)
+    let handRect = BoardLayout.hand
+    let weatherRect = BoardLayout.weatherSlot
 
     var watchdog: Float = 0
     var lastSig = ""
