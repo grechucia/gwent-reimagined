@@ -148,19 +148,19 @@ extension Scene {
 
     /// Lets the player pick one of the reward cards after a win.
     func drawCareerReward() {
-        guard let opts = careerRewards else { return }
+        guard let options = careerRewards else { return }
         clicks.removeAll()
         renderer.rect(R(0, 0, virtualWidth, virtualHeight), RGBA.black.alpha(0.8))
         renderer.text(L("Victory!"), .gwent(64), x: 960, y: 60, color: RGBA.gold, align: .center)
-        renderer.text(opts.isEmpty ? L("You already own every card of this faction.")
+        renderer.text(options.isEmpty ? L("You already own every card of this faction.")
                             : L("Choose a card to add to your collection:"),
                .serif(24, italic: true), x: 960, y: 150, color: .white, align: .center)
         if let nl = careerNewLeader, let lc = gameData.cards[nl] {
             renderer.text("★ " + L("New leader") + ": " + gameData.cardName(lc), .serif(22, bold: true), x: 960, y: 196, color: RGBA.gold, align: .center)
         }
         let cw: Float = 300, chh = cw / 0.697, gap: Float = 60
-        let x0 = 960 - (Float(opts.count) * cw + Float(max(0, opts.count - 1)) * gap) / 2
-        for (i, k) in opts.enumerated() {
+        let x0 = 960 - (Float(options.count) * cw + Float(max(0, options.count - 1)) * gap) / 2
+        for (i, k) in options.enumerated() {
             guard let d = gameData.cards[k] else { continue }
             let base = R(x0 + Float(i) * (cw + gap), 260, cw, chh)
             let hovered = base.contains(mouse)
@@ -170,7 +170,7 @@ extension Scene {
             if hovered { builderHover = Card(d, owner: nil) }
             button(base) { [weak self] in self?.career.take(k); self?.careerRewards = nil; self?.careerNewLeader = nil; self?.audio.play("game_buy") }
         }
-        if opts.isEmpty {
+        if options.isEmpty {
             goldButton(R(960 - 150, 700, 300, 60), L("Continue"), font: .serif(24, bold: true)) { [weak self] in self?.careerRewards = nil; self?.careerNewLeader = nil }
         }
     }

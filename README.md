@@ -153,33 +153,50 @@ python3 split.py       # split new strings into parts -> src_<n>.json (existing 
 
 ### Updating an existing language
 
-After adding new strings to the code (`L("English text")` or `L2("Polish", "English")`), run `extract.py` and `split.py`. Translate only the newly created `src_<n>.json` part(s), then run `check.py` and `assemble.py`.
+After adding new strings to the code (`L("English text")`; Polish UI translations live in `native/Resources/data/ui_pl.json`), run `extract.py` and `split.py`. Translate only the newly created `src_<n>.json` part(s), then run `check.py` and `assemble.py`.
 
 ## Project structure
 
 ```
 native/
 ├── Sources/
-│   ├── main.swift           # macOS app delegate, window, frame pacing (CADisplayLink), menu bar
-│   ├── MainIOS.swift        # iOS app/scene delegates, touch input
-│   ├── Platform.swift       # platform layer (dialogs, links, folder picker)
-│   ├── Renderer.swift       # Metal 2D renderer, textures, CoreText text, shaders
-│   ├── Scene.swift          # screens, input, game board
-│   ├── SceneFX.swift        # effects, rules and licenses screens
-│   ├── DeckScreens.swift    # start menu, deck selection and preview, leader picker
-│   ├── DeckBuilder.swift    # deck building logic
-│   ├── CareerScreens.swift  # career, save location prompt, options
-│   ├── Career.swift         # career generation and the SaveStore
-│   ├── Engine.swift         # game rules and abilities
-│   ├── AI.swift             # computer opponent
-│   ├── Gamepad.swift        # game controller input
-│   ├── GameData.swift       # cards, decks, factions, localisation
-│   └── Audio.swift          # music and sound effects
-├── Resources/               # exported data (JSON), icon
-├── tools/                   # data export, icon generator, i18n pipeline
-├── build.sh                 # macOS build
-└── build-ios.sh             # iOS build (.ipa / Simulator)
-img/ audio/ sfx/ fonts/      # game assets
+│   ├── main.swift                # macOS entry point: window, input, frame pacing, menu bar
+│   ├── MainIOS.swift             # iOS entry point: app/scene delegates, touch input
+│   ├── Platform.swift            # platform layer shared by macOS and iOS (dialogs, links, folder picker)
+│   ├── Renderer.swift            # Metal 2D renderer, textures, CoreText text, shaders
+│   ├── Audio.swift               # music and sound effects
+│   ├── Gamepad.swift             # game controller focus navigation
+│   │
+│   ├── GameData.swift            # cards, decks, factions, localisation (L)
+│   ├── Engine.swift              # core rules: cards, rows, players, rounds and turns
+│   ├── UnitAbilities.swift       # spy, medic, muster, berserker, djinn...
+│   ├── SpecialCards.swift        # special and weather cards, scorch, cull
+│   ├── LeaderAbilities.swift     # every leader ability
+│   ├── FactionAbilities.swift    # activatable faction abilities
+│   ├── Scoring.swift             # power calculation (weather, horns, bonds, morale)
+│   ├── AI.swift                  # computer opponent and difficulty levels
+│   │
+│   ├── SaveStore.swift           # single JSON save file
+│   ├── Career.swift              # career generation, opponents and rewards
+│   ├── DeckBuilder.swift         # deck-building model
+│   │
+│   ├── Scene.swift               # UI core: screens, input routing, immediate-mode buttons
+│   ├── TitleScreen.swift         # title screen and menu background
+│   ├── DeckScreens.swift         # start menu, faction and deck selection, deck preview
+│   ├── DeckBuilderScreen.swift   # deck builder and leader picker
+│   ├── CareerScreens.swift       # career ladder and rewards
+│   ├── GameBoard.swift           # match screen (BoardLayout, rows, hand, buttons, AI turns)
+│   ├── CardRendering.swift       # small and large cards, card preview
+│   ├── Effects.swift             # card flights, burns, weather animations
+│   ├── OptionsScreen.swift       # in-app options
+│   ├── SaveLocationPrompt.swift  # save location prompt
+│   ├── RulesScreen.swift         # rules
+│   └── LicensesScreen.swift      # licenses and credits
+├── Resources/                    # exported data (JSON), ui_pl.json, icon
+├── tools/                        # data export, icon generator, i18n pipeline
+├── build.sh                      # macOS build
+└── build-ios.sh                  # iOS build (.ipa / Simulator)
+img/ audio/ sfx/ fonts/           # game assets
 cards.js decks.js factions.js abilities.js lang/   # original game data
 ```
 

@@ -31,21 +31,22 @@ extension Game {
         case "skip_game":
             player.factionUsedGame = true
             note(L("Redania used its faction ability and skipped a turn"), "notif_redania")
+        // Morale Boost: Adds +1 to all units in the row (excluding itself).
         case "morale":
             if let (_, r) = await pickRow(player, gameData.factionDesc("lyria_rivia"), RowType.allCases.map { (player, $0) }, ai: { RowType.allCases.map { player.row($0).cards.count }.enumerated().max { $0.1 < $1.1 }!.0 }) {
                 player.row(r).factionMorale += 1; player.factionUsedGame = true
                 note(L("Lyria & Rivia ability used - Morale Boost effect applied to a row."), "notif_lyria_rivia"); sound("moral")
             }
         case "weather":
-            let opts = player.deck.filter { $0.data.isWeather }
-            if let t = await pickOne(player, L("Choose a weather card to play"), opts, ai: { $0.first }) {
+            let options = player.deck.filter { $0.data.isWeather }
+            if let t = await pickOne(player, L("Choose a weather card to play"), options, ai: { $0.first }) {
                 player.factionUsedGame = true; player.deck.removeAll { $0 === t }; t.owner = player
                 await playWeather(t, by: player, row: nil)
                 note(L("Ofir faction ability used - Weather card played from deck."), "notif_ofir")
             }
         case "transform":
-            let opts = player.rowCards.filter { $0.act("monster_toussaint") && $0.playedTurn < turn - 1 }
-            if let t = await pickOne(player, L("Choose which monster to transform."), opts, ai: best1), let k = t.data.targets.first, let d = gameData.cards[k] {
+            let options = player.rowCards.filter { $0.act("monster_toussaint") && $0.playedTurn < turn - 1 }
+            if let t = await pickOne(player, L("Choose which monster to transform."), options, ai: best1), let k = t.data.targets.first, let d = gameData.cards[k] {
                 t.revertTo = t.key
                 t.transform(into: d); t.playedTurn = turn
                 sound("monster_toussaint")

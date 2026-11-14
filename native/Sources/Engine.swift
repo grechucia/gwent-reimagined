@@ -242,7 +242,7 @@ final class Game {
     }
     /// Asks a player to pick one card.
     func pickOne(_ player: Player, _ title: String, _ cards: [Card], cancel: Bool = false, ai: @escaping ([Card]) -> Card?) async -> Card? {
-        await pickCards(player, title, cards, max: 1, cancel: cancel) { cs in ai(cs).map { [$0] } ?? [] }.first
+        await pickCards(player, title, cards, max: 1, cancel: cancel) { candidates in ai(candidates).map { [$0] } ?? [] }.first
     }
     /// Asks a player to pick a row.
     func pickRow(_ p: Player, _ title: String, _ rows: [(Player, RowType)], ai: @escaping () -> Int) async -> (Player, RowType)? {
@@ -324,7 +324,7 @@ final class Game {
     /// Handles the Daisy of the Valley ability after the redraw.
     func daisyReturn() async {
         if human.leaderAbility == "francesca_daisy" {
-            let back = await pickCards(human, L("Choose 2 cards to put back into your deck"), human.hand, min: 2, max: 2) { cs in Array(cs.sorted { self.aiCardValue($0) < self.aiCardValue($1) }.prefix(2)) }
+            let back = await pickCards(human, L("Choose 2 cards to put back into your deck"), human.hand, min: 2, max: 2) { candidates in Array(candidates.sorted { self.aiCardValue($0) < self.aiCardValue($1) }.prefix(2)) }
             for c in back { human.hand.removeAll { $0 === c }; human.deck.insert(c, at: Int.random(in: 0...human.deck.count)) }
         }
     }
@@ -348,56 +348,62 @@ final class Game {
     /// Starts a round: faction bonuses, who goes first, turn loop.
     func startRound() async {
         turn += 1
+        // Reset per-round flags of both players.
         for player in [human, computer] {
             player.aamadBonus = 0; player.comradeUsedRound = false; player.factionUsedRound = false; player.fleetDrawsRound = 0; player.halfWeather = false
         }
+        // Announce the round.
         note(L("Round Start") + " · \(round)", "notif_round_start")
         sound(round == 1 ? "round1_start" : "round_win")
+        // Faction perks that trigger at the start of rounds 2 and 3 (Northern Realms, Zerrikania, Skellige).
         if round > 1 {
             for player in [human, computer] {
                 if player.faction == "realms" && lastRoundWinner !== player { draw(player, 1); note(L("Northern Realms faction ability triggered - North draws an additional card."), "notif_north") }
                 if player.faction == "zerrikania" && lastRoundWinner === player.opponent {
-                    let opts = player.grave.filter { $0.isUnit }
-                    if let c = await pickOne(player, L("Which card to restore from your grave?"), opts, cancel: true, ai: { cs in cs.max { self.aiCardValue($0) < self.aiCardValue($1) } }) {
-                        player.grave.removeAll { $0 === c }
-                        await placeUnit(c, by: player, row: c.allowedRows.first ?? .close)
+                    let options = player.grave.filter { $0.isUnit }
+                    if let card = await pickOne(player, L("Which card to restore from your grave?"), options, cancel: true, ai: { candidates in candidates.max { self.aiCardValue($0) < self.aiCardValue($1) } }) {
+                        player.grave.removeAll { $0 === card }
+                        await placeUnit(card, by: player, row: card.allowedRows.first ?? .close)
                         note(L("Zerrikania ability used - Unit restored from discard pile."), "notif_zerrikania")
                     }
                 }
                 if player.faction == "skellige" && round == 3 {
-                    let opts = player.grave.filter { $0.isUnit }.shuffled().prefix(2)
-                    for c in opts { player.grave.removeAll { $0 === c }; await placeUnit(c, by: player, row: c.allowedRows.randomElement() ?? .close) }
-                    if !opts.isEmpty { note(player === human ? L("Skellige Ability Triggered!") : L("Opponent Skellige Ability Triggered!"), "notif_skellige") }
+                    let options = player.grave.filter { $0.isUnit }.shuffled().prefix(2)
+                    for card in options { player.grave.removeAll { $0 === card }; await placeUnit(card, by: player, row: card.allowedRows.randomElement() ?? .close) }
+                    if !options.isEmpty { note(player === human ? L("Skellige Ability Triggered!") : L("Opponent Skellige Ability Triggered!"), "notif_skellige") }
                 }
             }
         }
+        // Wild Hunt picks which of its leaders to use this round.
         for player in [human, computer] where player.faction == "wild_hunt" {
             let leaders = gameData.cards.values.filter { $0.isLeader && $0.key.hasPrefix("wh_") }.sorted { $0.key < $1.key }
             let cards = leaders.map { Card($0, owner: player) }
-            if let c = await pickOne(player, L("Select the next leader to start the round with"), cards, ai: { cs in cs.randomElement() }) {
-                player.leader = c; player.leaderUses = 1; applyPassiveLeader(player)
+            if let card = await pickOne(player, L("Select the next leader to start the round with"), cards, ai: { candidates in candidates.randomElement() }) {
+                player.leader = card; player.leaderUses = 1; applyPassiveLeader(player)
             }
         }
         for player in [human, computer] {
+            // Leaders that offer a decision at the start of a round.
             if player.leaderAbility == "king_bran", player.leaderUses > 0 {
-                let yes = await pickOption(player, L("Bring the Skellige Storm?"), [L("Bring the Storm [E]"), L("Maybe later [Q]")]) { (self.round > 1 || player.deck.contains { $0.has("storm") }) ? 0 : 1 }
-                if yes == 0 { player.leaderUses = 0; player.halfWeather = true
+                let answer = await pickOption(player, L("Bring the Skellige Storm?"), [L("Bring the Storm [E]"), L("Maybe later [Q]")]) { (self.round > 1 || player.deck.contains { $0.has("storm") }) ? 0 : 1 }
+                if answer == 0 { player.leaderUses = 0; player.halfWeather = true
                     if let s = player.deck.first(where: { $0.has("storm") }) { player.deck.removeAll { $0 === s }; player.hand.append(s) } }
             }
             if player.leaderAbility == "madman_lugos", player.leaderUses > 0, player.opponent.hand.count >= 2 {
-                let yes = await pickOption(player, L("Discard a card from the hand of the opponent?"), [L("Discard a card [E]"), L("Maybe later [Q]")]) { self.round >= 2 ? 0 : 1 }
-                if yes == 0 {
+                let answer = await pickOption(player, L("Discard a card from the hand of the opponent?"), [L("Discard a card [E]"), L("Maybe later [Q]")]) { self.round >= 2 ? 0 : 1 }
+                if answer == 0 {
                     player.leaderUses = 0
-                    let two = Array(player.opponent.hand.shuffled().prefix(2))
-                    if let c = await pickOne(player, L("Which card to discard?"), two, ai: { cs in cs.max { self.aiCardValue($0) < self.aiCardValue($1) } }) {
-                        player.opponent.hand.removeAll { $0 === c }; player.opponent.grave.append(c)
+                    let twoCards = Array(player.opponent.hand.shuffled().prefix(2))
+                    if let card = await pickOne(player, L("Which card to discard?"), twoCards, ai: { candidates in candidates.max { self.aiCardValue($0) < self.aiCardValue($1) } }) {
+                        player.opponent.hand.removeAll { $0 === card }; player.opponent.grave.append(card)
                     }
                 }
             }
         }
+        // Scoia'tael decides who goes first.
         for player in [human, computer] where player.faction == "scoiatael" {
-            let i = await pickOption(player, L("Who should go first?"), [L("Go First [E]"), L("Let Opponent Start [Q]")]) { 1 }
-            current = i == 0 ? player : player.opponent
+            let answer = await pickOption(player, L("Who should go first?"), [L("Go First [E]"), L("Let Opponent Start [Q]")]) { 1 }
+            current = answer == 0 ? player : player.opponent
             if player === computer { note(L("Opponent used the Scoia'tael faction perk to go first."), "notif_scoiatael") }
             break
         }
@@ -441,10 +447,10 @@ final class Game {
             q.lostUnitThisTurn = false
             let n = 1 + q.rowCards.filter { $0.act("soothsayer") }.count
             if q.leaderAbility == "lady_wood_brewess", q.deck.count >= 2 {
-                let two = Array(q.deck.prefix(2))
-                if let c = await pickOne(q, L("Choose a unit to play immediately"), two, ai: { cs in cs.max { self.aiCardValue($0) < self.aiCardValue($1) } }) {
-                    q.deck.removeAll { $0 === c }
-                    if c.isUnit { await placeUnit(c, by: q, row: c.allowedRows.first ?? .close) } else { q.hand.append(c) }
+                let twoCards = Array(q.deck.prefix(2))
+                if let card = await pickOne(q, L("Choose a unit to play immediately"), twoCards, ai: { candidates in candidates.max { self.aiCardValue($0) < self.aiCardValue($1) } }) {
+                    q.deck.removeAll { $0 === card }
+                    if card.isUnit { await placeUnit(card, by: q, row: card.allowedRows.first ?? .close) } else { q.hand.append(card) }
                     q.deck.shuffle()
                 }
             } else { draw(q, n) }
@@ -460,28 +466,32 @@ final class Game {
     func endRound() async {
         phase = .roundEnd
         recalc()
+        // Monsters may take one card back to hand before the round is scored.
         for player in [human, computer] where player.faction == "monsters" && !player.monstersUsed && !player.rowCards.isEmpty {
-            let yes = await pickOption(player, L("Would you like to retake one of your cards?"), [L("Retake a card [E]"), L("Not yet [Q]")]) { self.round >= 2 ? 0 : 1 }
-            if yes == 0, let c = await pickOne(player, L("Which card to retake?"), player.rowCards, ai: { cs in cs.max { self.aiCardValue($0) < self.aiCardValue($1) } }) {
+            let answer = await pickOption(player, L("Would you like to retake one of your cards?"), [L("Retake a card [E]"), L("Not yet [Q]")]) { self.round >= 2 ? 0 : 1 }
+            if answer == 0, let card = await pickOne(player, L("Which card to retake?"), player.rowCards, ai: { candidates in candidates.max { self.aiCardValue($0) < self.aiCardValue($1) } }) {
                 player.monstersUsed = true
-                if let r = player.rowOf(c) { player.row(r).cards.removeAll { $0 === c } }
-                resetCard(c); player.hand.append(c)
+                if let r = player.rowOf(card) { player.row(r).cards.removeAll { $0 === card } }
+                resetCard(card); player.hand.append(card)
                 note(L("Monsters faction ability triggered - monsters retake one card to their hand"), "notif_monsters")
             }
         }
         recalc()
-        let a = human.total, b = computer.total
-        var w: Player? = a > b ? human : (b > a ? computer : nil)
-        if w == nil {
-            let nm = human.faction == "nilfgaard", no = computer.faction == "nilfgaard"
-            if nm != no { w = nm ? human : computer; note(L("Nilfgaard wins draws"), "notif_nilfgaard") }
+        // Decide the round winner; Nilfgaard wins draws against other factions.
+        let humanScore = human.total, computerScore = computer.total
+        var roundWinner: Player? = humanScore > computerScore ? human : (computerScore > humanScore ? computer : nil)
+        if roundWinner == nil {
+            let humanIsNilfgaard = human.faction == "nilfgaard", computerIsNilfgaard = computer.faction == "nilfgaard"
+            if humanIsNilfgaard != computerIsNilfgaard { roundWinner = humanIsNilfgaard ? human : computer; note(L("Nilfgaard wins draws"), "notif_nilfgaard") }
         }
-        history.append((a, b, w))
-        lastRoundWinner = w
-        if let w = w { w.opponent.gems -= 1 } else { human.gems -= 1; computer.gems -= 1 }
-        if w === human { note(L("You won the round!"), "notif_win_round"); sound("round_win") }
-        else if w === computer { note(L("Your opponent won the round"), "notif_lose_round"); sound("round_lose") }
+        // Record the result and take a life from the loser (both on a draw).
+        history.append((humanScore, computerScore, roundWinner))
+        lastRoundWinner = roundWinner
+        if let roundWinner = roundWinner { roundWinner.opponent.gems -= 1 } else { human.gems -= 1; computer.gems -= 1 }
+        if roundWinner === human { note(L("You won the round!"), "notif_win_round"); sound("round_win") }
+        else if roundWinner === computer { note(L("Your opponent won the round"), "notif_lose_round"); sound("round_lose") }
         else { note(L("The round ended in a draw"), "notif_draw_round") }
+        // Clear the board, then end the match after the third round or when someone has no lives left.
         await cleanupRound()
         if human.gems <= 0 || computer.gems <= 0 || round >= 3 {
             phase = .over
@@ -490,9 +500,10 @@ final class Game {
             recalc()
             return
         }
+        // Otherwise prepare the next round; the round winner moves first.
         round += 1
         human.passed = false; computer.passed = false
-        current = w ?? current
+        current = roundWinner ?? current
         phase = .play
         await startRound()
     }

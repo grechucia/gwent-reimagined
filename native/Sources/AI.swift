@@ -218,13 +218,19 @@ extension Game {
     func aiDecide(for requestedPlayer: Player? = nil) -> AIMove? {
         let ai = requestedPlayer ?? computer, foe: Player = ai.opponent
         recalc()
+        // Nothing left to play: pass.
         if ai.hand.isEmpty && !leaderAvailable(ai) { return nil }
+        // Positive lead means the AI is ahead in the current round.
         let lead = ai.total - foe.total
         let moves = aiMoves(for: ai).sorted { $0.value > $1.value }
         guard let best = moves.first else { return nil }
+        // A card that must be played this turn always wins.
         if let f = ai.forcedCard, let m = moves.first(where: { $0.card === f }) { return m }
+        // Easy and normal opponents sometimes deviate from the best move.
         if ai === computer && aiLevel < 2, let m = weakenedChoice(moves, ai: ai, foe: foe, lead: lead) { return m }
+        // With one life left the AI cannot afford to lose this round.
         let mustWin = ai.gems == 1
+        // The opponent passed: play the cheapest card that takes the lead, or pass if already ahead.
         if foe.passed {
             if lead > 0 { return nil }
             if let win = moves.filter({ lead + $0.gain > 0 }).min(by: { ($0.card?.basePower ?? 0) < ($1.card?.basePower ?? 0) }) { return win }
@@ -232,8 +238,11 @@ extension Game {
             if mustWin || lead + potential > 0 { return best }
             return nil
         }
+        // Comfortable lead: pass to save cards.
         if !mustWin && lead >= 14 && ai.hand.count <= foe.hand.count { return nil }
+        // Hopeless first round: pass and keep cards for later rounds.
         if !mustWin && round == 1 && foe.gems == 2 && lead < -25 && ai.hand.count < foe.hand.count { return nil }
+        // Every move would cost more than it gains while ahead: pass.
         if best.value < -6 && !mustWin && lead > 0 { return nil }
         return best
     }

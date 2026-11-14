@@ -7,6 +7,7 @@ extension Game {
         let o = player.opponent!
         let kind = card.specialKind ?? ""
         switch kind {
+        // Commander's Horn: Doubles the strength of all unit cards in that row. Limited to 1 per row. | Mardroeme: Triggers transformation of all Berserker cards on the same row. | Morale Boost: Adds +1 to…
         case "horn", "mardroeme", "morale", "toussaint_wine", "shield", "shield_c", "shield_r", "shield_s":
             var r = row
             if r == nil { r = await pickRow(player, L("Select a card on your side of the board."), validRows(for: card, by: player).map { (player, $0) }) { 0 }?.1 }
@@ -15,31 +16,39 @@ extension Game {
             await animate(card, kind)
             sound(kind == "horn" ? "horn" : (kind == "mardroeme" ? "mardroeme" : (kind.hasPrefix("shield") ? "shield" : "moral")))
             if kind == "mardroeme" { await berserk(player, rowArea) }
+        // Dimensional Door: While the door is active, at the end of each of your turns you should draw one card from your deck. If the row of the card matches the row of the door, play it immediatly,…
         case "door":
             var r = row
             if r == nil { r = await pickRow(player, L("Select a card on your side of the board."), validRows(for: card, by: player).map { (player, $0) }) { 0 }?.1 }
             let open = RowType.allCases.filter { player.row($0).door }
             if let rowArea = r, open.count < maxDoors { player.row(rowArea).door = true }
             player.grave.append(card); sound("door")
+        // Decoy: Swap with a card on the battlefield to return it to your hand.
         case "decoy":
             if let t = target, let r = player.rowOf(t), let i = player.row(r).cards.firstIndex(where: { $0 === t }) {
                 player.row(r).cards[i] = card
                 resetCard(t); t.owner = player; player.hand.append(t)
                 sound("decoy")
             } else { player.grave.append(card) }
+        // Scorch: Discard after playing. Kills the strongest card(s) on the battlefield.
         case "scorch": await scorch(except: nil); player.grave.append(card)
+        // Cull: Kills the weakest card(s) on the battlefield.
         case "cull": await cull(except: nil); player.grave.append(card)
+        // Clear Weather: Removes all Weather Cards (Biting Frost, Impenetrable Fog and Torrential Rain) effects.
         case "clear": await clearWeather(); player.grave.append(card)
+        // Lock: Lock/cancels the ability of the next unit played in that row (ignores units without abilities and heroes).
         case "lock":
             var r = row
             if r == nil { r = await pickRow(player, L("Select a card on your side of the board."), enemyRowTargets(for: card, by: player).map { (o, $0) }) { Int.random(in: 0..<3) }?.1 }
             if let rowArea = r { o.row(rowArea).lock = card } else { player.grave.append(card) }
             sound("lock")
+        // Curse: Place on your or opponent's battlefield on any row. Next unit card (not hero) that will be placed on this row will be destroyed and it's abilities will not work
         case "curse":
             var dest: (Player, RowType)? = rowOwner.flatMap { q in row.map { (q, $0) } }
             if dest == nil { dest = await pickRow(player, gameData.abilityName("curse"), curseRows(by: player)) { 3 + Int.random(in: 0..<3) } }
             if let (q, rowArea) = dest { q.row(rowArea).curse = card } else { player.grave.append(card) }
             sound("curse")
+        // Knockback: Pushes all units of the selected row (Melee or Ranged) or row back towards the Siege row, ignores shields.
         case "knockback":
             var r = row
             if r == nil { r = await pickRow(player, gameData.abilityName("knockback"), [(o, .close), (o, .ranged)]) { 0 }?.1 }
@@ -51,47 +60,59 @@ extension Game {
                 sound("knockback")
             }
             player.grave.append(card)
+        // Seize: Move the Melee unit(s) with the lowest strength on your side of the board/ Their abilities won't work anymore.
         case "seize": await seize(player, .close); player.grave.append(card)
+        // Bank: Draw a card from your deck.
         case "bank": draw(player, 1); sound("game_buy"); player.grave.append(card)
+        // Skellige Fleet: Place on your battlefield and either draw from your deck 1 top card instantly OR draw 2 top cards at the end of this round. In one round you can draw by Skellige Fleet no more than…
         case "skellige_fleet":
             if player.fleetDrawsRound < 3 {
-                let i = await pickOption(player, L("Draw now or more later?"), [L("Draw 1 now [E]"), L("Draw 2 later [Q]")]) { 0 }
-                if i == 0 { draw(player, 1); player.fleetDrawsRound += 1 } else { player.fleetPending += 2; player.fleetDrawsRound += 2 }
+                let answer = await pickOption(player, L("Draw now or more later?"), [L("Draw 1 now [E]"), L("Draw 2 later [Q]")]) { 0 }
+                if answer == 0 { draw(player, 1); player.fleetDrawsRound += 1 } else { player.fleetPending += 2; player.fleetDrawsRound += 2 }
             }
             player.row(.siege).specials.append(card)
+        // Royal Decree: Use your leader's ability
         case "royal_decree":
             player.grave.append(card)
             await leaderEffect(player, free: true)
+        // Decoration: Promote a friendly unit to Hero status
         case "decoration":
-            let opts = player.rowCards.filter { !$0.hero }
-            if let t = await pickOne(player, L("Choose a unit to promote to Hero."), opts, ai: { cs in cs.max { $0.power < $1.power } }) { t.heroOverride = true; t.flash = 1; await animate(t, "decoration") }
+            let options = player.rowCards.filter { !$0.hero }
+            if let t = await pickOne(player, L("Choose a unit to promote to Hero."), options, ai: { candidates in candidates.max { $0.power < $1.power } }) { t.heroOverride = true; t.flash = 1; await animate(t, "decoration") }
             player.grave.append(card); sound("decoration")
+        // Chernobog: Double the strength of any unit card in your Close combat row. Discard after playing. | Perun: Add +5 strength to any unit card in your Ranged row. Discard after playing.
         case "chernobog", "perun":
-            let opts = player.row(kind == "chernobog" ? .close : .ranged).cards.filter { !$0.hero }
-            if let t = await pickOne(player, kind == "chernobog" ? L("Choose which unit to double with Chernobog runestone") : L("Choose which unit to grant +5 strength with Perun runestone"), opts, ai: { cs in cs.max { $0.power < $1.power } }) {
+            let options = player.row(kind == "chernobog" ? .close : .ranged).cards.filter { !$0.hero }
+            if let t = await pickOne(player, kind == "chernobog" ? L("Choose which unit to double with Chernobog runestone") : L("Choose which unit to grant +5 strength with Perun runestone"), options, ai: { candidates in candidates.max { $0.power < $1.power } }) {
                 if kind == "chernobog" { t.multiplier *= 2 } else { t.bonus += 5 }; t.flash = 1; await animate(t, kind)
             }
             player.grave.append(card); sound("rune_call")
+        // Svarog: Choose an enemy unit in the Siege row and reduce its strength to 1. Discard after playing. | Morana: Choose an enemy unit in the Close row and reduce its strength to 1. Discard after playing.
         case "svarog", "morana":
-            let opts = o.row(kind == "svarog" ? .siege : .close).cards.filter { !$0.hero }
-            if let t = await pickOne(player, kind == "svarog" ? L("Choose which enemy siege unit to reduce to 1 with Svarog.") : L("Choose which enemy close unit to reduce to 1 with Morana."), opts, ai: { cs in cs.max { $0.power < $1.power } }) { t.setTo = 1; t.flash = 1; await animate(t, kind) }
+            let options = o.row(kind == "svarog" ? .siege : .close).cards.filter { !$0.hero }
+            if let t = await pickOne(player, kind == "svarog" ? L("Choose which enemy siege unit to reduce to 1 with Svarog.") : L("Choose which enemy close unit to reduce to 1 with Morana."), options, ai: { candidates in candidates.max { $0.power < $1.power } }) { t.setTo = 1; t.flash = 1; await animate(t, kind) }
             player.grave.append(card); sound("rune_call")
+        // Triglav's Weaken: Choose an enemy hero card and weaken it by removing its Hero status. Discard after playing.
         case "triglav":
-            let opts = o.rowCards.filter { $0.hero }
-            if let t = await pickOne(player, L("Choose the enemy hero to weaken."), opts, ai: { cs in cs.max { $0.power < $1.power } }) { t.heroOverride = false; t.flash = 1; await animate(t, "triglav") }
+            let options = o.rowCards.filter { $0.hero }
+            if let t = await pickOne(player, L("Choose the enemy hero to weaken."), options, ai: { candidates in candidates.max { $0.power < $1.power } }) { t.heroOverride = false; t.flash = 1; await animate(t, "triglav") }
             player.grave.append(card); sound("triglav")
+        // Veles: Move your strongest unit card to the Siege row. While there, its strength is doubled. Discard after playing.
         case "veles":
             if let t = player.rowCards.filter({ !$0.hero }).max(by: { $0.power < $1.power }) {
                 if let tr = player.rowOf(t) { player.row(tr).cards.removeAll { $0 === t } }
                 player.row(.siege).cards.append(t); t.siegeMult = 2; await animate(t, "veles")
             }
             player.grave.append(card); sound("veles")
+        // Devana's Hunt: Reduce the strength of all non-hero enemy units in the Ranged row to 2. Discard after playing.
         case "devana":
             for t in o.row(.ranged).cards where !t.hero { t.setTo = 2; t.flash = 1 }
             player.grave.append(card); sound("rune_call")
+        // Zoria's Frost: Freeze the opponent's Close combat row. Discard after playing.
         case "zoria":
             o.weather[RowType.close.rawValue].insert("frost")
             player.grave.append(card); sound("cold")
+        // Stribog: Move the enemy Ranged unit(s) with the lowest strength to your side of the board. Discard after playing.
         case "stribog":
             let units = o.row(.ranged).cards.filter { !$0.hero }
             if let mn = units.map({ $0.power }).min() {
@@ -121,10 +142,15 @@ extension Game {
     /// Rows affected by a weather ability.
     func weatherRows(_ ability: String, _ card: Card) -> [RowType] {
         switch ability {
+        // Biting Frost: Sets the strength of all Close Combat cards to 1 for both players. | Giant Spider Webs: Sets the strength of all Close Combat cards to 1 for both players.
         case "frost", "spider_web": return [.close]
+        // Impenetrable Fog: Sets the strength of all Ranged Combat cards to 1 for both players. | Tse Tse Flies: Sets the strength of all Ranged Combat cards to 1 for both players.
         case "fog", "tse_tse": return [.ranged]
+        // Torrential Rain: Sets the strength of all Siege Combat cards to 1 for both players. | Dragon Wrath: Sets the strength of all Siege Combat cards to 1 for both players.
         case "rain", "dragon_wrath": return [.siege]
+        // Sandstorm: Reduces the Strength of all Close Combat and Ranged Combat Units to 1 (non-Hero units only).
         case "sandstorm": return [.close, .ranged]
+        // White Frost: Sets the strength of all cards on the 2 corresponding rows to 1 for both players.
         case "white_frost":
             switch card.data.row { case "agile_cs": return [.close, .siege]; case "agile_rs": return [.ranged, .siege]; default: return [.close, .ranged] }
         default: return []
@@ -137,11 +163,11 @@ extension Game {
         if a == "clear" { await clearWeather(); (card.owner ?? player).grave.append(card); return }
         var rows = weatherRows(a, card)
         if a == "storm" {
-            let i = await pickOption(player, L("Skellige Storm can either target Close/Ranged rows or Ranged/Siege rows, which one to target?"), [L("Close + Ranged [E]"), L("Ranged + Siege [Q]")]) {
+            let answer = await pickOption(player, L("Skellige Storm can either target Close/Ranged rows or Ranged/Siege rows, which one to target?"), [L("Close + Ranged [E]"), L("Ranged + Siege [Q]")]) {
                 let o = player.opponent!
                 return o.row(.close).total + o.row(.ranged).total - player.row(.close).total - player.row(.ranged).total >= o.row(.ranged).total + o.row(.siege).total - player.row(.ranged).total - player.row(.siege).total ? 0 : 1
             }
-            rows = i == 0 ? [.close, .ranged] : [.ranged, .siege]
+            rows = answer == 0 ? [.close, .ranged] : [.ranged, .siege]
         }
         if rows.allSatisfy({ human.weather[$0.rawValue].contains(a) && computer.weather[$0.rawValue].contains(a) }) { (card.owner ?? player).grave.append(card); return }
         for q in [human, computer] { for r in rows { q.weather[r.rawValue].insert(a) } }
@@ -173,8 +199,8 @@ extension Game {
         if navigatorShield && card.has("door_o") && (side.leaderAbility == "imlerith_general") { return true }
         if side.leaderAbility == "novigrad_sigismund" && !side.sigismundSaved { side.sigismundSaved = true; note(L("Sigismund Dijkstra prevented the death of a friendly unit.")); return true }
         if !side.comradeUsedRound, side.rowCards.contains(where: { $0.act("comrade") }) {
-            let i = await pickOption(side, L("Do you want to save Comrade too?"), [L("Save it [E]"), L("Let it die [Q]")]) { 0 }
-            if i == 0 { side.comradeUsedRound = true; sound("comrade"); return true }
+            let answer = await pickOption(side, L("Do you want to save Comrade too?"), [L("Save it [E]"), L("Let it die [Q]")]) { 0 }
+            if answer == 0 { side.comradeUsedRound = true; sound("comrade"); return true }
         }
         return false
     }
