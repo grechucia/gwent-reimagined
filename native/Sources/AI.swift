@@ -211,6 +211,7 @@ extension Game {
         let moves = aiMoves(for: ai).sorted { $0.value > $1.value }
         guard let best = moves.first else { return nil }
         if let f = ai.forcedCard, let m = moves.first(where: { $0.card === f }) { return m }
+        if ai === op && aiLevel < 2, let m = weakenedChoice(moves, ai: ai, foe: foe, lead: lead) { return m }
         let mustWin = ai.gems == 1
         if foe.passed {
             if lead > 0 { return nil }
@@ -223,6 +224,15 @@ extension Game {
         if !mustWin && round == 1 && foe.gems == 2 && lead < -25 && ai.hand.count < foe.hand.count { return nil }
         if best.value < -6 && !mustWin && lead > 0 { return nil }
         return best
+    }
+
+    /// Easier opponents sometimes play a weaker move instead of the best one, and pass less cleverly.
+    private func weakenedChoice(_ moves: [AIMove], ai: Player, foe: Player, lead: Int) -> AIMove? {
+        let mistake: Double = aiLevel == 0 ? 0.5 : 0.2
+        guard moves.count > 1, Double.random(in: 0..<1) < mistake else { return nil }
+        if aiLevel == 0 && !foe.passed && lead > 0 && ai.gems == 2 && Double.random(in: 0..<1) < 0.3 { return nil }
+        let pool = moves.prefix(aiLevel == 0 ? max(2, moves.count / 2) : min(3, moves.count)).dropFirst()
+        return pool.randomElement()
     }
 
     func aiTurn(_ ai: Player) async {

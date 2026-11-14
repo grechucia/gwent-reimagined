@@ -134,6 +134,8 @@ final class Game {
     var weatherCards: [Card] = []
     var current: Player
     var round = 1
+    /// AI strength for the computer opponent: 0 = easy, 1 = normal, 2 = hard.
+    var aiLevel = 1
     var turn = 0
     var history: [(me: Int, op: Int, winner: Player?)] = []
     enum Phase { case redraw, play, roundEnd, over }

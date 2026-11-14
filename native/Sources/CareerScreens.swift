@@ -272,6 +272,9 @@ extension Scene {
         r.text(SaveStore.shared.chosen ? SaveStore.shared.displayPath : L2("jeszcze nie wybrano", "not chosen yet"), .ui(15), x: bx, y: y + 4, color: .gray(0.8), maxWidth: 680)
         goldButton(R(bx, y + 50, 200, 44), L2("Zmień…", "Change…"), font: .serif(17, bold: true)) { [weak self] in self?.askSaveLocation(then: nil) }
         y += 126
+        label(L2("Poziom trudności (poza karierą)", "Difficulty (outside career)"))
+        choice([(L2("Łatwy", "Easy"), aiLevel == 0, true), (L2("Normalny", "Normal"), aiLevel == 1, true), (L2("Trudny", "Hard"), aiLevel == 2, true)], w: 180) { [weak self] i in self?.aiLevel = i }
+        y += 76
         label(L2("Język", "Language"))
         languageToggle(y: y + 6)
     }

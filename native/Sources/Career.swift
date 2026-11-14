@@ -116,8 +116,8 @@ struct CareerFight {
         let last = c == chapterCount - 1
         let d = difficulty - 1
         let progress = Float(c) / Float(max(1, chapterCount - 1))
-        let base = 2 + Int((progress * 7).rounded()) + (d < 0 ? -2 : d)
-        let h = max(0, Int((progress * 4).rounded()) + d - 1)
+        let base = Int((progress * 6).rounded()) + (d < 0 ? -1 : d)
+        let h = max(0, Int((progress * 3).rounded()) + d - 1)
         var fights: [CareerFight] = []
         for k in 0..<4 {
             let boss = k == 3
@@ -168,7 +168,7 @@ struct CareerFight {
         let p = pool(f)
         let ls = gd.cards.values.filter { $0.isLeader && $0.faction == f }.sorted { $0.key < $1.key }
         leaders = ls.first.map { [$0.key] } ?? []; leader = leaders.first ?? ""
-        var cap = 4 - (difficulty - 1), units: [CardData] = []
+        var cap = 6 - (difficulty - 1), units: [CardData] = []
         while true {
             units = p.filter { $0.isUnit && !$0.isHero && $0.strength <= cap && !$0.abilities.contains("spy") }
             if units.reduce(0, { $0 + $1.count }) >= 24 || cap > 12 { break }
@@ -176,8 +176,9 @@ struct CareerFight {
         }
         collection = [:]
         var n = 0
-        for u in units.sorted(by: { $0.strength < $1.strength }) where n < 25 { let c = min(u.count, 25 - n); collection[u.key] = c; n += c }
+        for u in units.sorted(by: { $0.strength > $1.strength }) where n < 22 { let c = min(u.count, 22 - n); collection[u.key] = c; n += c }
         for w in p.filter({ $0.isWeather }).prefix(2) { collection[w.key] = 1 }
+        for k in ["spe_horn", "spe_decoy"] where gd.cards[k] != nil { collection[k] = 1 }
         deck = collection
         save()
     }
@@ -196,13 +197,14 @@ struct CareerFight {
         var rng = SeededRNG(rngBase &+ fi &* 7919)
         let p = pool(f.faction)
         var cap = f.cap
-        while cap < 15 && p.filter({ $0.isUnit && !$0.isHero && $0.strength <= cap }).reduce(0, { $0 + $1.count }) < 22 { cap += 1 }
-        let units = p.filter { $0.isUnit && !$0.isHero && $0.strength <= cap }.shuffled(using: &rng)
+        while cap < 15 && p.filter({ $0.isUnit && !$0.isHero && $0.strength <= cap }).reduce(0, { $0 + $1.count }) < 18 { cap += 1 }
+        let pool = p.filter { $0.isUnit && !$0.isHero && $0.strength <= cap && (f.boss || !$0.abilities.contains("spy")) }.shuffled(using: &rng)
+        let units = f.boss ? pool : pool.sorted { $0.strength < $1.strength }
         let heroes = p.filter { $0.isUnit && $0.isHero }.shuffled(using: &rng).prefix(f.heroes)
-        let specials = p.filter { !$0.isUnit }.shuffled(using: &rng).prefix(min(6, 1 + f.heroes))
+        let specials = p.filter { !$0.isUnit }.shuffled(using: &rng).prefix(min(4, f.heroes))
         var cards: [(String, Int)] = heroes.map { ($0.key, 1) }
         var n = cards.count
-        for u in units where n < 25 { let c = min(u.count, 25 - n); cards.append((u.key, c)); n += c }
+        for u in units where n < 20 { let c = min(u.count, 20 - n); cards.append((u.key, c)); n += c }
         cards += specials.map { ($0.key, 1) }
         let ls = gd.cards.values.filter { $0.isLeader && $0.faction == f.faction }.sorted { $0.key < $1.key }
         let lead = f.boss ? (ls.last ?? ls.first) : ls.first

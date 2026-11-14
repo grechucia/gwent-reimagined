@@ -19,6 +19,11 @@ final class Scene {
     var clickTargets: [R] { hits.map { $0.0 } }
     var padCursor = false
     var exitConfirmT: Float = 0
+    /// Global AI difficulty for games outside the career (0 easy, 1 normal, 2 hard), stored in UserDefaults.
+    var aiLevel: Int {
+        get { UserDefaults.standard.object(forKey: "aiLevel") as? Int ?? 1 }
+        set { UserDefaults.standard.set(newValue, forKey: "aiLevel") }
+    }
     var padNoFocus: [R] = []
     var padNoAuto: [R] = []
     var padPrimary: R?
@@ -324,9 +329,12 @@ final class Scene {
         careerFight = cf
         if cf == nil { careerFightName = nil }
         game = Game(myDeck: mine, opDeck: theirs)
+        game?.aiLevel = cf != nil ? max(0, Career.shared.difficulty - 1) : aiLevel
         game?.autoHuman = autotest
         game?.showChoices = ProcessInfo.processInfo.environment["GWENT_SHOWCHOICES"] == "1"
-        log("GRA \(gamesPlayed + 1): \(mine.faction) (\(mine.leader)) vs \(theirs.faction) (\(theirs.leader))")
+        func power(_ d: DeckData) -> (Int, Int) { d.cards.reduce((0, 0)) { acc, e in let c = gd.cards[e.0]; return (acc.0 + (c?.strength ?? 0) * e.1, acc.1 + e.1) } }
+        let pm = power(mine), po = power(theirs)
+        log("GAME \(gamesPlayed + 1): \(mine.faction) power \(pm.0) / \(pm.1) cards vs \(theirs.faction) power \(po.0) / \(po.1) cards, AI level \(game?.aiLevel ?? -1)")
         selected = nil; notes = []; noteT = 0; aiT = 0
         screen = .game
         audio.play("game_start")
