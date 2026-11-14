@@ -4,6 +4,22 @@ import Metal
 import CoreGraphics
 import simd
 
+/// Fixed positions of board elements in the virtual 1920x1080 space (they match the board image).
+enum BoardLayout {
+    static let rowsLeft: Float = 567
+    static let rowsWidth: Float = 946
+    static let allRows = R(567, 5, 946, 816)
+    static let rowScoreX: Float = 534
+    static let humanPanel = R(0, 666, 450, 135)
+    static let computerPanel = R(0, 263, 450, 135)
+    static let rulesButton = R(1540, 16, 190, 46)
+    static let passButton = R(292, 848, 150, 50)
+    static let giveUpButton = R(292, 944, 150, 50)
+    static let exitButton = R(1680, 1018, 180, 46)
+    static let musicButtonsX: Float = 1570
+    static let bottomButtonsY: Float = 1018
+}
+
 extension Scene {
     /// Board background.
     func drawModernBoard(_ match: Game) {
@@ -67,7 +83,7 @@ extension Scene {
         return !["horn", "mardroeme", "morale", "toussaint_wine", "shield", "shield_c", "shield_r", "shield_s", "door", "decoy", "lock", "knockback", "curse"].contains(card.specialKind ?? "")
     }
 
-    /// Game board: rows, hand, player panels, buttons and choices.
+    /// Game board: draws the whole match screen for one frame and drives the computer's turns.
     func drawGame(_ dt: Float) {
         guard let match = game else { return }
         processEvents(match, dt)
@@ -75,150 +91,207 @@ extension Scene {
         hover = nil
         let canAct = match.phase == .play && match.current === match.human && !match.busy && match.choice == nil
         if !canAct && match.choice == nil { selected = nil }
+        drawActivePlayerHighlight(match)
+        let targets = playTargets(match, canAct: canAct)
         for player in [match.computer, match.human] {
-            let band = player === match.human ? R(0, 666, 450, 135) : R(0, 263, 450, 135)
-            if match.current === player && match.phase == .play {
-                renderer.gradient(band, RGBA(r: 0.5, g: 0.38, b: 0.12, a: 0.0), RGBA(r: 0.85, g: 0.62, b: 0.2, a: 0.22), steps: 8)
-                renderer.rect(R(band.x, player === match.human ? band.y : band.y + band.h - 3, band.w, 3), RGBA.gold.alpha(0.8))
-            }
+            for rowType in RowType.allCases { drawRow(player, rowType, match: match, targets: targets, dt: dt) }
         }
-        var targetRows: [(Player, RowType)] = []
-        var decoyTargets: [Card] = []
-        var rowChoice: [(Player, RowType)] = []
-        if let ch = match.choice, case .rows(let rs) = ch.kind { rowChoice = rs }
-        if canAct, let s = selected {
-            if s.isUnit { targetRows = match.validRows(for: s, by: match.human).map { ((s.has("spy") || s.has("emissary") || s.has("ofiri_envoy")) ? match.computer : match.human, $0) } }
-            else {
-                switch s.specialKind ?? "" {
-                case "decoy": decoyTargets = match.decoyTargets(for: match.human)
-                case "lock", "knockback": targetRows = match.enemyRowTargets(for: s, by: match.human).map { (match.computer, $0) }
-                case "curse": targetRows = match.curseRows(by: match.human)
-                default: targetRows = match.validRows(for: s, by: match.human).map { (match.human, $0) }
-                }
-            }
+        drawWeatherSlot(match, canAct: canAct, dt: dt)
+        for player in [match.computer, match.human] { drawStats(player, match, canAct: canAct) }
+        smallButton(BoardLayout.rulesButton, L("Rules"), enabled: true) { [weak self] in self?.openRules() }
+        parkHiddenCards(match)
+        drawHand(match, canAct: canAct, dt: dt)
+        drawMatchButtons(match, canAct: canAct, dt: dt)
+        drawFX(dt)
+        if let h = hover ?? selected { drawPreview(h) }
+        if match.phase == .redraw && match.choice == nil { drawRedraw(match) }
+        if let choice = match.choice { drawChoice(choice, match) }
+        drawNotes(dt)
+        if match.phase == .over && notes.isEmpty { drawEnd(match) }
+        runComputerTurn(match, dt: dt)
+        if autotest { autoTest(match, dt) }
+    }
+
+    /// Rows and cards the human can target with the selected card, plus rows offered by a pending choice.
+    struct PlayTargets {
+        var rows: [(Player, RowType)] = []
+        var decoyCards: [Card] = []
+        var choiceRows: [(Player, RowType)] = []
+    }
+
+    /// Works out where the currently selected card can be played.
+    func playTargets(_ match: Game, canAct: Bool) -> PlayTargets {
+        var targets = PlayTargets()
+        if let choice = match.choice, case .rows(let rows) = choice.kind { targets.choiceRows = rows }
+        guard canAct, let card = selected else { return targets }
+        if card.isUnit {
+            let playsOnEnemySide = card.has("spy") || card.has("emissary") || card.has("ofiri_envoy")
+            targets.rows = match.validRows(for: card, by: match.human).map { (playsOnEnemySide ? match.computer : match.human, $0) }
+            return targets
         }
-        for player in [match.computer, match.human] {
-            for rowType in RowType.allCases {
-                let rowArea = rowRect(player, rowType)
-                let row = player.row(rowType)
-                if let ov = weatherOverlay(player.weather[rowType.rawValue]) { renderer.image("img/icons/\(ov).png", R(567, rowArea.y + 6, 950, 127), color: .white.alpha(0.7 + 0.15 * sin(time * 1.3 + Float(rowType.rawValue)))) }
-                drawWeatherFX(player.weather[rowType.rawValue], rowArea)
-                let full = R(567, rowArea.y + 2, 946, rowArea.h - 4)
-                let isTarget = targetRows.contains { $0.0 === player && $0.1 == rowType }
-                let isChoice = rowChoice.firstIndex { $0.0 === player && $0.1 == rowType }
-                if isTarget || isChoice != nil {
-                    let pulse = 0.18 + 0.1 * sin(time * 5)
-                    renderer.rect(full, RGBA(r: 1, g: 0.8, b: 0.3, a: pulse)); renderer.frame(full, RGBA.gold, 2)
-                    if let s = selected, isTarget { button(full) { [weak self] in self?.playSelected(s, row: rowType, rowOwner: player) } }
-                    if let i = isChoice { button(full) { match.resolveChoice([i]) } }
-                }
-                var mx: Float = 712
-                for (flag, icon) in [(row.lock != nil, "power_lock"), (row.curse != nil, "power_curse"), (row.door, "power_door"), (row.leaderHorn, "power_horn")] where flag {
-                    renderer.image("img/icons/\(icon).png", R(mx, rowArea.y + 92, 36, 36)); mx += 38
-                }
-                let rowPositions = layout(row.cards.count, in: R(rowArea.x + 4, rowArea.y + 5, rowArea.w - 8, cardHeight))
-                for (i, card) in row.cards.enumerated() {
-                    move(card, to: rowPositions[i], from: player === match.human ? SIMD2(1000, 1000) : SIMD2(1000, -150), dt: dt)
-                    let cardRect = R(card.pos.x, card.pos.y, cardWidth, cardHeight)
-                    let isDecoy = decoyTargets.contains { $0 === card }
-                    let (fr, flying) = flightRect(card, target: rowPositions[i])
-                    if flying { renderer.rect(R(fr.x + 10, fr.y + 16, fr.w, fr.h), RGBA.black.alpha(0.35)) }
-                    drawCard(card, flying ? fr : cardRect, highlight: isDecoy)
-                    if card.locked { renderer.image("img/icons/power_lock.png", R(cardRect.x + 50, cardRect.y + 4, 32, 32)) }
-                    if cardRect.contains(mouse) { hover = card }
-                    if isDecoy, let s = selected { button(cardRect) { [weak self] in self?.playSelected(s, target: card) } }
-                }
-                let sp = specialRect(player, rowType)
-                for (i, s) in row.specials.enumerated() {
-                    move(s, to: SIMD2(sp.x + Float(i) * 14, sp.y), from: SIMD2(1000, 1000), dt: dt)
-                    let cardRect = R(s.pos.x, s.pos.y, cardWidth, cardHeight)
-                    drawCard(s, cardRect)
-                    if cardRect.contains(mouse) { hover = s }
-                }
-                let scoreText = "\(row.total)"
-                let disc = Renderer.Font.ui(78)
-                let dh = renderer.measure("●", disc).h
-                renderer.text("●", disc, x: 534, y: rowArea.y + 70 - dh / 2, color: RGBA.goldDark.alpha(0.9), align: .center, shadow: nil)
-                renderer.text("●", .ui(70), x: 534, y: rowArea.y + 70 - renderer.measure("●", .ui(70)).h / 2, color: RGBA(r: 0.06, g: 0.05, b: 0.04, a: 1), align: .center, shadow: nil)
-                let textHeight = renderer.measure(scoreText, .ui(28, bold: true)).h
-                renderer.text(scoreText, .ui(28, bold: true), x: 534, y: rowArea.y + 70 - textHeight / 2, color: RGBA(r: 1, g: 0.9, b: 0.65, a: 1), align: .center, shadow: nil)
-            }
+        switch card.specialKind ?? "" {
+        case "decoy": targets.decoyCards = match.decoyTargets(for: match.human)
+        case "lock", "knockback": targets.rows = match.enemyRowTargets(for: card, by: match.human).map { (match.computer, $0) }
+        case "curse": targets.rows = match.curseRows(by: match.human)
+        default: targets.rows = match.validRows(for: card, by: match.human).map { (match.human, $0) }
         }
-        let wps = layout(match.weatherCards.count, in: R(weatherRect.x + 8, weatherRect.y + 8, weatherRect.w - 16, cardHeight))
+        return targets
+    }
+
+    /// Golden glow behind the panel of the player whose turn it is.
+    func drawActivePlayerHighlight(_ match: Game) {
+        for player in [match.computer, match.human] where match.current === player && match.phase == .play {
+            let band = player === match.human ? BoardLayout.humanPanel : BoardLayout.computerPanel
+            renderer.gradient(band, RGBA(r: 0.5, g: 0.38, b: 0.12, a: 0.0), RGBA(r: 0.85, g: 0.62, b: 0.2, a: 0.22), steps: 8)
+            renderer.rect(R(band.x, player === match.human ? band.y : band.y + band.h - 3, band.w, 3), RGBA.gold.alpha(0.8))
+        }
+    }
+
+    /// One board row: weather, target highlight, row effect icons, unit cards, special cards and the row score.
+    func drawRow(_ player: Player, _ rowType: RowType, match: Game, targets: PlayTargets, dt: Float) {
+        let rowArea = rowRect(player, rowType)
+        let row = player.row(rowType)
+        if let overlay = weatherOverlay(player.weather[rowType.rawValue]) {
+            renderer.image("img/icons/\(overlay).png", R(BoardLayout.rowsLeft, rowArea.y + 6, 950, 127), color: .white.alpha(0.7 + 0.15 * sin(time * 1.3 + Float(rowType.rawValue))))
+        }
+        drawWeatherFX(player.weather[rowType.rawValue], rowArea)
+        let wholeRow = R(BoardLayout.rowsLeft, rowArea.y + 2, BoardLayout.rowsWidth, rowArea.h - 4)
+        let isTarget = targets.rows.contains { $0.0 === player && $0.1 == rowType }
+        let choiceIndex = targets.choiceRows.firstIndex { $0.0 === player && $0.1 == rowType }
+        if isTarget || choiceIndex != nil {
+            let pulse = 0.18 + 0.1 * sin(time * 5)
+            renderer.rect(wholeRow, RGBA(r: 1, g: 0.8, b: 0.3, a: pulse)); renderer.frame(wholeRow, RGBA.gold, 2)
+            if let card = selected, isTarget { button(wholeRow) { [weak self] in self?.playSelected(card, row: rowType, rowOwner: player) } }
+            if let index = choiceIndex { button(wholeRow) { match.resolveChoice([index]) } }
+        }
+        var iconX: Float = 712
+        for (active, icon) in [(row.lock != nil, "power_lock"), (row.curse != nil, "power_curse"), (row.door, "power_door"), (row.leaderHorn, "power_horn")] where active {
+            renderer.image("img/icons/\(icon).png", R(iconX, rowArea.y + 92, 36, 36)); iconX += 38
+        }
+        let positions = layout(row.cards.count, in: R(rowArea.x + 4, rowArea.y + 5, rowArea.w - 8, cardHeight))
+        for (i, card) in row.cards.enumerated() {
+            move(card, to: positions[i], from: player === match.human ? SIMD2(1000, 1000) : SIMD2(1000, -150), dt: dt)
+            let cardRect = R(card.pos.x, card.pos.y, cardWidth, cardHeight)
+            let isDecoyTarget = targets.decoyCards.contains { $0 === card }
+            let (flightFrame, flying) = flightRect(card, target: positions[i])
+            if flying { renderer.rect(R(flightFrame.x + 10, flightFrame.y + 16, flightFrame.w, flightFrame.h), RGBA.black.alpha(0.35)) }
+            drawCard(card, flying ? flightFrame : cardRect, highlight: isDecoyTarget)
+            if card.locked { renderer.image("img/icons/power_lock.png", R(cardRect.x + 50, cardRect.y + 4, 32, 32)) }
+            if cardRect.contains(mouse) { hover = card }
+            if isDecoyTarget, let decoy = selected { button(cardRect) { [weak self] in self?.playSelected(decoy, target: card) } }
+        }
+        let specialSlot = specialRect(player, rowType)
+        for (i, special) in row.specials.enumerated() {
+            move(special, to: SIMD2(specialSlot.x + Float(i) * 14, specialSlot.y), from: SIMD2(1000, 1000), dt: dt)
+            let cardRect = R(special.pos.x, special.pos.y, cardWidth, cardHeight)
+            drawCard(special, cardRect)
+            if cardRect.contains(mouse) { hover = special }
+        }
+        drawRowScore(row.total, centerY: rowArea.y + 70)
+    }
+
+    /// Gold disc with the total power of a row.
+    func drawRowScore(_ total: Int, centerY: Float) {
+        let x = BoardLayout.rowScoreX
+        let outer = Renderer.Font.ui(78), inner = Renderer.Font.ui(70), digits = Renderer.Font.ui(28, bold: true)
+        renderer.text("●", outer, x: x, y: centerY - renderer.measure("●", outer).h / 2, color: RGBA.goldDark.alpha(0.9), align: .center, shadow: nil)
+        renderer.text("●", inner, x: x, y: centerY - renderer.measure("●", inner).h / 2, color: RGBA(r: 0.06, g: 0.05, b: 0.04, a: 1), align: .center, shadow: nil)
+        let text = "\(total)"
+        renderer.text(text, digits, x: x, y: centerY - renderer.measure(text, digits).h / 2, color: RGBA(r: 1, g: 0.9, b: 0.65, a: 1), align: .center, shadow: nil)
+    }
+
+    /// Weather cards in play and, for cards without a target, the area that plays them.
+    func drawWeatherSlot(_ match: Game, canAct: Bool, dt: Float) {
+        let positions = layout(match.weatherCards.count, in: R(weatherRect.x + 8, weatherRect.y + 8, weatherRect.w - 16, cardHeight))
         for (i, card) in match.weatherCards.enumerated() {
-            move(card, to: wps[i], from: SIMD2(1000, 1000), dt: dt)
+            move(card, to: positions[i], from: SIMD2(1000, 1000), dt: dt)
             let cardRect = R(card.pos.x, card.pos.y, cardWidth, cardHeight)
             drawCard(card, cardRect)
             if cardRect.contains(mouse) { hover = card }
         }
-        if canAct, let s = selected, isFreeSpecial(s) {
+        if canAct, let card = selected, isFreeSpecial(card) {
             let pulse = 0.18 + 0.1 * sin(time * 5)
             renderer.rect(weatherRect, RGBA(r: 1, g: 0.8, b: 0.3, a: pulse)); renderer.frame(weatherRect, RGBA.gold, 2)
-            button(weatherRect) { [weak self] in self?.playSelected(s) }
-            button(R(567, 5, 946, 816)) { [weak self] in self?.playSelected(s) }
+            button(weatherRect) { [weak self] in self?.playSelected(card) }
+            button(BoardLayout.allRows) { [weak self] in self?.playSelected(card) }
         }
-        for player in [match.computer, match.human] { drawStats(player, match, canAct: canAct) }
-        smallButton(R(1540, 16, 190, 46), L("Rules"), enabled: true) { [weak self] in self?.openRules() }
+    }
+
+    /// Keeps cards that are not visible (opponent's hand, both decks) at their off-screen or deck positions.
+    func parkHiddenCards(_ match: Game) {
         for card in match.computer.hand { card.hasPos = true; card.pos = SIMD2(1000, -160) }
-        for player in [match.human, match.computer] { let d = deckRect(player); for card in player.deck { card.pos = SIMD2(d.x, d.y); card.hasPos = true } }
-        let handPositions = layout(match.human.hand.count, in: R(handRect.x + 8, handRect.y + 6, handRect.w - 16, cardHeight), gap: 3)
-        var hoveredHand: Card?
-        for (i, card) in match.human.hand.enumerated().reversed() where hoveredHand == nil {
-            if R(handPositions[i].x, handPositions[i].y - card.lift, cardWidth, cardHeight).contains(mouse) && match.phase == .play && match.choice == nil { hoveredHand = card }
+        for player in [match.human, match.computer] {
+            let deck = deckRect(player)
+            for card in player.deck { card.pos = SIMD2(deck.x, deck.y); card.hasPos = true }
+        }
+    }
+
+    /// The human's hand: hover lift, selection and click handling.
+    func drawHand(_ match: Game, canAct: Bool, dt: Float) {
+        let positions = layout(match.human.hand.count, in: R(handRect.x + 8, handRect.y + 6, handRect.w - 16, cardHeight), gap: 3)
+        var hoveredCard: Card?
+        for (i, card) in match.human.hand.enumerated().reversed() where hoveredCard == nil {
+            let area = R(positions[i].x, positions[i].y - card.lift, cardWidth, cardHeight)
+            if area.contains(mouse) && match.phase == .play && match.choice == nil { hoveredCard = card }
         }
         let forced = match.human.forcedCard
         for (i, card) in match.human.hand.enumerated() {
-            let want: Float = (selected === card ? 26 : (hoveredHand === card ? 14 : 0))
-            card.lift += (want - card.lift) * min(1, dt * 14)
-            move(card, to: handPositions[i], from: SIMD2(deckRect(match.human).x, deckRect(match.human).y), dt: dt)
+            let targetLift: Float = selected === card ? 26 : (hoveredCard === card ? 14 : 0)
+            card.lift += (targetLift - card.lift) * min(1, dt * 14)
+            move(card, to: positions[i], from: SIMD2(deckRect(match.human).x, deckRect(match.human).y), dt: dt)
             let cardRect = R(card.pos.x, card.pos.y - card.lift, cardWidth, cardHeight)
             drawCard(card, cardRect, highlight: selected === card || forced === card, dim: canAct && forced != nil && forced !== card)
             if i == 0 && canAct { padPrimary = cardRect }
-            if hoveredHand === card { hover = card }
+            if hoveredCard === card { hover = card }
             if canAct { button(cardRect) { [weak self] in self?.clickHand(card) } }
         }
-        for (i, (sym, act)) in [("♫", { [weak self] in self?.audio.musicOn.toggle() } as () -> Void), ("⏭", { [weak self] in self?.audio.skipTrack() })].enumerated() {
-            let b = R(1570 + Float(i) * 52, 1018, 46, 46)
-            padNoAuto.append(b)
-            let on = i == 1 || audio.musicOn
-            let hovered = b.contains(mouse)
-            renderer.rect(b, RGBA(r: 0.03, g: 0.03, b: 0.04, a: hovered ? 0.9 : 0.7)); renderer.frame(b, RGBA.goldDark.alpha(hovered ? 0.9 : 0.45), 1)
-            renderer.text(sym, .ui(24, bold: true), x: b.mid.x, y: b.y + 8, color: hovered ? .white : RGBA(r: 0.93, g: 0.76, b: 0.35, a: on ? 1 : 0.35), align: .center)
-            button(b, act)
+    }
+
+    /// Music buttons, Exit to menu (with confirmation), Pass and Give up.
+    func drawMatchButtons(_ match: Game, canAct: Bool, dt: Float) {
+        let musicButtons: [(String, () -> Void)] = [("♫", { [weak self] in self?.audio.musicOn.toggle() }), ("⏭", { [weak self] in self?.audio.skipTrack() })]
+        for (i, (symbol, action)) in musicButtons.enumerated() {
+            let box = R(BoardLayout.musicButtonsX + Float(i) * 52, BoardLayout.bottomButtonsY, 46, 46)
+            padNoAuto.append(box)
+            let active = i == 1 || audio.musicOn
+            let hovered = box.contains(mouse)
+            renderer.rect(box, RGBA(r: 0.03, g: 0.03, b: 0.04, a: hovered ? 0.9 : 0.7)); renderer.frame(box, RGBA.goldDark.alpha(hovered ? 0.9 : 0.45), 1)
+            renderer.text(symbol, .ui(24, bold: true), x: box.mid.x, y: box.y + 8, color: hovered ? .white : RGBA(r: 0.93, g: 0.76, b: 0.35, a: active ? 1 : 0.35), align: .center)
+            button(box, action)
         }
         exitConfirmT = max(0, exitConfirmT - dt)
-        padNoAuto.append(R(1680, 1018, 180, 46))
-        smallButton(R(1680, 1018, 180, 46), exitConfirmT > 0 ? L("Are you sure?") : L("Exit to menu"), enabled: true) { [weak self] in
-            guard let s = self else { return }
-            if s.exitConfirmT > 0 { s.exitConfirmT = 0; s.game = nil; s.screen = .title } else { s.exitConfirmT = 3 }
+        padNoAuto.append(BoardLayout.exitButton)
+        smallButton(BoardLayout.exitButton, exitConfirmT > 0 ? L("Are you sure?") : L("Exit to menu"), enabled: true) { [weak self] in
+            guard let scene = self else { return }
+            if scene.exitConfirmT > 0 { scene.exitConfirmT = 0; scene.game = nil; scene.screen = .title } else { scene.exitConfirmT = 3 }
         }
-        smallButton(R(292, 848, 150, 50), L("Pass"), enabled: canAct) { [weak self] in self?.selected = nil; self?.game?.humanPass() }
-        padNoAuto.append(R(292, 944, 150, 50))
-        smallButton(R(292, 944, 150, 50), L("Give up"), enabled: match.phase != .over) { [weak self] in self?.game?.surrender() }
-        drawFX(dt)
-        if let h = hover ?? selected { drawPreview(h) }
-        if match.phase == .redraw && match.choice == nil { drawRedraw(match) }
-        if let ch = match.choice { drawChoice(ch, match) }
-        drawNotes(dt)
-        if match.phase == .over && notes.isEmpty { drawEnd(match) }
+        smallButton(BoardLayout.passButton, L("Pass"), enabled: canAct) { [weak self] in self?.selected = nil; self?.game?.humanPass() }
+        padNoAuto.append(BoardLayout.giveUpButton)
+        smallButton(BoardLayout.giveUpButton, L("Give up"), enabled: match.phase != .over) { [weak self] in self?.game?.surrender() }
+    }
+
+    /// Lets the computer move after a short delay once nothing else is happening on screen.
+    func runComputerTurn(_ match: Game, dt: Float) {
         let coinShown = fxList.contains { if case .coin = $0.kind { return true }; return false }
-        if match.phase == .play && !match.busy && match.choice == nil && notes.isEmpty && !coinShown && !rulesOpen {
-            aiT += dt
-            let delay: Float = autotest ? 0.35 : 0.85
-            if aiT > delay {
-                aiT = 0
-                if match.current === match.computer {
-                    if autotest { if let m = match.aiDecide(for: match.computer) { log("  Player 2: \(m.card?.key ?? (m.kind == .leader ? "LEADER \(match.computer.leaderAbility)" : "FACTION"))\(m.row.map { " -> \($0)" } ?? "")  [\(match.human.total):\(match.computer.total)]") } else { log("  Player 2: pass  [\(match.human.total):\(match.computer.total)]") } }
-                    Task { @MainActor in await match.aiTurn(match.computer) }
-                }
-                else if autotest && match.current === match.human {
-                    if let m = match.aiDecide(for: match.human) { log("  Player 1: \(m.card?.key ?? (m.kind == .leader ? "LEADER \(match.human.leaderAbility)" : "FACTION"))\(m.row.map { " -> \($0)" } ?? "")  [\(match.human.total):\(match.computer.total)]") }
-                    else { log("  Player 1: pass  [\(match.human.total):\(match.computer.total)]") }
-                    Task { @MainActor in await match.aiTurn(match.human) }
-                }
-            }
-        } else { aiT = 0 }
-        if autotest { autoTest(match, dt) }
+        guard match.phase == .play && !match.busy && match.choice == nil && notes.isEmpty && !coinShown && !rulesOpen else { aiT = 0; return }
+        aiT += dt
+        guard aiT > (autotest ? 0.35 : 0.85) else { return }
+        aiT = 0
+        if match.current === match.computer {
+            if autotest { logAIMove(match, match.computer, label: "Player 2") }
+            Task { @MainActor in await match.aiTurn(match.computer) }
+        } else if autotest && match.current === match.human {
+            logAIMove(match, match.human, label: "Player 1")
+            Task { @MainActor in await match.aiTurn(match.human) }
+        }
+    }
+
+    /// Writes the move the AI is about to make to the test log.
+    func logAIMove(_ match: Game, _ player: Player, label: String) {
+        let score = "[\(match.human.total):\(match.computer.total)]"
+        guard let move = match.aiDecide(for: player) else { log("  \(label): pass  \(score)"); return }
+        let what = move.card?.key ?? (move.kind == .leader ? "LEADER \(player.leaderAbility)" : "FACTION")
+        log("  \(label): \(what)\(move.row.map { " -> \($0)" } ?? "")  \(score)")
     }
 
     /// Automatic play used by tests (GWENT_AUTOTEST).
