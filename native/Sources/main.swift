@@ -172,10 +172,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, MTKViewDelegate, NSMen
         let now = CACurrentMediaTime()
         let dt = Float(min(0.1, now - last)); last = now
         if autotest {
-            fpsFrames += 1; fpsT += Double(dt); worst = max(worst, Double(dt))
+            fpsT += Double(dt); worst = max(worst, Double(dt))
             if fpsT >= 5 { log(String(format: "FPS %.1f, najdłuższa klatka %.0f ms, bufor %dx%d", Double(fpsFrames) / fpsT, worst * 1000, Int(v.drawableSize.width), Int(v.drawableSize.height))); fpsFrames = 0; fpsT = 0; worst = 0 }
         }
         guard let cb = renderer.begin(view: v) else { return }
+        fpsFrames += 1
         gamepad.update(dt)
         scene?.frame(dt: dt)
         renderer.end(cb, view: v)
@@ -223,7 +224,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, MTKViewDelegate, NSMen
         l.preferredFrameRateRange = CAFrameRateRange(minimum: f, maximum: f, preferred: f)
         l.add(to: .main, forMode: .common); link = l
     }
-    @objc func tick(_ l: CADisplayLink) { draw(in: view) }
+    @objc func tick(_ l: CADisplayLink) { view.draw() }
     var isFullScreen: Bool { window.styleMask.contains(.fullScreen) }
     func setFullScreen(_ on: Bool) { if on != isFullScreen { window.toggleFullScreen(nil) } }
     @objc func pickResolution(_ s: NSMenuItem) { renderRes = s.tag; view.renderHeight = s.tag; refreshMenus() }
