@@ -1,10 +1,9 @@
-// Visual effects (card flights, burns, weather), the rules screen and the licenses screen.
+// Visual effects: card flights, burns, flashes and animated weather on rows.
 import CoreGraphics
 import Foundation
 import Metal
 import simd
 
-private let cardWidth: Float = 85, cardHeight: Float = 122
 
 /// A running visual effect.
 struct FX {
@@ -74,7 +73,7 @@ extension Scene {
         }
     }
     /// Whether an effect is a burn (scorch) effect.
-    private func isBurn(_ f: FX) -> Bool { if case .burn = f.kind { return true }; return false }
+    func isBurn(_ f: FX) -> Bool { if case .burn = f.kind { return true }; return false }
 
     /// Rectangle of a card flying towards a target.
     func flightRect(_ card: Card, target: SIMD2<Float>) -> (R, Bool) {
@@ -123,95 +122,10 @@ extension Scene {
         }
     }
 
-    /// Opens the rules screen.
-    func openRules() { rulesOpen = true; rulesScroll = 0; game?.paused = true }
-    /// Closes the rules screen.
-    func closeRules() { rulesOpen = false; game?.paused = false }
-    /// Rules screen.
-    func drawRules() {
-        renderer.rect(R(0, 0, virtualWidth, virtualHeight), RGBA.black.alpha(0.82))
-        let panel = R(260, 90, 1400, 940)
-        renderer.gradient(panel, RGBA(r: 0.13, g: 0.1, b: 0.06, a: 0.98), RGBA(r: 0.07, g: 0.05, b: 0.03, a: 0.98), steps: 12)
-        renderer.frame(panel, RGBA.goldDark, 2)
-        renderer.frame(panel.inset(6), RGBA.goldDark.alpha(0.4), 1)
-        renderer.text(L("Rules of Gwent"), .gwent(48), x: 960, y: 22, color: RGBA.gold, align: .center)
-        let back = R(40, 24, 190, 50)
-        goldButton(back, "‹  " + L("Back"), font: .serif(22, bold: true)) { [weak self] in self?.closeRules() }
-        let content = R(panel.x + 50, panel.y + 30, panel.w - 100, panel.h - 60)
-        let blocks = gameData.rules()
-        var heights: [Float] = []
-        var total: Float = 0
-        for b in blocks {
-            let h = b.heading ? renderer.measure(b.text, .gwent(30), maxWidth: content.w).h + 18 : renderer.measure(b.text, .serif(21), maxWidth: content.w).h + 16
-            heights.append(h); total += h
-        }
-        let maxScroll = max(0, total - content.h)
-        rulesScroll = max(0, min(maxScroll, rulesScroll - wheel))
-        renderer.clip(content)
-        var y = content.y - rulesScroll
-        for (i, b) in blocks.enumerated() {
-            let h = heights[i]
-            if y + h >= content.y && y <= content.y + content.h {
-                if b.heading {
-                    renderer.text(b.text, .gwent(30), x: content.x, y: y + 10, color: RGBA.gold, maxWidth: content.w)
-                    renderer.rect(R(content.x, y + h - 6, min(content.w, 520), 1.5), RGBA.goldDark.alpha(0.6))
-                } else {
-                    renderer.text(b.text, .serif(21), x: content.x, y: y, color: RGBA(r: 0.92, g: 0.88, b: 0.8, a: 1), maxWidth: content.w)
-                }
-            }
-            y += h
-        }
-        renderer.clip(nil)
-        if maxScroll > 0 {
-            let textHeight = content.h * content.h / total
-            renderer.rect(R(panel.x + panel.w - 14, content.y + (content.h - textHeight) * rulesScroll / maxScroll, 5, textHeight), RGBA.gold.alpha(0.6))
-        }
-        renderer.text(L("Scroll with the mouse wheel · Esc — back"), .ui(16), x: 960, y: 1040, color: .gray(0.6), align: .center)
-    }
 }
 
 @inline(__always) func fract(_ x: Float) -> Float { x - floor(x) }
 
 /// Licenses screen.
 extension Scene {
-    /// Draws the licenses and credits.
-    func drawCredits() {
-        renderer.rect(R(0, 0, virtualWidth, virtualHeight), RGBA.black.alpha(0.85))
-        let panel = R(360, 110, 1200, 860)
-        glassPanel(panel, alpha: 0.95)
-        renderer.text(L("Licenses"), .gwent(52), x: 960, y: 24, color: RGBA.gold, align: .center)
-        goldButton(R(40, 24, 190, 50), "‹  " + L("Back"), font: .serif(22, bold: true)) { [weak self] in self?.creditsOpen = false; self?.game?.paused = false }
-        let x = panel.x + 60, w = panel.w - 120
-        var y = panel.y + 40
-        /// Section heading.
-        func head(_ text: String) { y += renderer.text(text, .gwent(30), x: x, y: y, color: RGBA.gold, maxWidth: w).h + 4; goldDivider(x, y, min(w, 600)); y += 14 }
-        /// Paragraph.
-        func para(_ text: String, _ color: RGBA = RGBA(r: 0.92, g: 0.88, b: 0.8, a: 1)) { y += renderer.text(text, .serif(19), x: x, y: y, color: color, maxWidth: w).h + 10 }
-        /// Clickable link.
-        func link(_ text: String, _ url: String) {
-            let sz = renderer.measure(text, .serif(19, bold: true), maxWidth: w)
-            let b = R(x, y, sz.w, sz.h)
-            let hovered = b.contains(mouse)
-            renderer.text(text, .serif(19, bold: true), x: x, y: y, color: hovered ? .white : RGBA(r: 0.55, g: 0.78, b: 1, a: 1), maxWidth: w)
-            renderer.rect(R(x, y + sz.h - 2, sz.w, 1), RGBA(r: 0.55, g: 0.78, b: 1, a: hovered ? 1 : 0.6))
-            button(b) { if let u = URL(string: url) { Platform.openURL(u) } }
-            y += sz.h + 12
-        }
-        head(L("Rights holder: CD PROJEKT RED"))
-        para(L("All characters, the Witcher universe, Gwent, names, card art, music, sounds and trademarks are the property of CD PROJEKT S.A. / CD PROJEKT RED. The Witcher 3: Wild Hunt © CD PROJEKT S.A."))
-        para("This is an unofficial fan work and is not approved/endorsed by CD PROJEKT RED.", RGBA(r: 1, g: 0.9, b: 0.6, a: 1))
-        para(L("The project is non-commercial and free. CD PROJEKT RED Fan Content Guidelines:"), .gray(0.7))
-        link("cdprojektred.com/en/fan-content", "https://www.cdprojektred.com/en/fan-content")
-        y += 10
-        head(L("Fork of Gwent Classic v5.0"))
-        para(L("This app is a fork of the open-source Gwent Classic v5.0 project from GitHub (authors: Arun Sundaram, Reynolds Costa, Sylver, Iván Mtz; version 5.0: ia2904)."))
-        link(L("Original: Gwent Classic (Arun Sundaram)"), "https://github.com/asundr/gwent-classic")
-        link("github.com/ia2904/gwent-classic-v5.0", "https://github.com/ia2904/gwent-classic-v5.0")
-        link(L("License (MIT + Commons Clause)"), "https://github.com/ia2904/gwent-classic-v5.0?tab=License-1-ov-file")
-        para("“Commons Clause” License Condition v1.0 — " + L("the license does not grant the right to sell the Software. Software: Gwent Classic · License: MIT · Licensor: Arun Sundaram."), .gray(0.75))
-        y += 10
-        head(L("Port"))
-        para("Reimagined / ported by grechucia. " + L("Port code under the same license (MIT + Commons Clause)."))
-        link("github.com/grechucia/gwent-reimagined", "https://github.com/grechucia/gwent-reimagined")
-    }
 }

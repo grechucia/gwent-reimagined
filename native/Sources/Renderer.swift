@@ -10,6 +10,8 @@ import UIKit
 #endif
 
 let virtualWidth: Float = 1920, virtualHeight: Float = 1080
+/// Size of a small card on the board, in virtual units.
+let cardWidth: Float = 85, cardHeight: Float = 122
 
 /// RGBA colour.
 struct RGBA { var r, g, b, a: Float
@@ -32,7 +34,7 @@ struct R: Equatable { var x, y, w, h: Float
 }
 
 /// Vertex sent to the GPU.
-private struct Vtx { var pos: SIMD2<Float>; var uv: SIMD2<Float>; var color: SIMD4<Float>; var mode: Float; var pad: SIMD3<Float> = .zero }
+struct Vtx { var pos: SIMD2<Float>; var uv: SIMD2<Float>; var color: SIMD4<Float>; var mode: Float; var pad: SIMD3<Float> = .zero }
 
 /// Rendered text texture with its size in virtual units.
 final class TextTex { let tex: MTLTexture; let w: Float; let h: Float
@@ -42,25 +44,25 @@ final class TextTex { let tex: MTLTexture; let w: Float; let h: Float
 final class Renderer {
     let device: MTLDevice
     let queue: MTLCommandQueue
-    private let pipeline: MTLRenderPipelineState
-    private let bgPipeline: MTLRenderPipelineState
-    private let sampler: MTLSamplerState
-    private let loader: MTKTextureLoader
-    private var buffers: [MTLBuffer] = []
-    private var bufIndex = 0
-    private let inflight = DispatchSemaphore(value: 3)
-    private let maxVerts = 120_000
-    private var verts: UnsafeMutablePointer<Vtx>!
-    private var vcount = 0, flushedFrom = 0
-    private var curTex: MTLTexture?
-    private var enc: MTLRenderCommandEncoder?
-    private var projection = matrix_identity_float4x4
+    let pipeline: MTLRenderPipelineState
+    let bgPipeline: MTLRenderPipelineState
+    let sampler: MTLSamplerState
+    let loader: MTKTextureLoader
+    var buffers: [MTLBuffer] = []
+    var bufIndex = 0
+    let inflight = DispatchSemaphore(value: 3)
+    let maxVerts = 120_000
+    var verts: UnsafeMutablePointer<Vtx>!
+    var vcount = 0, flushedFrom = 0
+    var curTex: MTLTexture?
+    var enc: MTLRenderCommandEncoder?
+    var projection = matrix_identity_float4x4
     let white: MTLTexture
     private(set) var pxScale: Float = 1
     private(set) var viewportPx = R(0, 0, 1, 1)
-    private var texCache: [String: MTLTexture] = [:]
-    private var textCache: [String: (TextTex, Int)] = [:]
-    private var frameNo = 0
+    var texCache: [String: MTLTexture] = [:]
+    var textCache: [String: (TextTex, Int)] = [:]
+    var frameNo = 0
     let gameDir: URL
 
     init?(view: MTKView, gameDir: URL) {
@@ -110,7 +112,7 @@ final class Renderer {
     /// Loads textures in advance.
     func preload(_ paths: [String]) { for r in paths { _ = texture(r) } }
     /// Decodes an image file into a mipmapped texture.
-    private func decode(_ url: URL) -> MTLTexture? {
+    func decode(_ url: URL) -> MTLTexture? {
         guard let src = CGImageSourceCreateWithURL(url as CFURL, nil),
               let img = CGImageSourceCreateImageAtIndex(src, 0, [kCGImageSourceShouldCache: false] as CFDictionary) else { return nil }
         let w = img.width, h = img.height
@@ -170,7 +172,7 @@ final class Renderer {
         if frameNo % 600 == 0 { trimTextCache() }
     }
     /// Sends the queued quads to the GPU.
-    private func flush() {
+    func flush() {
         guard let e = enc, vcount > flushedFrom, let t = curTex else { return }
         e.setVertexBuffer(buffers[bufIndex], offset: 0, index: 0)
         e.setVertexBytes(&projection, length: MemoryLayout<float4x4>.stride, index: 1)
@@ -257,7 +259,7 @@ final class Renderer {
     enum Align { case left, center, right }
 
     /// Creates the CoreText font for a given pixel scale.
-    private func ctFont(_ f: Font, scale: Float) -> CTFont {
+    func ctFont(_ f: Font, scale: Float) -> CTFont {
         var font = CTFontCreateWithName(f.name as CFString, CGFloat(f.size * scale), nil)
         var traits: CTFontSymbolicTraits = []
         if f.bold { traits.insert(.traitBold) }
@@ -300,7 +302,7 @@ final class Renderer {
         return tt
     }
     /// Drops text textures that were not used recently.
-    private func trimTextCache() { textCache = textCache.filter { frameNo - $0.value.1 < 600 } }
+    func trimTextCache() { textCache = textCache.filter { frameNo - $0.value.1 < 600 } }
 
     @discardableResult
     /// Draws text and returns its size.

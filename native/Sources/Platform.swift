@@ -103,7 +103,7 @@ import UniformTypeIdentifiers
         while let p = vc?.presentedViewController { vc = p }
         return vc
     }
-    private static var pickerDelegate: PickerDelegate?
+    static var pickerDelegate: PickerDelegate?
     /// Receives the result of the iOS document picker.
     final class PickerDelegate: NSObject, UIDocumentPickerDelegate {
         let done: (URL?) -> Void

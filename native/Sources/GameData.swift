@@ -33,7 +33,7 @@ final class GameData {
     var decks: [DeckData] = []
     var factions: [String: [String: String]] = [:]
     var abilities: [String: [String: String]] = [:]
-    private var lang: [String: [String: Any]] = [:]
+    var lang: [String: [String: Any]] = [:]
     var language = "en"
     static let languages: [(code: String, name: String)] = [("de", "Deutsch"), ("en", "English"), ("es", "Español"), ("fr", "Français"),
         ("it", "Italiano"), ("pl", "Polski"), ("pt", "Português"), ("ru", "Русский"), ("zh", "中文"), ("ja", "日本語"), ("ko", "한국어")]
@@ -83,7 +83,7 @@ final class GameData {
     }
 
     /// Section of the active translation file.
-    private func section(_ text: String) -> [String: Any] { (lang[language]?[text] as? [String: Any]) ?? [:] }
+    func section(_ text: String) -> [String: Any] { (lang[language]?[text] as? [String: Any]) ?? [:] }
 
     /// Localised card name.
     func cardName(_ cardData: CardData) -> String { ((section("cards")[cardData.key] as? [String: String])?["name"]).flatMap { $0.isEmpty ? nil : $0 } ?? cardData.name }

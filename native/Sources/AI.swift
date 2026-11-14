@@ -11,19 +11,19 @@ struct AIMove { let card: Card?; let row: RowType?; let rowOwner: Player?; let t
 @MainActor
 extension Game {
     /// Snapshot of the board used to try a move and roll it back.
-    private struct Snap { var rows: [[Card]]; var specials: [[Card]]; var weather: [[Set<String>]]; var horns: [Bool] }
+    struct Snap { var rows: [[Card]]; var specials: [[Card]]; var weather: [[Set<String>]]; var horns: [Bool] }
     /// Captures the current board state.
-    private func snap() -> Snap {
+    func snap() -> Snap {
         let rs = human.rows + computer.rows
         return Snap(rows: rs.map { $0.cards }, specials: rs.map { $0.specials }, weather: [human.weather, computer.weather], horns: rs.map { $0.leaderHorn })
     }
     /// Restores a board state captured with snap().
-    private func restore(_ snapshot: Snap) {
+    func restore(_ snapshot: Snap) {
         for (i, r) in (human.rows + computer.rows).enumerated() { r.cards = snapshot.rows[i]; r.specials = snapshot.specials[i]; r.leaderHorn = snapshot.horns[i] }
         human.weather = snapshot.weather[0]; computer.weather = snapshot.weather[1]
     }
     /// Returns how much the score difference changes for `ai` if `apply` is executed (the board is restored afterwards).
-    private func diffAfter(_ ai: Player, _ apply: () -> Void) -> Int {
+    func diffAfter(_ ai: Player, _ apply: () -> Void) -> Int {
         let s = snap()
         apply(); recalc()
         let d = ai.total - ai.opponent.total
@@ -31,7 +31,7 @@ extension Game {
         return d
     }
     /// Simulates removing the strongest non-hero units from the given rows (scorch-like effects).
-    private func killMax(_ cards: [Card], in rows: [Row]) {
+    func killMax(_ cards: [Card], in rows: [Row]) {
         guard let mx = cards.filter({ !$0.hero }).map({ $0.power }).max(), mx > 0 else { return }
         for r in rows where !r.shielded { r.cards.removeAll { !$0.hero && $0.power == mx && $0.immortalRounds == 0 } }
     }
@@ -239,7 +239,7 @@ extension Game {
     }
 
     /// Easier opponents sometimes play a weaker move instead of the best one, and pass less cleverly.
-    private func weakenedChoice(_ moves: [AIMove], ai: Player, foe: Player, lead: Int) -> AIMove? {
+    func weakenedChoice(_ moves: [AIMove], ai: Player, foe: Player, lead: Int) -> AIMove? {
         let mistake: Double = aiLevel == 0 ? 0.5 : 0.2
         guard moves.count > 1, Double.random(in: 0..<1) < mistake else { return nil }
         if aiLevel == 0 && !foe.passed && lead > 0 && ai.gems == 2 && Double.random(in: 0..<1) < 0.3 { return nil }

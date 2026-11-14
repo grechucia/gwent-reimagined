@@ -5,8 +5,8 @@ import simd
 /// Polls the active game controller every frame and turns its input into UI actions.
 @MainActor final class Gamepad {
     weak var scene: Scene?
-    private var prev: [String: Bool] = [:]
-    private var repeatT: [String: Float] = [:]
+    var prev: [String: Bool] = [:]
+    var repeatT: [String: Float] = [:]
 
     init() { GCController.startWirelessControllerDiscovery {} }
 
@@ -29,7 +29,7 @@ import simd
     }
 
     /// Edge-detects a button; held directions repeat after 0.4 s, then every 0.12 s.
-    private func press(_ name: String, _ on: Bool, _ dt: Float, repeats: Bool, _ action: () -> Void) {
+    func press(_ name: String, _ on: Bool, _ dt: Float, repeats: Bool, _ action: () -> Void) {
         let was = prev[name] ?? false
         prev[name] = on
         if on && !was { action(); repeatT[name] = 0.4; return }
@@ -47,10 +47,10 @@ extension Scene {
         padCursor = true; mouse = SIMD2(-1, -1)
         return true
     }
-    private var focusTargets: [R] { clicks.map { $0.0 }.filter { t in t.w < virtualWidth * 0.9 && t.h < virtualHeight * 0.9 && !padNoFocus.contains { $0 == t } } }
+    var focusTargets: [R] { clicks.map { $0.0 }.filter { t in t.w < virtualWidth * 0.9 && t.h < virtualHeight * 0.9 && !padNoFocus.contains { $0 == t } } }
 
     /// Element focused automatically: the screen's primary element, otherwise the one nearest the centre.
-    private func autoTarget(_ targets: [R]) -> R? {
+    func autoTarget(_ targets: [R]) -> R? {
         if let p = padPrimary, targets.contains(where: { $0 == p }) { return p }
         let pool = targets.filter { t in !padNoAuto.contains { $0 == t } }
         return (pool.isEmpty ? targets : pool).min { simd_length($0.mid - SIMD2(virtualWidth / 2, virtualHeight / 2)) < simd_length($1.mid - SIMD2(virtualWidth / 2, virtualHeight / 2)) }
@@ -74,7 +74,7 @@ extension Scene {
     }
 
     /// The interactive element under the focus point.
-    private func focusedRect(_ targets: [R]) -> R? {
+    func focusedRect(_ targets: [R]) -> R? {
         guard mouse.x >= 0 else { return nil }
         return targets.filter { $0.contains(mouse) }.min { $0.w * $0.h < $1.w * $1.h }
     }

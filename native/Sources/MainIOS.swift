@@ -10,11 +10,11 @@ import AVFoundation
 final class IOSGameView: MTKView {
     weak var app: IOSAppDelegate?
     var renderHeight = 0 { didSet { updateDrawableSize() } }
-    private var start = CGPoint.zero
-    private var last = CGPoint.zero
-    private var dragging = false
-    private var longFired = false
-    private var longTimer: Timer?
+    var start = CGPoint.zero
+    var last = CGPoint.zero
+    var dragging = false
+    var longFired = false
+    var longTimer: Timer?
 
     /// Keeps the drawable size in sync with the view size.
     override func layoutSubviews() { super.layoutSubviews(); updateDrawableSize() }
@@ -34,7 +34,7 @@ final class IOSGameView: MTKView {
         }
     }
     /// Converts a touch position to the virtual 1920x1080 space.
-    private func virtualPoint(_ p: CGPoint) -> SIMD2<Float> {
+    func virtualPoint(_ p: CGPoint) -> SIMD2<Float> {
         guard let r = app?.renderer, bounds.width > 0 else { return .zero }
         let px = Float(p.x / bounds.width) * Float(drawableSize.width)
         let py = Float(p.y / bounds.height) * Float(drawableSize.height)
@@ -105,7 +105,7 @@ final class IOSAppDelegate: UIResponder, UIApplicationDelegate, MTKViewDelegate,
     var scene: Scene?
     var audio: Audio!
     let gamepad = Gamepad()
-    private var last = CACurrentMediaTime()
+    var last = CACurrentMediaTime()
     let res = Bundle.main.resourceURL!
 
     var renderRes: Int { get { UserDefaults.standard.integer(forKey: "renderRes") } set { UserDefaults.standard.set(newValue, forKey: "renderRes") } }

@@ -21,7 +21,7 @@ extension Scene {
     }
 
     /// Difficulty and faction selection for a new career.
-    private func drawCareerStart() {
+    func drawCareerStart() {
         renderer.text(L("You start with weak cards of the chosen faction. Every career is generated anew: different places, opponents and bosses. Win, earn cards and reach the top."),
                .serif(20, italic: true), x: 960, y: 96, color: .gray(0.88), maxWidth: 1300, align: .center)
         renderer.text(L("Difficulty") + ":", .serif(22, bold: true), x: 960 - 470, y: 160, color: RGBA.gold)
@@ -50,7 +50,7 @@ extension Scene {
     }
 
     /// Chapter list, fights of the selected chapter and the player's deck panel.
-    private func drawCareerLadder() {
+    func drawCareerLadder() {
         let n = career.chapterCount
         let cc = min(careerChapter ?? career.currentChapter, n - 1)
         let dn = Career.difficultyNames[career.difficulty]
@@ -147,7 +147,7 @@ extension Scene {
     }
 
     /// Lets the player pick one of the reward cards after a win.
-    private func drawCareerReward() {
+    func drawCareerReward() {
         guard let opts = careerRewards else { return }
         clicks.removeAll()
         renderer.rect(R(0, 0, virtualWidth, virtualHeight), RGBA.black.alpha(0.8))
@@ -175,118 +175,4 @@ extension Scene {
         }
     }
 
-    /// Opens the save-location prompt, then runs `then`.
-    func askSaveLocation(then: (() -> Void)?) { savePromptOpen = true; savePromptThen = then }
-
-    /// Save-location prompt: this device, iCloud Drive or a custom folder.
-    func drawSavePrompt() {
-        renderer.rect(R(0, 0, virtualWidth, virtualHeight), RGBA.black.alpha(0.82))
-        let p = R(360, 120, 1200, 840)
-        glassPanel(p, alpha: 0.96)
-        renderer.text(L("Where should your progress be saved?"), .gwent(44), x: 960, y: p.y + 30, color: RGBA.gold, align: .center)
-        renderer.text(L("Your decks and career are kept in one file. Choose a location – you can change it later in Options."),
-               .serif(19, italic: true), x: 960, y: p.y + 96, color: .gray(0.88), maxWidth: p.w - 120, align: .center)
-        let ic = SaveStore.iCloudDir
-        let opts: [(String, String, Bool, () -> Void)] = [
-            (Platform.isDesktop ? L("On this Mac") : L("On this device"),
-             Platform.isDesktop ? L("Local save. The simplest choice if you only play on this computer.")
-                                : L("Local save, visible in the Files app. The simplest choice if you only play on this device."), true,
-             { [weak self] in self?.finishSaveChoice(SaveStore.localDir) }),
-            (L("iCloud Drive"), ic == nil
-                ? (Platform.isDesktop ? L("iCloud Drive is off on this Mac (System Settings → Apple ID → iCloud).")
-                                      : L("Choose a folder in iCloud Drive with “Choose a folder…”."))
-                : L("Syncs between Apple devices: your Mac, iPhone and iPad share the same progress."),
-             ic != nil, { [weak self] in if let u = ic { self?.finishSaveChoice(u) } }),
-            (L("Choose a folder…"), L("E.g. a network drive, Dropbox or Google Drive – useful if you also want to sync with Android."), true,
-             { [weak self] in self?.pickSaveFolder() })]
-        for (i, o) in opts.enumerated() {
-            let b = R(p.x + 80, p.y + 180 + Float(i) * 170, p.w - 160, 140)
-            let hovered = o.2 && b.contains(mouse)
-            renderer.rect(b, RGBA.black.alpha(hovered ? 0.5 : 0.32)); renderer.frame(b, RGBA.gold.alpha(o.2 ? (hovered ? 1 : 0.5) : 0.2), hovered ? 2.5 : 1.5)
-            renderer.text(o.0, .serif(28, bold: true), x: b.x + 30, y: b.y + 22, color: o.2 ? (hovered ? .white : RGBA.gold) : .gray(0.45))
-            renderer.text(o.1, .ui(18), x: b.x + 30, y: b.y + 72, color: o.2 ? .gray(0.88) : .gray(0.5), maxWidth: b.w - 60)
-            if o.2 { button(b, o.3) }
-        }
-        if SaveStore.shared.chosen {
-            renderer.text(L("Currently") + ": " + SaveStore.shared.displayPath, .ui(15), x: 960, y: p.y + p.h - 70, color: .gray(0.7), maxWidth: p.w - 100, align: .center)
-            smallLink(R(960 - 120, p.y + p.h - 44, 240, 32), L("Cancel")) { [weak self] in self?.savePromptOpen = false; self?.savePromptThen = nil }
-        }
-    }
-    /// Applies the chosen save folder and reloads saved data.
-    private func finishSaveChoice(_ url: URL) {
-        SaveStore.shared.choose(url)
-        Career.shared.load(); customDecks = DeckBuilder.loadCustom()
-        savePromptOpen = false
-        let t = savePromptThen; savePromptThen = nil; t?()
-    }
-    /// Shows the system folder picker.
-    private func pickSaveFolder() {
-        Platform.pickFolder(message: L("Folder for GwentReimagined saves")) { [weak self] u in
-            if let u = u { self?.finishSaveChoice(u) }
-        }
-    }
-
-    /// Options overlay: player name, audio, graphics, difficulty, save location and language.
-    func drawOptions() {
-        renderer.rect(R(0, 0, virtualWidth, virtualHeight), RGBA.black.alpha(0.82))
-        let p = R(360, 40, 1200, 1000)
-        glassPanel(p, alpha: 0.96)
-        renderer.text(L("Options"), .gwent(52), x: 960, y: p.y + 24, color: RGBA.gold, align: .center)
-        goldButton(R(40, 24, 190, 50), "‹  " + L("Back"), font: .serif(22, bold: true)) { [weak self] in self?.optionsOpen = false; self?.game?.paused = false }
-        goldButton(R(p.x + p.w - 250, p.y + 30, 210, 46), L("Licenses"), font: .serif(18, bold: true)) { [weak self] in self?.creditsOpen = true }
-        var y = p.y + 110
-        let lx = p.x + 60, bx = p.x + 420
-        /// Draws a row label.
-        func label(_ text: String) { renderer.text(text, .serif(22, bold: true), x: lx, y: y + 10, color: .white, maxWidth: 340) }
-        /// Draws a row of toggle buttons; the selected one is highlighted.
-        func choice(_ items: [(String, Bool, Bool)], w width: Float = 140, _ act: @escaping (Int) -> Void) {
-            for (i, it) in items.enumerated() {
-                let b = R(bx + Float(i) * (width + 10), y, width, 46)
-                goldButton(b, (it.1 ? "✓ " : "") + it.0, font: .serif(17, bold: true), enabled: it.2) { act(i) }
-                if it.1 { renderer.rect(b, RGBA(r: 1, g: 0.78, b: 0.3, a: 0.22)); renderer.frame(b.inset(-3), RGBA(r: 1, g: 0.85, b: 0.4, a: 1), 3) }
-            }
-        }
-        label(L("Player name"))
-        renderer.text(playerName, .serif(22, bold: true), x: bx, y: y + 10, color: RGBA.gold, maxWidth: 380)
-        goldButton(R(bx + 400, y, 200, 46), L("Change…"), font: .serif(17, bold: true)) { [weak self] in self?.askPlayerName() }
-        y += 76
-        label(L("Music"))
-        choice([(L("On"), audio.musicOn && !audio.muted, true), (L("Off"), !audio.musicOn || audio.muted, true)]) { [weak self] i in
-            guard let s = self else { return }
-            if i == 0 { s.audio.muted = false; s.audio.musicOn = true } else { s.audio.musicOn = false }
-            s.host?.refreshMenus()
-        }
-        y += 76
-        label(L("Sound effects"))
-        choice([(L("On"), !audio.muted, true), (L("Off"), audio.muted, true)]) { [weak self] i in
-            guard let s = self else { return }
-            s.audio.muted = i == 1; if i == 1 { s.audio.musicOn = false }
-            s.host?.refreshMenus()
-        }
-        y += 76
-        if let h = host {
-            label(L("Render resolution"))
-            let rs = resolutions
-            choice(rs.map { ($0.px == 0 ? L("Native") : "\($0.px)p", $0.px == h.renderRes, true) }, w: 128) { i in h.setRenderRes(rs[i].px) }
-            y += 76
-            label(L("Frame limit"))
-            let fl = h.availableFrameLimits
-            choice(fl.map { ("\($0) FPS", $0 == h.effectiveFrameLimit, true) }, w: 128) { i in h.setFrameLimit(fl[i]) }
-            y += 76
-            if h.supportsWindowModes {
-                label(L("Display mode"))
-                choice([(L("Window"), !h.isFullScreen, true), (L("Full screen"), h.isFullScreen, true)], w: 180) { i in h.setFullScreen(i == 1) }
-                y += 76
-            }
-        }
-        label(L("Save location"))
-        renderer.text(SaveStore.shared.chosen ? SaveStore.shared.displayPath : L("not chosen yet"), .ui(15), x: bx, y: y + 4, color: .gray(0.8), maxWidth: 680)
-        goldButton(R(bx, y + 50, 200, 44), L("Change…"), font: .serif(17, bold: true)) { [weak self] in self?.askSaveLocation(then: nil) }
-        y += 126
-        label(L("Difficulty (outside career)"))
-        choice([(L("Easy"), aiLevel == 0, true), (L("Normal"), aiLevel == 1, true), (L("Hard"), aiLevel == 2, true)], w: 180) { [weak self] i in self?.aiLevel = i }
-        y += 76
-        label(L("Language"))
-        languageToggle(y: y + 6)
-    }
 }

@@ -3,14 +3,14 @@ import AVFoundation
 
 /// Plays the music (AVAudioPlayer) and sound effects (AVAudioEngine with a small pool of player nodes).
 final class Audio: NSObject, AVAudioPlayerDelegate {
-    private let engine = AVAudioEngine()
-    private var players: [AVAudioPlayerNode] = []
-    private var next = 0
-    private var buffers: [String: AVAudioPCMBuffer] = [:]
-    private var music: AVAudioPlayer?
-    private var tracks: [URL] = []
-    private var lastTrack = -1
-    private let dir: URL
+    let engine = AVAudioEngine()
+    var players: [AVAudioPlayerNode] = []
+    var next = 0
+    var buffers: [String: AVAudioPCMBuffer] = [:]
+    var music: AVAudioPlayer?
+    var tracks: [URL] = []
+    var lastTrack = -1
+    let dir: URL
     var muted = false
     var musicOn = true { didSet { musicOn ? playMusic() : music?.stop() } }
 
@@ -31,7 +31,7 @@ final class Audio: NSObject, AVAudioPlayerDelegate {
     }
 
     /// Loads and caches a sound effect as a PCM buffer.
-    private func buffer(_ name: String) -> AVAudioPCMBuffer? {
+    func buffer(_ name: String) -> AVAudioPCMBuffer? {
         if let b = buffers[name] { return b }
         let url = dir.appendingPathComponent("sfx/\(name).mp3")
         guard let f = try? AVAudioFile(forReading: url),

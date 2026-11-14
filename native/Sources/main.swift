@@ -40,7 +40,7 @@ final class GameView: MTKView {
         }
         layer?.contentsScale = drawableSize.width / b.width
     }
-    private var tracking: NSTrackingArea?
+    var tracking: NSTrackingArea?
     /// Tracks mouse movement inside the view.
     override func updateTrackingAreas() {
         if let t = tracking { removeTrackingArea(t) }
@@ -75,11 +75,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, MTKViewDelegate, NSMen
     var scene: Scene?
     var audio: Audio!
     let gamepad = Gamepad()
-    private var last = CACurrentMediaTime()
+    var last = CACurrentMediaTime()
     let env = ProcessInfo.processInfo.environment
     lazy var autotest = env["GWENT_AUTOTEST"] == "1"
     lazy var logURL = URL(fileURLWithPath: env["GWENT_LOG"] ?? (NSHomeDirectory() + "/Library/Logs/GwentReimagined.log"))
-    private var fpsFrames = 0, fpsT: Double = 0, worst: Double = 0
+    var fpsFrames = 0, fpsT: Double = 0, worst: Double = 0
     /// Appends a line to the test log.
     func log(_ text: String) {
         guard autotest else { return }
@@ -236,7 +236,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, MTKViewDelegate, NSMen
     func setFrameLimit(_ limit: Int) { frameLimit = limit; applyFrameRate(); refreshMenus() }
     var availableFrameLimits: [Int] { let hz = screenFPS; let l = frameLimits.filter { $0 <= hz && hz % $0 == 0 }; return l.isEmpty ? [hz] : l }
     var effectiveFrameLimit: Int { let a = availableFrameLimits; return a.contains(frameLimit) ? frameLimit : (a.last { $0 <= frameLimit } ?? a.last!) }
-    private var link: CADisplayLink?
+    var link: CADisplayLink?
     /// Creates the display link that drives rendering at the chosen frame rate.
     func applyFrameRate() {
         let f = Float(effectiveFrameLimit)
