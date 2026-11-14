@@ -72,11 +72,11 @@ extension Game {
 
     /// Spy: the player draws cards.
     func spyDraw(_ player: Player, _ count: Int) async {
-        let o = player.opponent!
+        let opponent = player.opponent!
         for _ in 0..<count {
-            if player.leaderAbility == "emhyr_whiteflame" && player.drawOpponentLeft > 0 && !o.deck.isEmpty {
+            if player.leaderAbility == "emhyr_whiteflame" && player.drawOpponentLeft > 0 && !opponent.deck.isEmpty {
                 let answer = await pickOption(player, L("Choose deck to draw from"), [L("Own deck [E]"), L("Opponent's deck [Q]")]) { 1 }
-                if answer == 1, let t = o.deck.first { o.deck.removeFirst(); t.owner = player; player.hand.append(t); player.drawOpponentLeft -= 1; continue }
+                if answer == 1, let topCard = opponent.deck.first { opponent.deck.removeFirst(); topCard.owner = player; player.hand.append(topCard); player.drawOpponentLeft -= 1; continue }
             }
             draw(player, 1)
         }
@@ -130,7 +130,7 @@ extension Game {
 
     /// Djinn: grants one of the wishes.
     func djinnWish(_ ability: String, _ card: Card, _ player: Player) async {
-        let o = player.opponent!
+        let opponent = player.opponent!
         let minStr = ability == "wish3" ? 7 : 6
         let costs = player.rowCards.filter { $0 !== card && !$0.hero && $0.basePower >= minStr }
         guard let cost = costs.max(by: { $0.power < $1.power }) else { return }
@@ -138,9 +138,9 @@ extension Game {
         switch ability {
         // Malicious Wish 1: Choose 1 of 3 random cards from the enemy hand. Cost: Destroy your strongest non-hero unit (Strength ≥ 6).
         case "wish1":
-            let three = Array(o.hand.shuffled().prefix(3))
+            let three = Array(opponent.hand.shuffled().prefix(3))
             if let t = await pickOne(player, L("The Djinn grants your wish: Choose 1 enemy card to steal."), three, ai: { candidates in candidates.max { self.aiCardValue($0) < self.aiCardValue($1) } }) {
-                o.hand.removeAll { $0 === t }; t.owner = player; player.hand.append(t)
+                opponent.hand.removeAll { $0 === t }; t.owner = player; player.hand.append(t)
             }
         // Malicious Wish 2: Choose 1 of the top 3 cards from your deck. Cost: Destroy your strongest non-hero unit (Strength ≥ 6). This card is immune.
         case "wish2":
@@ -150,8 +150,8 @@ extension Game {
             }
             card.immortalRounds = max(card.immortalRounds, 1)
         default:
-            let options = o.rowCards.filter { !$0.hero && $0.immortalRounds == 0 }
-            if let t = await pickOne(player, L("The Djinn grants your third wish: Choose 1 enemy unit to destroy."), options, ai: { candidates in candidates.max { $0.power < $1.power } }) { await destroy(t, side: o) }
+            let options = opponent.rowCards.filter { !$0.hero && $0.immortalRounds == 0 }
+            if let chosen = await pickOne(player, L("The Djinn grants your third wish: Choose 1 enemy unit to destroy."), options, ai: { candidates in candidates.max { $0.power < $1.power } }) { await destroy(chosen, side: opponent) }
             card.immortalRounds = max(card.immortalRounds, 1)
         }
     }
@@ -160,8 +160,8 @@ extension Game {
     func abilitySpy(_ card: Card, by player: Player, side: Player, row rowType: RowType, ability: String) async {
         if player.faction == "toussaint" {
             let three = Array(player.deck.prefix(3))
-            if let k = await pickOne(player, L("Choose the card to draw and keep"), three, ai: { candidates in candidates.max { self.aiCardValue($0) < self.aiCardValue($1) } }) {
-                player.deck.removeAll { $0 === k }; player.hand.append(k); player.deck.shuffle()
+            if let chosen = await pickOne(player, L("Choose the card to draw and keep"), three, ai: { candidates in candidates.max { self.aiCardValue($0) < self.aiCardValue($1) } }) {
+                player.deck.removeAll { $0 === chosen }; player.hand.append(chosen); player.deck.shuffle()
             }
         } else { await spyDraw(player, 2) }
         sound("spy")
@@ -179,22 +179,22 @@ extension Game {
         let opponent = player.opponent!
         let answer = player.drawOpponentLeft > 0 && !opponent.deck.isEmpty
             ? await pickOption(player, L("From which deck to draw the next card? (Ofiri Envoy can draw from opponent's deck only once)"), [L("Own deck [E]"), L("Opponent's deck [Q]")]) { 0 } : 0
-        if answer == 1 { player.drawOpponentLeft = 0; if let t = opponent.deck.first { opponent.deck.removeFirst(); t.owner = player; player.hand.append(t) }; draw(player, 1) } else { draw(player, 2) }
+        if answer == 1 { player.drawOpponentLeft = 0; if let topCard = opponent.deck.first { opponent.deck.removeFirst(); topCard.owner = player; player.hand.append(topCard) }; draw(player, 1) } else { draw(player, 2) }
         sound("ofiri_envoy")
     }
 
     /// Invoke: Invokes one of the available associated cards from the deck.
     func abilityInvoke(_ card: Card, by player: Player, side: Player, row rowType: RowType, ability: String) async {
         let options = player.deck.filter { card.data.targets.contains($0.key) || ($0.groupKey == card.groupKey && $0 !== card && !card.data.target.isEmpty) }
-        if let t = await pickOne(player, L("Choose one card to play."), options, ai: { $0.first }) { player.deck.removeAll { $0 === t }; await placeUnit(t, by: player, row: t.allowedRows.first ?? rowType); sound("invoke") }
+        if let chosen = await pickOne(player, L("Choose one card to play."), options, ai: { $0.first }) { player.deck.removeAll { $0 === chosen }; await placeUnit(chosen, by: player, row: chosen.allowedRows.first ?? rowType); sound("invoke") }
     }
 
     /// Summon One Of: Summons from anywhere (deck, grave or hand) one of the associated card of choice
     func abilitySummonOneOf(_ card: Card, by player: Player, side: Player, row rowType: RowType, ability: String) async {
         let options = (player.deck + player.hand + player.grave).filter { card.data.targets.contains($0.key) }
-        if let t = await pickOne(player, L("Choose one card to play."), options, ai: { candidates in candidates.max { self.aiCardValue($0) < self.aiCardValue($1) } }) {
-            player.deck.removeAll { $0 === t }; player.hand.removeAll { $0 === t }; player.grave.removeAll { $0 === t }
-            await placeUnit(t, by: player, row: t.allowedRows.first ?? rowType)
+        if let chosen = await pickOne(player, L("Choose one card to play."), options, ai: { candidates in candidates.max { self.aiCardValue($0) < self.aiCardValue($1) } }) {
+            player.deck.removeAll { $0 === chosen }; player.hand.removeAll { $0 === chosen }; player.grave.removeAll { $0 === chosen }
+            await placeUnit(chosen, by: player, row: chosen.allowedRows.first ?? rowType)
         }
     }
 
@@ -208,11 +208,11 @@ extension Game {
     /// Witch Hunt: Destroy the weakest unit on the opposite row. If there are several, choose one.
     func abilityWitchHunt(_ card: Card, by player: Player, side: Player, row rowType: RowType, ability: String) async {
         let opponent = player.opponent!
-        let opp = opponent.row(rowType)
-        if opp.shielded { return }
-        let units = opp.cards.filter { !$0.hero && $0.immortalRounds == 0 }
-        if let mn = units.map({ $0.power }).min() {
-            let cands = units.filter { $0.power == mn }
+        let enemyRow = opponent.row(rowType)
+        if enemyRow.shielded { return }
+        let candidates = enemyRow.cards.filter { !$0.hero && $0.immortalRounds == 0 }
+        if let mn = candidates.map({ $0.power }).min() {
+            let cands = candidates.filter { $0.power == mn }
             if let t = await pickOne(player, L("Choose which enemy card to destroy"), cands, ai: { $0.first }) { await destroy(t, side: opponent) }
         }
     }
@@ -220,14 +220,14 @@ extension Game {
     /// Necrophage: Choose up to 2 unit cards from your discard pile and shuffle them back into your deck.
     func abilityNecrophage(_ card: Card, by player: Player, side: Player, row rowType: RowType, ability: String) async {
         let options = player.grave.filter { $0.isUnit }
-        let picks = await pickCards(player, L("Choose up to 2 cards to take from your grave back to your deck."), options, min: 0, max: 2, cancel: true) { candidates in Array(candidates.sorted { self.aiCardValue($0) > self.aiCardValue($1) }.prefix(2)) }
-        for x in picks { player.grave.removeAll { $0 === x }; resetCard(x); player.deck.insert(x, at: Int.random(in: 0...player.deck.count)) }
+        let picked = await pickCards(player, L("Choose up to 2 cards to take from your grave back to your deck."), options, min: 0, max: 2, cancel: true) { candidates in Array(candidates.sorted { self.aiCardValue($0) > self.aiCardValue($1) }.prefix(2)) }
+        for x in picked { player.grave.removeAll { $0 === x }; resetCard(x); player.deck.insert(x, at: Int.random(in: 0...player.deck.count)) }
     }
 
     /// Goetia: Place on your battlefield and take 1 card from your deck to your hand, then choose any 1 card from your hand and shuffle it into your deck.
     func abilityGoetia(_ card: Card, by player: Player, side: Player, row rowType: RowType, ability: String) async {
-        if let d = await pickOne(player, L("Choose a card to draw from your deck."), player.deck, ai: { candidates in candidates.max { self.aiCardValue($0) < self.aiCardValue($1) } }) {
-            player.deck.removeAll { $0 === d }; player.hand.append(d)
+        if let chosen = await pickOne(player, L("Choose a card to draw from your deck."), player.deck, ai: { candidates in candidates.max { self.aiCardValue($0) < self.aiCardValue($1) } }) {
+            player.deck.removeAll { $0 === chosen }; player.hand.append(chosen)
             if let back = await pickOne(player, L("Which card to put back into your deck?"), player.hand, ai: { candidates in candidates.min { self.aiCardValue($0) < self.aiCardValue($1) } }) {
                 player.hand.removeAll { $0 === back }; player.deck.insert(back, at: Int.random(in: 0...player.deck.count))
             }
@@ -237,23 +237,23 @@ extension Game {
     /// Zirael: Place on your battlefield. Reveal 5 cards from your deck and choose up to 2 to add to your hand. Shuffle the rest back into the deck.
     func abilityZirael(_ card: Card, by player: Player, side: Player, row rowType: RowType, ability: String) async {
         let five = Array(player.deck.prefix(5))
-        let picks = await pickCards(player, L("Choose up to 2 cards to draw and keep in your hand"), five, min: 0, max: 2) { candidates in Array(candidates.sorted { self.aiCardValue($0) > self.aiCardValue($1) }.prefix(2)) }
-        for x in picks { player.deck.removeAll { $0 === x }; player.hand.append(x) }
+        let picked = await pickCards(player, L("Choose up to 2 cards to draw and keep in your hand"), five, min: 0, max: 2) { candidates in Array(candidates.sorted { self.aiCardValue($0) > self.aiCardValue($1) }.prefix(2)) }
+        for x in picked { player.deck.removeAll { $0 === x }; player.hand.append(x) }
         player.deck.shuffle()
     }
 
     /// Naglfar: Place on your battlefield and draw 2 cards or less from your deck with the word 'Naglfar' in their name and play them immediatly.
     func abilityNaglfar(_ card: Card, by player: Player, side: Player, row rowType: RowType, ability: String) async {
         let options = player.deck.filter { $0.data.name.contains("Naglfar") && $0.isUnit }
-        let picks = await pickCards(player, L("Choose up to 2 cards to play right away."), options, min: 0, max: 2) { candidates in Array(candidates.prefix(2)) }
-        for x in picks { player.deck.removeAll { $0 === x }; await placeUnit(x, by: player, row: x.allowedRows.first ?? .siege) }
+        let picked = await pickCards(player, L("Choose up to 2 cards to play right away."), options, min: 0, max: 2) { candidates in Array(candidates.prefix(2)) }
+        for x in picked { player.deck.removeAll { $0 === x }; await placeUnit(x, by: player, row: x.allowedRows.first ?? .siege) }
     }
 
     /// Bait: Place on your battlefield and draw from your deck one card with Tight Bond ability. Play it immediatly.
     func abilityBait(_ card: Card, by player: Player, side: Player, row rowType: RowType, ability: String) async {
         let options = player.deck.filter { $0.has("bond") }
-        if let t = await pickOne(player, L("Choose one card to play."), options, ai: { candidates in candidates.max { self.aiCardValue($0) < self.aiCardValue($1) } }) {
-            player.deck.removeAll { $0 === t }; await placeUnit(t, by: player, row: t.allowedRows.first ?? rowType)
+        if let chosen = await pickOne(player, L("Choose one card to play."), options, ai: { candidates in candidates.max { self.aiCardValue($0) < self.aiCardValue($1) } }) {
+            player.deck.removeAll { $0 === chosen }; await placeUnit(chosen, by: player, row: chosen.allowedRows.first ?? rowType)
         }
     }
 
@@ -268,8 +268,8 @@ extension Game {
     /// Trade: Choose 1 card from the enemy's deck. Trade 1 of your runes from your deck to their hand.
     func abilityTrade(_ card: Card, by player: Player, side: Player, row rowType: RowType, ability: String) async {
         let opponent = player.opponent!
-        if let t = await pickOne(player, L("Select a card from the opponent's deck to buy."), opponent.deck, ai: { candidates in candidates.max { self.aiCardValue($0) < self.aiCardValue($1) } }) {
-            opponent.deck.removeAll { $0 === t }; t.owner = player; player.hand.append(t)
+        if let chosen = await pickOne(player, L("Select a card from the opponent's deck to buy."), opponent.deck, ai: { candidates in candidates.max { self.aiCardValue($0) < self.aiCardValue($1) } }) {
+            opponent.deck.removeAll { $0 === chosen }; chosen.owner = player; player.hand.append(chosen)
             if let rune = player.deck.first(where: { $0.key.hasPrefix("ofir_") && $0.data.isSpecial }) { player.deck.removeAll { $0 === rune }; rune.owner = opponent; opponent.hand.append(rune) }
             sound("trade")
         }
@@ -278,24 +278,24 @@ extension Game {
     /// Rune Crafting: Choose and add a Rune card from your deck to your hand.
     func abilityRuneCall(_ card: Card, by player: Player, side: Player, row rowType: RowType, ability: String) async {
         let options = player.deck.filter { $0.key.hasPrefix("ofir_") && $0.data.isSpecial }
-        if let t = await pickOne(player, L("Choose 1 runestone from your deck to add to your hand."), options, ai: { $0.randomElement() }) { player.deck.removeAll { $0 === t }; player.hand.append(t) }
+        if let chosen = await pickOne(player, L("Choose 1 runestone from your deck to add to your hand."), options, ai: { $0.randomElement() }) { player.deck.removeAll { $0 === chosen }; player.hand.append(chosen) }
     }
 
     /// Doppler: Choose an enemy unit (not hero or special) from the opposite row and transform into a basic copy of it (stats only, no abilities).
     func abilityDoppler(_ card: Card, by player: Player, side: Player, row rowType: RowType, ability: String) async {
         let opponent = player.opponent!
         let options = opponent.row(rowType).cards.filter { !$0.hero && $0.isUnit }
-        if let t = await pickOne(player, L("Choose an enemy unit from the opposite row to transform Doppler into."), options, ai: { candidates in candidates.max { $0.basePower < $1.basePower } }) {
-            card.baseOverride = t.basePower; sound("doppler"); await animate(card, "doppler")
+        if let chosen = await pickOne(player, L("Choose an enemy unit from the opposite row to transform Doppler into."), options, ai: { candidates in candidates.max { $0.basePower < $1.basePower } }) {
+            card.baseOverride = chosen.basePower; sound("doppler"); await animate(card, "doppler")
         }
     }
 
     /// Aerondight: Place this card on the board, then move the unit with the highest original strength to the siege row. While there, triple its strength.
     func abilityAerondight(_ card: Card, by player: Player, side: Player, row rowType: RowType, ability: String) async {
         let options = player.rowCards.filter { $0 !== card && !$0.hero }
-        if let t = await pickOne(player, L("Choose which card to equip with Aerondight."), options, ai: { candidates in candidates.max { $0.basePower < $1.basePower } }) {
-            if let tr = player.rowOf(t) { player.row(tr).cards.removeAll { $0 === t } }
-            player.row(.siege).cards.append(t); t.siegeMult = 3
+        if let chosen = await pickOne(player, L("Choose which card to equip with Aerondight."), options, ai: { candidates in candidates.max { $0.basePower < $1.basePower } }) {
+            if let tr = player.rowOf(chosen) { player.row(tr).cards.removeAll { $0 === chosen } }
+            player.row(.siege).cards.append(chosen); chosen.siegeMult = 3
         }
     }
 }

@@ -60,12 +60,12 @@ import UniformTypeIdentifiers
             done(a.runModal() == .alertFirstButtonReturn ? tf.stringValue : nil)
         }
         #else
-        guard let vc = rootViewController else { done(nil); return }
+        guard let presenter = rootViewController else { done(nil); return }
         let a = UIAlertController(title: title, message: message, preferredStyle: .alert)
         a.addTextField { $0.text = current; $0.placeholder = placeholder; $0.autocapitalizationType = .words }
         a.addAction(UIAlertAction(title: L("Cancel"), style: .cancel) { _ in done(nil) })
         a.addAction(UIAlertAction(title: "OK", style: .default) { _ in done(a.textFields?.first?.text) })
-        vc.present(a, animated: true)
+        presenter.present(a, animated: true)
         #endif
     }
 
@@ -79,7 +79,7 @@ import UniformTypeIdentifiers
             done(p.runModal() == .OK ? p.url : nil)
         }
         #else
-        guard let vc = rootViewController else { done(nil); return }
+        guard let presenter = rootViewController else { done(nil); return }
         let picker = UIDocumentPickerViewController(forOpeningContentTypes: [.folder])
         let d = PickerDelegate { url in
             if let u = url {
@@ -92,16 +92,16 @@ import UniformTypeIdentifiers
         }
         pickerDelegate = d
         picker.delegate = d
-        vc.present(picker, animated: true)
+        presenter.present(picker, animated: true)
         #endif
     }
 
     #if os(iOS)
     static weak var iosRoot: UIViewController?
     static var rootViewController: UIViewController? {
-        var vc = iosRoot
-        while let p = vc?.presentedViewController { vc = p }
-        return vc
+        var presenter = iosRoot
+        while let p = presenter?.presentedViewController { presenter = p }
+        return presenter
     }
     static var pickerDelegate: PickerDelegate?
     /// Receives the result of the iOS document picker.

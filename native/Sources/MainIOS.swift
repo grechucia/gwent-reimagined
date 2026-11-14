@@ -20,17 +20,17 @@ final class IOSGameView: MTKView {
     override func layoutSubviews() { super.layoutSubviews(); updateDrawableSize() }
     /// Sets the drawable size from the view size and the render resolution option.
     func updateDrawableSize() {
-        let b = bounds.size
-        guard b.width > 0, b.height > 0 else { return }
+        let boundsSize = bounds.size
+        guard boundsSize.width > 0, boundsSize.height > 0 else { return }
         autoResizeDrawable = false
-        let aspect = b.width / b.height
+        let aspect = boundsSize.width / boundsSize.height
         if renderHeight > 0 {
             let h16 = CGFloat(renderHeight)
             let h = aspect >= 16.0 / 9.0 ? h16 : h16 * (16.0 / 9.0) / aspect
             drawableSize = CGSize(width: (h * aspect).rounded(), height: h.rounded())
         } else {
             let s = window?.screen.nativeScale ?? UIScreen.main.nativeScale
-            drawableSize = CGSize(width: b.width * s, height: b.height * s)
+            drawableSize = CGSize(width: boundsSize.width * s, height: boundsSize.height * s)
         }
     }
     /// Converts a touch position to the virtual 1920x1080 space.
@@ -44,8 +44,8 @@ final class IOSGameView: MTKView {
 
     /// Touch down: moves focus and starts the long-press timer (long press = card details).
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
-        guard let t = touches.first, let s = app?.scene else { return }
-        start = t.location(in: self); last = start; dragging = false; longFired = false
+        guard let touch = touches.first, let s = app?.scene else { return }
+        start = touch.location(in: self); last = start; dragging = false; longFired = false
         s.padCursor = false
         s.mouseMoved(virtualPoint(start))
         longTimer?.invalidate()
@@ -59,8 +59,8 @@ final class IOSGameView: MTKView {
     }
     /// Dragging scrolls lists.
     override func touchesMoved(_ touches: Set<UITouch>, with event: UIEvent?) {
-        guard let t = touches.first, let s = app?.scene else { return }
-        let p = t.location(in: self)
+        guard let touch = touches.first, let s = app?.scene else { return }
+        let p = touch.location(in: self)
         if !dragging && hypot(p.x - start.x, p.y - start.y) > 12 { dragging = true; longTimer?.invalidate() }
         if dragging {
             let a = virtualPoint(last), b = virtualPoint(p)
@@ -72,8 +72,8 @@ final class IOSGameView: MTKView {
     /// Tap = click, unless the touch was a drag or a long press.
     override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
         longTimer?.invalidate()
-        guard let t = touches.first, let s = app?.scene else { return }
-        let p = virtualPoint(t.location(in: self))
+        guard let touch = touches.first, let s = app?.scene else { return }
+        let p = virtualPoint(touch.location(in: self))
         if !dragging && !longFired { s.click(p) }
         s.mouse = SIMD2(-1, -1)
     }
@@ -110,7 +110,7 @@ final class IOSAppDelegate: UIResponder, UIApplicationDelegate, MTKViewDelegate,
 
     var renderRes: Int { get { UserDefaults.standard.integer(forKey: "renderRes") } set { UserDefaults.standard.set(newValue, forKey: "renderRes") } }
     var frameLimit: Int {
-        get { let v = UserDefaults.standard.integer(forKey: "frameLimit"); return v == 0 ? 60 : v }
+        get { let stored = UserDefaults.standard.integer(forKey: "frameLimit"); return stored == 0 ? 60 : stored }
         set { UserDefaults.standard.set(newValue, forKey: "frameLimit") }
     }
     var lang: String {
@@ -124,8 +124,8 @@ final class IOSAppDelegate: UIResponder, UIApplicationDelegate, MTKViewDelegate,
     /// Not applicable on iOS.
     func refreshMenus() {}
     var screenFPS: Int { max(30, UIScreen.main.maximumFramesPerSecond) }
-    var availableFrameLimits: [Int] { let hz = screenFPS; let l = frameLimits.filter { $0 <= hz && hz % $0 == 0 }; return l.isEmpty ? [hz] : l }
-    var effectiveFrameLimit: Int { let a = availableFrameLimits; return a.contains(frameLimit) ? frameLimit : (a.last { $0 <= frameLimit } ?? a.last!) }
+    var availableFrameLimits: [Int] { let hz = screenFPS; let limits = frameLimits.filter { $0 <= hz && hz % $0 == 0 }; return limits.isEmpty ? [hz] : limits }
+    var effectiveFrameLimit: Int { let available = availableFrameLimits; return available.contains(frameLimit) ? frameLimit : (available.last { $0 <= frameLimit } ?? available.last!) }
     /// Changes the render resolution.
     func setRenderRes(_ height: Int) { renderRes = height; view.renderHeight = height }
     /// Changes the frame limit.
@@ -193,14 +193,14 @@ final class IOSSceneDelegate: UIResponder, UIWindowSceneDelegate {
     /// Attaches the game window to the scene.
     func scene(_ scene: UIScene, willConnectTo session: UISceneSession, options: UIScene.ConnectionOptions) {
         guard let ws = scene as? UIWindowScene, let app = UIApplication.shared.delegate as? IOSAppDelegate else { return }
-        let vc = GameViewController()
-        vc.app = app
+        let controller = GameViewController()
+        controller.app = app
         let w = UIWindow(windowScene: ws)
-        w.rootViewController = vc
+        w.rootViewController = controller
         w.backgroundColor = .black
         w.makeKeyAndVisible()
         window = w
-        Platform.iosRoot = vc
+        Platform.iosRoot = controller
     }
 }
 #endif

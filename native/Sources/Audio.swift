@@ -76,8 +76,8 @@ final class Audio: NSObject, AVAudioPlayerDelegate {
         guard musicOn, !muted, !tracks.isEmpty else { return }
         if menuMode {
             if music?.isPlaying == true { return }
-            guard let t = tracks.first(where: { $0.lastPathComponent == "track11.mp3" }) ?? tracks.first else { return }
-            music = try? AVAudioPlayer(contentsOf: t)
+            guard let menuTrack = tracks.first(where: { $0.lastPathComponent == "track11.mp3" }) ?? tracks.first else { return }
+            music = try? AVAudioPlayer(contentsOf: menuTrack)
             music?.numberOfLoops = -1
             music?.volume = 0.35
             music?.play()

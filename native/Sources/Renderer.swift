@@ -105,9 +105,9 @@ final class Renderer {
         if let t = texCache[path] { return t }
         let url = gameDir.appendingPathComponent(path)
         guard FileManager.default.fileExists(atPath: url.path) else { return nil }
-        guard let t = decode(url) else { return nil }
-        texCache[path] = t
-        return t
+        guard let texture = decode(url) else { return nil }
+        texCache[path] = texture
+        return texture
     }
     /// Loads textures in advance.
     func preload(_ paths: [String]) { for r in paths { _ = texture(r) } }
@@ -131,12 +131,12 @@ final class Renderer {
         let levels = Int(floor(log2(Double(max(w, h))))) + 1
         let td = MTLTextureDescriptor.texture2DDescriptor(pixelFormat: .rgba8Unorm, width: w, height: h, mipmapped: levels > 1)
         td.usage = [.shaderRead]
-        guard let t = device.makeTexture(descriptor: td) else { return nil }
-        t.replace(region: MTLRegionMake2D(0, 0, w, h), mipmapLevel: 0, withBytes: px, bytesPerRow: w * 4)
+        guard let texture = device.makeTexture(descriptor: td) else { return nil }
+        texture.replace(region: MTLRegionMake2D(0, 0, w, h), mipmapLevel: 0, withBytes: px, bytesPerRow: w * 4)
         if levels > 1, let cb = queue.makeCommandBuffer(), let blit = cb.makeBlitCommandEncoder() {
-            blit.generateMipmaps(for: t); blit.endEncoding(); cb.commit(); cb.waitUntilCompleted()
+            blit.generateMipmaps(for: texture); blit.endEncoding(); cb.commit(); cb.waitUntilCompleted()
         }
-        return t
+        return texture
     }
 
     /// Starts a frame: computes the letterboxed viewport and opens a render pass.
@@ -295,9 +295,9 @@ final class Renderer {
         ctx.setFillColor(gray: 1, alpha: 1)
         CTFrameDraw(frame, ctx)
         let td = MTLTextureDescriptor.texture2DDescriptor(pixelFormat: .r8Unorm, width: W, height: H, mipmapped: false)
-        guard let t = device.makeTexture(descriptor: td), let data = ctx.data else { return nil }
-        t.replace(region: MTLRegionMake2D(0, 0, W, H), mipmapLevel: 0, withBytes: data, bytesPerRow: W)
-        let tt = TextTex(tex: t, w: Float(W) / scale, h: Float(H) / scale)
+        guard let texture = device.makeTexture(descriptor: td), let data = ctx.data else { return nil }
+        texture.replace(region: MTLRegionMake2D(0, 0, W, H), mipmapLevel: 0, withBytes: data, bytesPerRow: W)
+        let tt = TextTex(tex: texture, w: Float(W) / scale, h: Float(H) / scale)
         textCache[key] = (tt, frameNo)
         return tt
     }
@@ -308,22 +308,22 @@ final class Renderer {
     /// Draws text and returns its size.
     func text(_ s: String, _ f: Font, x: Float, y: Float, color: RGBA = .white, maxWidth: Float = 0, align: Align = .left,
               shadow: RGBA? = RGBA(r: 0, g: 0, b: 0, a: 0.85), lineSpacing: Float = 0) -> (w: Float, h: Float) {
-        guard let t = textTex(s, f, maxWidth: maxWidth, align: align, lineSpacing: lineSpacing) else { return (0, 0) }
+        guard let textTexture = textTex(s, f, maxWidth: maxWidth, align: align, lineSpacing: lineSpacing) else { return (0, 0) }
         var x0 = x
         if maxWidth <= 0 || align == .left {
-            if align == .center { x0 = x - t.w / 2 } else if align == .right { x0 = x - t.w }
-        } else if align == .center { x0 = x - t.w / 2 } else if align == .right { x0 = x - t.w }
+            if align == .center { x0 = x - textTexture.w / 2 } else if align == .right { x0 = x - textTexture.w }
+        } else if align == .center { x0 = x - textTexture.w / 2 } else if align == .right { x0 = x - textTexture.w }
         if let s = shadow {
             let o = max(1, f.size * 0.06)
-            quad(t.tex, R(x0 + o, y + o, t.w, t.h), color: s, mode: 1)
+            quad(textTexture.tex, R(x0 + o, y + o, textTexture.w, textTexture.h), color: s, mode: 1)
         }
-        quad(t.tex, R(x0, y, t.w, t.h), color: color, mode: 1)
-        return (t.w, t.h)
+        quad(textTexture.tex, R(x0, y, textTexture.w, textTexture.h), color: color, mode: 1)
+        return (textTexture.w, textTexture.h)
     }
     /// Measures text without drawing it.
     func measure(_ text: String, _ font: Font, maxWidth: Float = 0) -> (w: Float, h: Float) {
-        guard let t = textTex(text, font, maxWidth: maxWidth) else { return (0, 0) }
-        return (t.w, t.h)
+        guard let textTexture = textTex(text, font, maxWidth: maxWidth) else { return (0, 0) }
+        return (textTexture.w, textTexture.h)
     }
 
     /// Uniforms for the title-screen shader.

@@ -88,7 +88,7 @@ extension Game {
         case "anna_henrietta_ladyship": await leaderAnnaHenriettaLadyship(player, free: free)
         // Choose an enemy hero card and remove its Hero status.
         case "anna_henrietta_little_weasel":
-            if let t = await pickOne(player, L("Choose the enemy hero to demote."), opponent.rowCards.filter { $0.hero }, ai: strongestCard) { t.heroOverride = false; t.flash = 1 }
+            if let chosen = await pickOne(player, L("Choose the enemy hero to demote."), opponent.rowCards.filter { $0.hero }, ai: strongestCard) { chosen.heroOverride = false; chosen.flash = 1 }
         // Take from your discard pile in your hand 3 or less unit cards, that died in the current round.
         case "lady_wood_whispess": await leaderLadyWoodWhispess(player, free: free)
         // Draw a Curse card from your deck and play it immediatly.
@@ -129,13 +129,13 @@ extension Game {
     /// Pick an Impenetrable Fog or Torrential Rain card from your deck and play it instantly.
     func leaderFoltestKing(_ player: Player, free: Bool) async {
         let options = player.deck.filter { $0.has("fog") || $0.has("rain") }
-        if let t = await pickOne(player, L("Which weather card to play? Impenetrable Fog or Torrential Rain?"), options, ai: { $0.first }) { player.deck.removeAll { $0 === t }; t.owner = player; await playWeather(t, by: player, row: nil) }
+        if let chosen = await pickOne(player, L("Which weather card to play? Impenetrable Fog or Torrential Rain?"), options, ai: { $0.first }) { player.deck.removeAll { $0 === chosen }; chosen.owner = player; await playWeather(chosen, by: player, row: nil) }
     }
 
     /// Pick any weather card from your deck and play it instantly.
     func leaderEredinKing(_ player: Player, free: Bool) async {
         let options = player.deck.filter { $0.data.isWeather }
-        if let t = await pickOne(player, L("Choose a weather card to play"), options, ai: { $0.first }) { player.deck.removeAll { $0 === t }; t.owner = player; await playWeather(t, by: player, row: nil) }
+        if let chosen = await pickOne(player, L("Choose a weather card to play"), options, ai: { $0.first }) { player.deck.removeAll { $0 === chosen }; chosen.owner = player; await playWeather(chosen, by: player, row: nil) }
     }
 
     /// If the opponent has a total of 10 or higher on one row, destroy that row's strongest card(s) (affects only the opponent's side of the battle field).
@@ -149,7 +149,7 @@ extension Game {
     func leaderEmhyrImperial(_ player: Player, free: Bool) async {
         let opponent = player.opponent!
         let options = opponent.grave.filter { $0.isUnit && !$0.hero }
-        if let t = await pickOne(player, L("Which card to draw?"), options, ai: strongestCard) { opponent.grave.removeAll { $0 === t }; resetCard(t); t.owner = player; player.hand.append(t) }
+        if let chosen = await pickOne(player, L("Which card to draw?"), options, ai: strongestCard) { opponent.grave.removeAll { $0 === chosen }; resetCard(chosen); chosen.owner = player; player.hand.append(chosen) }
         if let back = await pickOne(player, L("Which card to put back into the deck?"), player.hand, ai: { candidates in candidates.min { self.aiCardValue($0) < self.aiCardValue($1) } }) {
             player.hand.removeAll { $0 === back }; player.deck.append(back)
         }
@@ -159,14 +159,14 @@ extension Game {
     func leaderEmhyrEmperor(_ player: Player, free: Bool) async {
         let opponent = player.opponent!
         let four = Array(opponent.hand.shuffled().prefix(4))
-        if let t = await pickOne(player, L("Which card should your opponent play on the next round?"), four, ai: { candidates in candidates.min { self.aiCardValue($0) < self.aiCardValue($1) } }) { opponent.forcedCard = t }
+        if let chosen = await pickOne(player, L("Which card should your opponent play on the next round?"), four, ai: { candidates in candidates.min { self.aiCardValue($0) < self.aiCardValue($1) } }) { opponent.forcedCard = chosen }
     }
 
     /// Destroy one unit or hero card on your battlefield. Then draw any one Spy or Emissary card from your deck into your hand.
     func leaderEmhyrRelentless(_ player: Player, free: Bool) async {
         if let t = await pickOne(player, L("Which card to destroy?"), player.rowCards, ai: { candidates in candidates.min { $0.power < $1.power } }) { await destroy(t, side: player) }
         let options = player.deck.filter { $0.has("spy") || $0.has("emissary") }
-        if let t = await pickOne(player, L("Which Spy/Emissary card to draw?"), options, ai: { $0.first }) { player.deck.removeAll { $0 === t }; player.hand.append(t) }
+        if let chosen = await pickOne(player, L("Which Spy/Emissary card to draw?"), options, ai: { $0.first }) { player.deck.removeAll { $0 === chosen }; player.hand.append(chosen) }
     }
 
     /// Play a unit or hero card from each player's discard pile onto their respective side of the field.
@@ -181,15 +181,15 @@ extension Game {
 
     /// Choose on your battlefield two or less unit and/or hero cards and take them into your hand.
     func leaderEredinCommander(_ player: Player, free: Bool) async {
-        let picks = await pickCards(player, L("Choose on your battlefield two or less unit and/or hero cards and take them into your hand."), player.rowCards, min: 0, max: 2) { candidates in Array(candidates.filter { $0.has("spy") || $0.has("medic") }.prefix(2)) }
-        for t in picks { if let r = player.rowOf(t) { player.row(r).cards.removeAll { $0 === t } }; resetCard(t); player.hand.append(t) }
+        let picked = await pickCards(player, L("Choose on your battlefield two or less unit and/or hero cards and take them into your hand."), player.rowCards, min: 0, max: 2) { candidates in Array(candidates.filter { $0.has("spy") || $0.has("medic") }.prefix(2)) }
+        for t in picked { if let currentRow = player.rowOf(t) { player.row(currentRow).cards.removeAll { $0 === t } }; resetCard(t); player.hand.append(t) }
     }
 
     /// Discard 2 cards and draw 1 card of your choice from your deck.
     func leaderEredinDestroyer(_ player: Player, free: Bool) async {
         let disc = await pickCards(player, L("Which card to discard?"), player.hand, min: min(2, player.hand.count), max: 2) { candidates in Array(candidates.sorted { self.aiCardValue($0) < self.aiCardValue($1) }.prefix(2)) }
         for t in disc { player.hand.removeAll { $0 === t }; player.grave.append(t) }
-        if let t = await pickOne(player, L("Which card to draw?"), player.deck, ai: strongestCard) { player.deck.removeAll { $0 === t }; player.hand.append(t) }
+        if let chosen = await pickOne(player, L("Which card to draw?"), player.deck, ai: strongestCard) { player.deck.removeAll { $0 === chosen }; player.hand.append(chosen) }
     }
 
     /// Choose 3 or less unit and/or hero cards, which lie on the opponent's battlefield. Move these cards to any other opponent's row (rows). | Choose 4 or less unit and/or hero cards, which lie on your…
@@ -221,9 +221,9 @@ extension Game {
     /// Draw from your deck any card with Mardroeme or Werewolf ability. Units are played immediately, specials are added to your hand.
     func leaderBirna(_ player: Player, free: Bool) async {
         let options = player.deck.filter { $0.has("mardroeme") || $0.has("berserker") }
-        if let t = await pickOne(player, gameData.abilityDesc("birna"), options, ai: strongestCard) {
-            player.deck.removeAll { $0 === t }
-            if t.isUnit { await placeUnit(t, by: player, row: t.allowedRows.first ?? .close) } else { player.hand.append(t) }
+        if let chosen = await pickOne(player, gameData.abilityDesc("birna"), options, ai: strongestCard) {
+            player.deck.removeAll { $0 === chosen }
+            if chosen.isUnit { await placeUnit(chosen, by: player, row: chosen.allowedRows.first ?? .close) } else { player.hand.append(chosen) }
         }
     }
 
@@ -231,18 +231,18 @@ extension Game {
     func leaderHolgerBlakhand(_ player: Player, free: Bool) async {
         let opponent = player.opponent!
         let options = (player.rowCards + opponent.rowCards).filter { !$0.hero }
-        if let t = await pickOne(player, L("Change the strength of a card?"), options, ai: { candidates in candidates.filter { $0.owner === player }.min { $0.power < $1.power } ?? candidates.first }) {
-            let v = await pickOption(player, L("Select a new base power"), (1...10).map { "\($0)" }) { (t.owner === player) ? 9 : 0 }
-            t.tempStrength = v + 1; t.flash = 1
+        if let chosen = await pickOne(player, L("Change the strength of a card?"), options, ai: { candidates in candidates.filter { $0.owner === player }.min { $0.power < $1.power } ?? candidates.first }) {
+            let v = await pickOption(player, L("Select a new base power"), (1...10).map { "\($0)" }) { (chosen.owner === player) ? 9 : 0 }
+            chosen.tempStrength = v + 1; chosen.flash = 1
         }
     }
 
     /// Draw three cards from your deck (excluding special cards, spies, and envoys). Play one of them immediately, shuffle the other two back into the deck. | Draw 3 cards from your deck, except special…
     func leaderRadovidKingRedania(_ player: Player, free: Bool) async {
         let three = Array(player.deck.filter { !$0.data.isSpecial && !$0.data.isWeather && !$0.has("spy") && !$0.has("emissary") && !$0.has("ofiri_envoy") }.prefix(3))
-        if let t = await pickOne(player, L("Choose a unit to play immediately"), three, ai: strongestCard) {
-            player.deck.removeAll { $0 === t }
-            if t.isUnit { await placeUnit(t, by: player, row: t.allowedRows.first ?? .close) }
+        if let chosen = await pickOne(player, L("Choose a unit to play immediately"), three, ai: strongestCard) {
+            player.deck.removeAll { $0 === chosen }
+            if chosen.isUnit { await placeUnit(chosen, by: player, row: chosen.allowedRows.first ?? .close) }
             player.deck.shuffle()
         }
     }
@@ -262,21 +262,21 @@ extension Game {
     func leaderAnnaHenriettaLadyship(_ player: Player, free: Bool) async {
         let opponent = player.opponent!
         let options = (player.rowCards + opponent.rowCards).filter { $0.revertTo != nil }
-        if let t = await pickOne(player, L("Choose the monster to revert to its primal form."), options, ai: { $0.first }), let k = t.revertTo, let d = gameData.cards[k] { t.transform(into: d); t.revertTo = nil }
+        if let chosen = await pickOne(player, L("Choose the monster to revert to its primal form."), options, ai: { $0.first }), let k = chosen.revertTo, let d = gameData.cards[k] { chosen.transform(into: d); chosen.revertTo = nil }
     }
 
     /// Take from your discard pile in your hand 3 or less unit cards, that died in the current round.
     func leaderLadyWoodWhispess(_ player: Player, free: Bool) async {
         let options = player.grave.filter { $0.isUnit && $0.diedRound == round }
-        let picks = await pickCards(player, gameData.abilityDesc("lady_wood_whispess"), options, min: 0, max: 3) { candidates in Array(candidates.sorted { self.aiCardValue($0) > self.aiCardValue($1) }.prefix(3)) }
-        for t in picks { player.grave.removeAll { $0 === t }; player.hand.append(t) }
+        let picked = await pickCards(player, gameData.abilityDesc("lady_wood_whispess"), options, min: 0, max: 3) { candidates in Array(candidates.sorted { self.aiCardValue($0) > self.aiCardValue($1) }.prefix(3)) }
+        for t in picked { player.grave.removeAll { $0 === t }; player.hand.append(t) }
     }
 
     /// Draw a Curse card from your deck and play it immediatly.
     func leaderLadyWoodWeavess(_ player: Player, free: Bool) async {
-        if let t = player.deck.first(where: { $0.specialKind == "curse" }) {
-            player.deck.removeAll { $0 === t }; t.owner = player
-            if let (q, r) = await pickRow(player, gameData.abilityName("curse"), curseRows(by: player), ai: { 3 }) { q.row(r).curse = t }
+        if let topCard = player.deck.first(where: { $0.specialKind == "curse" }) {
+            player.deck.removeAll { $0 === topCard }; topCard.owner = player
+            if let (q, r) = await pickRow(player, gameData.abilityName("curse"), curseRows(by: player), ai: { 3 }) { q.row(r).curse = topCard }
         }
     }
 
@@ -294,10 +294,10 @@ extension Game {
     /// Draw from your deck or graveyard any number of Navigator cards. Then choose in your hand the same number of cards and put them back in any place of the deck.
     func leaderAuberonKing(_ player: Player, free: Bool) async {
         let navs = (player.deck + player.grave).filter { $0.has("door_o") }
-        let picks = await pickCards(player, gameData.abilityDesc("auberon_king"), navs, min: 0, max: navs.count) { $0 }
-        for t in picks { player.deck.removeAll { $0 === t }; player.grave.removeAll { $0 === t }; player.hand.append(t) }
-        if !picks.isEmpty {
-            let back = await pickCards(player, L("Which card to put back into the deck?"), player.hand.filter { card in !picks.contains { $0 === card } }, min: picks.count, max: picks.count) { candidates in Array(candidates.sorted { self.aiCardValue($0) < self.aiCardValue($1) }.prefix(picks.count)) }
+        let picked = await pickCards(player, gameData.abilityDesc("auberon_king"), navs, min: 0, max: navs.count) { $0 }
+        for t in picked { player.deck.removeAll { $0 === t }; player.grave.removeAll { $0 === t }; player.hand.append(t) }
+        if !picked.isEmpty {
+            let back = await pickCards(player, L("Which card to put back into the deck?"), player.hand.filter { card in !picked.contains { $0 === card } }, min: picked.count, max: picked.count) { candidates in Array(candidates.sorted { self.aiCardValue($0) < self.aiCardValue($1) }.prefix(picked.count)) }
             for t in back { player.hand.removeAll { $0 === t }; player.deck.insert(t, at: Int.random(in: 0...player.deck.count)) }
         }
     }
@@ -305,16 +305,16 @@ extension Game {
     /// Draw any special card from your deck and play it immediatly.
     func leaderWinterQueen(_ player: Player, free: Bool) async {
         let options = player.deck.filter { $0.data.isSpecial || $0.data.isWeather }
-        if let t = await pickOne(player, L("Choose a special card to play immediatly."), options, ai: { $0.first }) {
-            player.deck.removeAll { $0 === t }; t.owner = player
-            if t.data.isWeather { await playWeather(t, by: player, row: nil) } else { await playSpecial(t, by: player, row: nil, rowOwner: nil, target: nil) }
+        if let chosen = await pickOne(player, L("Choose a special card to play immediatly."), options, ai: { $0.first }) {
+            player.deck.removeAll { $0 === chosen }; chosen.owner = player
+            if chosen.data.isWeather { await playWeather(chosen, by: player, row: nil) } else { await playSpecial(chosen, by: player, row: nil, rowOwner: nil, target: nil) }
         }
     }
 
     /// Destroy one of your units on the board and summon a Koshchey.
     func leaderAlzurMaker(_ player: Player, free: Bool) async {
-        if let t = await pickOne(player, gameData.abilityDesc("alzur_maker"), player.rowCards.filter { !$0.hero }, ai: { candidates in candidates.min { $0.power < $1.power } }) {
-            await destroy(t, side: player)
+        if let chosen = await pickOne(player, gameData.abilityDesc("alzur_maker"), player.rowCards.filter { !$0.hero }, ai: { candidates in candidates.min { $0.power < $1.power } }) {
+            await destroy(chosen, side: player)
             if let d = gameData.cards["wu_koshchey"] { await placeUnit(Card(d, owner: player), by: player, row: .close) }
         }
     }
@@ -338,14 +338,14 @@ extension Game {
     func leaderAzarJaved(_ player: Player, free: Bool) async {
         let opponent = player.opponent!
         recalc()
-        if let t = opponent.rowCards.filter({ $0.hero }).min(by: { $0.power < $1.power }) { await destroy(t, side: opponent) }
+        if let candidates = opponent.rowCards.filter({ $0.hero }).min(by: { $0.power < $1.power }) { await destroy(candidates, side: opponent) }
     }
 
     /// Select 2 cards from your opponent's discard pile and shuffle them back into his/her deck.
     func leaderBaalZebuth(_ player: Player, free: Bool) async {
         let opponent = player.opponent!
-        let picks = await pickCards(player, gameData.abilityDesc("baal_zebuth"), opponent.grave, min: 0, max: 2) { candidates in Array(candidates.sorted { self.aiCardValue($0) > self.aiCardValue($1) }.prefix(2)) }
-        for t in picks { opponent.grave.removeAll { $0 === t }; resetCard(t); opponent.deck.append(t) }
+        let picked = await pickCards(player, gameData.abilityDesc("baal_zebuth"), opponent.grave, min: 0, max: 2) { candidates in Array(candidates.sorted { self.aiCardValue($0) > self.aiCardValue($1) }.prefix(2)) }
+        for t in picked { opponent.grave.removeAll { $0 === t }; resetCard(t); opponent.deck.append(t) }
         opponent.deck.shuffle()
     }
 
@@ -362,10 +362,10 @@ extension Game {
     func leaderNibrasGale(_ player: Player, free: Bool) async {
         let opponent = player.opponent!
         let three = Array(opponent.deck.prefix(3))
-        if let t = await pickOne(player, L("Choose a card to add to your hand (others will be discarded)"), three, ai: strongestCard) {
+        if let chosen = await pickOne(player, L("Choose a card to add to your hand (others will be discarded)"), three, ai: strongestCard) {
             opponent.deck.removeAll { x in three.contains { $0 === x } }
-            t.owner = player; player.hand.append(t)
-            for x in three where x !== t { opponent.grave.append(x) }
+            chosen.owner = player; player.hand.append(chosen)
+            for x in three where x !== chosen { opponent.grave.append(x) }
         }
     }
 }

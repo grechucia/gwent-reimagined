@@ -57,12 +57,12 @@ extension Game {
 
     /// Seize: steals the weakest enemy unit from a row.
     func seize(_ player: Player, _ rowType: RowType) async {
-        let o = player.opponent!
-        if o.row(rowType).shielded { return }
-        let units = o.row(rowType).cards.filter { !$0.hero && $0.immortalRounds == 0 }
-        guard let mn = units.map({ $0.power }).min() else { return }
-        for t in units where t.power == mn {
-            o.row(rowType).cards.removeAll { $0 === t }
+        let opponent = player.opponent!
+        if opponent.row(rowType).shielded { return }
+        let units = opponent.row(rowType).cards.filter { !$0.hero && $0.immortalRounds == 0 }
+        guard let lowestPower = units.map({ $0.power }).min() else { return }
+        for t in units where t.power == lowestPower {
+            opponent.row(rowType).cards.removeAll { $0 === t }
             t.owner = player; t.locked = true
             player.row(rowType).cards.append(t); t.flash = 1; events.append(.anim(t, "seize"))
         }
@@ -94,8 +94,8 @@ extension Game {
         var rows = weatherRows(a, card)
         if a == "storm" {
             let answer = await pickOption(player, L("Skellige Storm can either target Close/Ranged rows or Ranged/Siege rows, which one to target?"), [L("Close + Ranged [E]"), L("Ranged + Siege [Q]")]) {
-                let o = player.opponent!
-                return o.row(.close).total + o.row(.ranged).total - player.row(.close).total - player.row(.ranged).total >= o.row(.ranged).total + o.row(.siege).total - player.row(.ranged).total - player.row(.siege).total ? 0 : 1
+                let opponent = player.opponent!
+                return opponent.row(.close).total + opponent.row(.ranged).total - player.row(.close).total - player.row(.ranged).total >= opponent.row(.ranged).total + opponent.row(.siege).total - player.row(.ranged).total - player.row(.siege).total ? 0 : 1
             }
             rows = answer == 0 ? [.close, .ranged] : [.ranged, .siege]
         }
@@ -137,20 +137,20 @@ extension Game {
 
     /// Destroys a card and moves it to the graveyard.
     func destroy(_ card: Card, side: Player, burn: Bool = true) async {
-        guard let r = side.rowOf(card) else { return }
+        guard let currentRow = side.rowOf(card) else { return }
         if await protected(card, side: side) { card.flash = 1; await animate(card, "comrade"); return }
         if burn { events.append(.burn(card)); await pause(0.75) }
-        side.row(r).cards.removeAll { $0 === card }
+        side.row(currentRow).cards.removeAll { $0 === card }
         events.append(.flash(card))
         resetCard(card); card.diedRound = round
         (card.owner ?? side).grave.append(card)
         side.lostUnitThisTurn = true
         if card.data.abilities.contains(where: { $0.hasPrefix("avenger") }) {
             for t in card.data.targets {
-                guard let d = gameData.cards[t], d.isUnit else { continue }
+                guard let cardData = gameData.cards[t], cardData.isUnit else { continue }
                 let n: Card
-                if let i = side.deck.firstIndex(where: { $0.key == t }) { n = side.deck.remove(at: i) } else { n = Card(d, owner: side) }
-                n.owner = side; side.row(RowType.from(d.row) ?? r).cards.append(n); n.flash = 1
+                if let i = side.deck.firstIndex(where: { $0.key == t }) { n = side.deck.remove(at: i) } else { n = Card(cardData, owner: side) }
+                n.owner = side; side.row(RowType.from(cardData.row) ?? currentRow).cards.append(n); n.flash = 1
             }
         }
     }
@@ -174,9 +174,9 @@ extension Game {
         recalc()
         var all: [(Card, Player)] = []
         for player in [human, computer] { for r in RowType.allCases where !player.row(r).shielded { for c in player.row(r).cards where !c.hero && c !== except && c.key != "spe_decoy" { all.append((c, player)) } } }
-        guard let mn = all.map({ $0.0.power }).min() else { return }
+        guard let lowestPower = all.map({ $0.0.power }).min() else { return }
         sound("cull")
-        let victims = all.filter { $0.0.power == mn }
+        let victims = all.filter { $0.0.power == lowestPower }
         for (c, _) in victims { events.append(.burn(c)) }
         await pause(0.75)
         for (c, player) in victims { await destroy(c, side: player, burn: false) }
@@ -188,10 +188,10 @@ extension Game {
         recalc()
         let row = side.row(rowType)
         guard row.total >= 10, !row.shielded else { return }
-        let units = row.cards.filter { !$0.hero && $0.key != "spe_decoy" }
-        guard let maxP = units.map({ $0.power }).max(), maxP > 0 else { return }
+        let candidates = row.cards.filter { !$0.hero && $0.key != "spe_decoy" }
+        guard let maxP = candidates.map({ $0.power }).max(), maxP > 0 else { return }
         sound("scorch")
-        let victims = units.filter { $0.power == maxP }
+        let victims = candidates.filter { $0.power == maxP }
         for c in victims { events.append(.burn(c)) }
         await pause(0.75)
         for c in victims { await destroy(c, side: side, burn: false) }
@@ -220,9 +220,9 @@ extension Game {
 
     /// Decoy: Swap with a card on the battlefield to return it to your hand.
     func specialDecoy(_ card: Card, by player: Player, row: RowType?, rowOwner: Player?, target: Card?, kind: String) async {
-        if let t = target, let r = player.rowOf(t), let i = player.row(r).cards.firstIndex(where: { $0 === t }) {
+        if let targetCard = target, let r = player.rowOf(targetCard), let i = player.row(r).cards.firstIndex(where: { $0 === targetCard }) {
             player.row(r).cards[i] = card
-            resetCard(t); t.owner = player; player.hand.append(t)
+            resetCard(targetCard); targetCard.owner = player; player.hand.append(targetCard)
             sound("decoy")
         } else { player.grave.append(card) }
     }
@@ -277,15 +277,15 @@ extension Game {
     /// Decoration: Promote a friendly unit to Hero status
     func specialDecoration(_ card: Card, by player: Player, row: RowType?, rowOwner: Player?, target: Card?, kind: String) async {
         let options = player.rowCards.filter { !$0.hero }
-        if let t = await pickOne(player, L("Choose a unit to promote to Hero."), options, ai: { candidates in candidates.max { $0.power < $1.power } }) { t.heroOverride = true; t.flash = 1; await animate(t, "decoration") }
+        if let chosen = await pickOne(player, L("Choose a unit to promote to Hero."), options, ai: { candidates in candidates.max { $0.power < $1.power } }) { chosen.heroOverride = true; chosen.flash = 1; await animate(chosen, "decoration") }
         player.grave.append(card); sound("decoration")
     }
 
     /// Chernobog: Double the strength of any unit card in your Close combat row. Discard after playing. | Perun: Add +5 strength to any unit card in your Ranged row. Discard after playing.
     func specialChernobog(_ card: Card, by player: Player, row: RowType?, rowOwner: Player?, target: Card?, kind: String) async {
         let options = player.row(kind == "chernobog" ? .close : .ranged).cards.filter { !$0.hero }
-        if let t = await pickOne(player, kind == "chernobog" ? L("Choose which unit to double with Chernobog runestone") : L("Choose which unit to grant +5 strength with Perun runestone"), options, ai: { candidates in candidates.max { $0.power < $1.power } }) {
-            if kind == "chernobog" { t.multiplier *= 2 } else { t.bonus += 5 }; t.flash = 1; await animate(t, kind)
+        if let chosen = await pickOne(player, kind == "chernobog" ? L("Choose which unit to double with Chernobog runestone") : L("Choose which unit to grant +5 strength with Perun runestone"), options, ai: { candidates in candidates.max { $0.power < $1.power } }) {
+            if kind == "chernobog" { chosen.multiplier *= 2 } else { chosen.bonus += 5 }; chosen.flash = 1; await animate(chosen, kind)
         }
         player.grave.append(card); sound("rune_call")
     }
@@ -294,7 +294,7 @@ extension Game {
     func specialSvarog(_ card: Card, by player: Player, row: RowType?, rowOwner: Player?, target: Card?, kind: String) async {
         let opponent = player.opponent!
         let options = opponent.row(kind == "svarog" ? .siege : .close).cards.filter { !$0.hero }
-        if let t = await pickOne(player, kind == "svarog" ? L("Choose which enemy siege unit to reduce to 1 with Svarog.") : L("Choose which enemy close unit to reduce to 1 with Morana."), options, ai: { candidates in candidates.max { $0.power < $1.power } }) { t.setTo = 1; t.flash = 1; await animate(t, kind) }
+        if let chosen = await pickOne(player, kind == "svarog" ? L("Choose which enemy siege unit to reduce to 1 with Svarog.") : L("Choose which enemy close unit to reduce to 1 with Morana."), options, ai: { candidates in candidates.max { $0.power < $1.power } }) { chosen.setTo = 1; chosen.flash = 1; await animate(chosen, kind) }
         player.grave.append(card); sound("rune_call")
     }
 
@@ -302,15 +302,15 @@ extension Game {
     func specialTriglav(_ card: Card, by player: Player, row: RowType?, rowOwner: Player?, target: Card?, kind: String) async {
         let opponent = player.opponent!
         let options = opponent.rowCards.filter { $0.hero }
-        if let t = await pickOne(player, L("Choose the enemy hero to weaken."), options, ai: { candidates in candidates.max { $0.power < $1.power } }) { t.heroOverride = false; t.flash = 1; await animate(t, "triglav") }
+        if let chosen = await pickOne(player, L("Choose the enemy hero to weaken."), options, ai: { candidates in candidates.max { $0.power < $1.power } }) { chosen.heroOverride = false; chosen.flash = 1; await animate(chosen, "triglav") }
         player.grave.append(card); sound("triglav")
     }
 
     /// Veles: Move your strongest unit card to the Siege row. While there, its strength is doubled. Discard after playing.
     func specialVeles(_ card: Card, by player: Player, row: RowType?, rowOwner: Player?, target: Card?, kind: String) async {
-        if let t = player.rowCards.filter({ !$0.hero }).max(by: { $0.power < $1.power }) {
-            if let tr = player.rowOf(t) { player.row(tr).cards.removeAll { $0 === t } }
-            player.row(.siege).cards.append(t); t.siegeMult = 2; await animate(t, "veles")
+        if let candidates = player.rowCards.filter({ !$0.hero }).max(by: { $0.power < $1.power }) {
+            if let tr = player.rowOf(candidates) { player.row(tr).cards.removeAll { $0 === candidates } }
+            player.row(.siege).cards.append(candidates); candidates.siegeMult = 2; await animate(candidates, "veles")
         }
         player.grave.append(card); sound("veles")
     }

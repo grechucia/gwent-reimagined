@@ -329,11 +329,11 @@ extension Scene {
         let gy: Float = mine ? 678 : 352
         renderer.image("img/icons/icon_gem_\(player.gems >= 1 ? "on" : "off").png", R(319, gy, 41, 42))
         renderer.image("img/icons/icon_gem_\(player.gems >= 2 ? "on" : "off").png", R(360, gy, 41, 42))
-        let st = R(427, mine ? 708 : 305, 54, 54)
-        renderer.image("img/icons/score_total_\(mine ? "me" : "op").png", st)
-        if player.total > player.opponent.total { renderer.image("img/icons/icon_high_score.png", R(st.x - 14, st.y - 12, 82, 78)) }
+        let scoreBadge = R(427, mine ? 708 : 305, 54, 54)
+        renderer.image("img/icons/score_total_\(mine ? "me" : "op").png", scoreBadge)
+        if player.total > player.opponent.total { renderer.image("img/icons/icon_high_score.png", R(scoreBadge.x - 14, scoreBadge.y - 12, 82, 78)) }
         let textHeight = renderer.measure("\(player.total)", .ui(30, bold: true)).h
-        renderer.text("\(player.total)", .ui(30, bold: true), x: st.mid.x, y: st.mid.y - textHeight / 2, color: .black, align: .center, shadow: RGBA.white.alpha(0.5))
+        renderer.text("\(player.total)", .ui(30, bold: true), x: scoreBadge.mid.x, y: scoreBadge.mid.y - textHeight / 2, color: .black, align: .center, shadow: RGBA.white.alpha(0.5))
         if player.passed { renderer.text(L("Passed"), .ui(24, bold: true), x: 330, y: mine ? 640 : 410, color: RGBA(r: 0.93, g: 0.72, b: 0.2, a: 1), align: .center) }
         let leaderArea = leaderRect(player)
         player.leader.pos = SIMD2(leaderArea.x, leaderArea.y); player.leader.hasPos = true
@@ -347,16 +347,16 @@ extension Scene {
             button(R(260, leaderArea.y + 51, 38, 38)) { [weak self] in self?.game?.humanLeader() }
         }
         if mine, let f = match.factionActive(player) {
-            let b = R(160, 612, 150, 34)
+            let box = R(160, 612, 150, 34)
             let title = f == "transform" ? L("Transform") : (f.hasPrefix("skip") ? L("Skip turn") : L("Faction ability"))
-            smallButton(b, title, enabled: canAct) { [weak self] in self?.game?.humanFaction() }
+            smallButton(box, title, enabled: canAct) { [weak self] in self?.game?.humanFaction() }
         }
         let deckArea = deckRect(player)
-        let n = player.deck.count
-        for i in 0..<min(4, n) { renderer.image("img/icons/deck_back_\(player.faction).jpg", R(deckArea.x - Float(i), deckArea.y - Float(i), deckArea.w, deckArea.h)) }
-        if n > 0 {
+        let count = player.deck.count
+        for i in 0..<min(4, count) { renderer.image("img/icons/deck_back_\(player.faction).jpg", R(deckArea.x - Float(i), deckArea.y - Float(i), deckArea.w, deckArea.h)) }
+        if count > 0 {
             renderer.rect(R(deckArea.mid.x - 22, deckArea.y + deckArea.h - 40, 44, 30), RGBA.black.alpha(0.6))
-            renderer.text("\(n)", .ui(22, bold: true), x: deckArea.mid.x, y: deckArea.y + deckArea.h - 38, color: .white, align: .center)
+            renderer.text("\(count)", .ui(22, bold: true), x: deckArea.mid.x, y: deckArea.y + deckArea.h - 38, color: .white, align: .center)
         }
         let graveArea = graveRect(player)
         for card in player.grave { move(card, to: SIMD2(graveArea.x, graveArea.y), from: SIMD2(graveArea.x, graveArea.y), dt: 1 / 60) }
@@ -405,12 +405,12 @@ extension Scene {
 
     /// Draws the current notification banner.
     func drawNotes(_ dt: Float) {
-        if let t = hoverText, game?.choice == nil {
+        if let tooltip = hoverText, game?.choice == nil {
             let w: Float = 420
-            let h = renderer.measure(t, .ui(17), maxWidth: w - 24).h + 20
-            let b = R(min(mouse.x + 18, virtualWidth - w - 10), min(mouse.y + 18, virtualHeight - h - 10), w, h)
-            renderer.rect(b, RGBA(r: 0.06, g: 0.05, b: 0.03, a: 0.94)); renderer.frame(b, RGBA.goldDark.alpha(0.7), 1)
-            renderer.text(t, .ui(17), x: b.x + 12, y: b.y + 10, color: .gray(0.92), maxWidth: w - 24)
+            let h = renderer.measure(tooltip, .ui(17), maxWidth: w - 24).h + 20
+            let box = R(min(mouse.x + 18, virtualWidth - w - 10), min(mouse.y + 18, virtualHeight - h - 10), w, h)
+            renderer.rect(box, RGBA(r: 0.06, g: 0.05, b: 0.03, a: 0.94)); renderer.frame(box, RGBA.goldDark.alpha(0.7), 1)
+            renderer.text(tooltip, .ui(17), x: box.x + 12, y: box.y + 10, color: .gray(0.92), maxWidth: w - 24)
         }
         hoverText = nil
         guard let n = notes.first else { return }
@@ -418,9 +418,9 @@ extension Scene {
         let dur: Float = autotest ? 0.5 : 1.25
         let a = max(0, min(1, min(noteT / 0.15, (dur - noteT) / 0.2)))
         let e = min(1, noteT / 0.18), ease = 1 - (1 - e) * (1 - e)
-        let f = Renderer.Font.gwent(34)
-        let textWidth = min(900, renderer.measure(n.text, f, maxWidth: 900).w)
-        let textHeight = renderer.measure(n.text, f, maxWidth: 900).h
+        let font = Renderer.Font.gwent(34)
+        let textWidth = min(900, renderer.measure(n.text, font, maxWidth: 900).w)
+        let textHeight = renderer.measure(n.text, font, maxWidth: 900).h
         let iw: Float = n.icon == nil ? 0 : 96
         let w = textWidth + iw + 90, h = max(110, textHeight + 50)
         let card = R(960 - w / 2, 500 - h / 2 + (1 - ease) * 18, w, h)
@@ -431,7 +431,7 @@ extension Scene {
         renderer.frame(card, RGBA.goldDark.alpha(0.35 * a), 1)
         var x = card.x + 45
         if let icon = n.icon { renderer.image("img/icons/\(icon).png", R(x - 10, card.mid.y - 52, 104, 104), color: .white.alpha(a)); x += iw + 10 }
-        renderer.text(n.text, f, x: n.icon == nil ? card.mid.x : x, y: card.mid.y - textHeight / 2, color: RGBA(r: 0.97, g: 0.88, b: 0.62, a: a), maxWidth: 900, align: n.icon == nil ? .center : .left, shadow: nil)
+        renderer.text(n.text, font, x: n.icon == nil ? card.mid.x : x, y: card.mid.y - textHeight / 2, color: RGBA(r: 0.97, g: 0.88, b: 0.62, a: a), maxWidth: 900, align: n.icon == nil ? .center : .left, shadow: nil)
         if noteT >= dur { notes.removeFirst(); noteT = 0 }
     }
 
@@ -440,14 +440,14 @@ extension Scene {
         renderer.rect(R(0, 0, virtualWidth, virtualHeight), RGBA.black.alpha(0.74))
         renderer.text(title, .serif(32, bold: true), x: 960, y: 70, color: RGBA.gold, maxWidth: 1500, align: .center)
         if let info = info { renderer.text(info, .ui(22), x: 960, y: 150, color: .gray(0.9), align: .center) }
-        let n = cards.count
-        let perRow = n > 14 ? 10 : (n > 6 ? Int((Double(n) / 2).rounded(.up)) : max(1, n))
-        let rows = Int((Double(n) / Double(perRow)).rounded(.up))
+        let count = cards.count
+        let perRow = count > 14 ? 10 : (count > 6 ? Int((Double(count) / 2).rounded(.up)) : max(1, count))
+        let rows = Int((Double(count) / Double(perRow)).rounded(.up))
         let w: Float = rows > 2 ? 120 : (rows > 1 ? 168 : 190), h = w * 1.437, gap: Float = rows > 2 ? 12 : 22
         let y0: Float = rows > 1 ? 195 : 330
         for (i, card) in cards.enumerated() {
             let rowI = i / perRow, colI = i % perRow
-            let inRow = min(perRow, n - rowI * perRow)
+            let inRow = min(perRow, count - rowI * perRow)
             let x0 = 960 - (Float(inRow) * w + Float(inRow - 1) * gap) / 2
             let cardRect = R(x0 + Float(colI) * (w + gap), y0 + Float(rowI) * (h + gap), w, h)
             if cardRect.y > 960 { break }
@@ -478,18 +478,18 @@ extension Scene {
         case .cards(let cards, let mn, let mx):
             let multi = mx > 1 || mn != 1
             let end = overlayCards(cards, title: choice.title, info: multi ? L("Selected: ") + "\(multiSel.count) / \(mx)" : nil, marked: multiSel) { [weak self] c in
-                guard let s = self else { return }
+                guard let strongSelf = self else { return }
                 if !multi { match.resolveChoice([cards.firstIndex { $0 === c }!]); return }
-                if let i = s.multiSel.firstIndex(where: { $0 === c }) { s.multiSel.remove(at: i) }
-                else if s.multiSel.count < mx { s.multiSel.append(c) }
+                if let i = strongSelf.multiSel.firstIndex(where: { $0 === c }) { strongSelf.multiSel.remove(at: i) }
+                else if strongSelf.multiSel.count < mx { strongSelf.multiSel.append(c) }
             }
             var bx: Float = 960 - 150
             if multi {
                 let ok = multiSel.count >= mn && multiSel.count <= mx
                 goldButton(R(choice.canCancel ? 960 - 320 : bx, min(990, end.y + 10), 300, 60), L("Done"), font: .gwent(30), enabled: ok) { [weak self] in
-                    guard let s = self else { return }
-                    let idx = s.multiSel.compactMap { m in cards.firstIndex { $0 === m } }
-                    s.multiSel = []; match.resolveChoice(idx)
+                    guard let strongSelf = self else { return }
+                    let idx = strongSelf.multiSel.compactMap { m in cards.firstIndex { $0 === m } }
+                    strongSelf.multiSel = []; match.resolveChoice(idx)
                 }
                 bx = 960 + 20
             }
@@ -516,9 +516,9 @@ extension Scene {
                 goldButton(R(x0 + Float(col) * (bw + 16), box.y + 120 + Float(row) * (bh + 16), bw, bh), o, font: .serif(22, bold: true)) { match.resolveChoice([i]) }
             }
         case .rows:
-            let b = R(560, 820, 960, 46)
-            renderer.rect(b, RGBA.black.alpha(0.8)); renderer.frame(b, RGBA.goldDark.alpha(0.7), 1)
-            renderer.text(choice.title, .serif(22, bold: true), x: b.mid.x, y: b.y + 10, color: RGBA.gold, maxWidth: 940, align: .center)
+            let box = R(560, 820, 960, 46)
+            renderer.rect(box, RGBA.black.alpha(0.8)); renderer.frame(box, RGBA.goldDark.alpha(0.7), 1)
+            renderer.text(choice.title, .serif(22, bold: true), x: box.mid.x, y: box.y + 10, color: RGBA.gold, maxWidth: 940, align: .center)
         }
     }
 
@@ -539,9 +539,9 @@ extension Scene {
         if let fi = careerFight {
             if match.winner === match.human {
                 goldButton(R(960 - 160, 760, 320, 64), L("Claim reward"), font: .serif(26, bold: true)) { [weak self] in
-                    guard let s = self else { return }
-                    s.careerRewards = s.career.rewardOptions(fi); s.careerNewLeader = s.career.win(fi)
-                    s.careerFight = nil; s.game = nil; s.careerChapter = nil; s.screen = .career
+                    guard let strongSelf = self else { return }
+                    strongSelf.careerRewards = strongSelf.career.rewardOptions(fi); strongSelf.careerNewLeader = strongSelf.career.win(fi)
+                    strongSelf.careerFight = nil; strongSelf.game = nil; strongSelf.careerChapter = nil; strongSelf.screen = .career
                 }
             } else {
                 goldButton(R(960 - 330, 760, 300, 64), L("Try again"), font: .serif(26, bold: true)) { [weak self] in self?.startCareerFight(fi) }

@@ -49,7 +49,7 @@ struct CareerFight {
         let key = "\(seed)|\(difficulty)|\(gameData.language)"
         if key != cacheKey { cache = [:]; cacheKey = key }
         if let v = cache[chapter] { return v }
-        let v = makeChapter(chapter); cache[chapter] = v; return v
+        let generated = makeChapter(chapter); cache[chapter] = generated; return generated
     }
     /// Generates a chapter: three regular opponents and a boss whose strength grows with progress.
     func makeChapter(_ chapter: Int) -> (title: String, fights: [CareerFight]) {
@@ -155,8 +155,8 @@ struct CareerFight {
         let heroes = p.filter { $0.isUnit && $0.isHero }.shuffled(using: &rng).prefix(f.heroes)
         let specials = p.filter { !$0.isUnit }.shuffled(using: &rng).prefix(min(4, f.heroes))
         var cards: [(String, Int)] = heroes.map { ($0.key, 1) }
-        var n = cards.count
-        for u in units where n < 20 { let c = min(u.count, 20 - n); cards.append((u.key, c)); n += c }
+        var count = cards.count
+        for u in units where count < 20 { let c = min(u.count, 20 - count); cards.append((u.key, c)); count += c }
         cards += specials.map { ($0.key, 1) }
         let leaderCards = gameData.cards.values.filter { $0.isLeader && $0.faction == f.faction }.sorted { $0.key < $1.key }
         let lead = f.boss ? (leaderCards.last ?? leaderCards.first) : leaderCards.first

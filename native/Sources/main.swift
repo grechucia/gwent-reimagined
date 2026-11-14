@@ -26,19 +26,19 @@ final class GameView: MTKView {
     override func viewDidChangeBackingProperties() { super.viewDidChangeBackingProperties(); updateDrawableSize() }
     /// Sets the drawable size from the view size and the render resolution option.
     func updateDrawableSize() {
-        let b = bounds.size
-        guard b.width > 0, b.height > 0 else { return }
+        let boundsSize = bounds.size
+        guard boundsSize.width > 0, boundsSize.height > 0 else { return }
         autoResizeDrawable = false
         if renderHeight > 0 {
-            let aspect = b.width / b.height
+            let aspect = boundsSize.width / boundsSize.height
             let h16 = CGFloat(renderHeight)
             let h = aspect >= 16.0 / 9.0 ? h16 : h16 * (16.0 / 9.0) / aspect
             drawableSize = CGSize(width: (h * aspect).rounded(), height: h.rounded())
         } else {
             let s = window?.backingScaleFactor ?? 2
-            drawableSize = CGSize(width: b.width * s, height: b.height * s)
+            drawableSize = CGSize(width: boundsSize.width * s, height: boundsSize.height * s)
         }
-        layer?.contentsScale = drawableSize.width / b.width
+        layer?.contentsScale = drawableSize.width / boundsSize.width
     }
     var tracking: NSTrackingArea?
     /// Tracks mouse movement inside the view.
@@ -93,7 +93,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, MTKViewDelegate, NSMen
 
     var renderRes: Int { get { UserDefaults.standard.integer(forKey: "renderRes") } set { UserDefaults.standard.set(newValue, forKey: "renderRes") } }
     var frameLimit: Int {
-        get { let v = UserDefaults.standard.integer(forKey: "frameLimit"); return v == 0 ? 60 : v }
+        get { let stored = UserDefaults.standard.integer(forKey: "frameLimit"); return stored == 0 ? 60 : stored }
         set { UserDefaults.standard.set(newValue, forKey: "frameLimit") }
     }
     var screenFPS: Int { max(30, (window?.screen ?? NSScreen.main)?.maximumFramesPerSecond ?? 60) }
@@ -107,7 +107,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, MTKViewDelegate, NSMen
         let ud = UserDefaults.standard
         if !ud.bool(forKey: "migratedLegacyDefaults"), let old = UserDefaults(suiteName: "pl.retronative.gwint.native") {
             for k in ["customDecks", "favoriteDeck", "frameLimit", "lang", "renderRes", "saveDir"] where ud.object(forKey: k) == nil {
-                if let v = old.object(forKey: k) { ud.set(v, forKey: k) }
+                if let value = old.object(forKey: k) { ud.set(value, forKey: k) }
             }
             ud.set(true, forKey: "migratedLegacyDefaults")
         }
@@ -171,8 +171,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, MTKViewDelegate, NSMen
         window.makeFirstResponder(view)
         NotificationCenter.default.addObserver(forName: NSWindow.didChangeScreenNotification, object: window, queue: .main) { [weak self] _ in
             MainActor.assumeIsolated {
-                guard let s = self else { return }
-                s.applyFrameRate(); s.refreshMenus()
+                guard let strongSelf = self else { return }
+                strongSelf.applyFrameRate(); strongSelf.refreshMenus()
             }
         }
         NSApp.activate(ignoringOtherApps: true)
@@ -235,7 +235,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, MTKViewDelegate, NSMen
     /// Changes the frame limit.
     func setFrameLimit(_ limit: Int) { frameLimit = limit; applyFrameRate(); refreshMenus() }
     var availableFrameLimits: [Int] { let hz = screenFPS; let l = frameLimits.filter { $0 <= hz && hz % $0 == 0 }; return l.isEmpty ? [hz] : l }
-    var effectiveFrameLimit: Int { let a = availableFrameLimits; return a.contains(frameLimit) ? frameLimit : (a.last { $0 <= frameLimit } ?? a.last!) }
+    var effectiveFrameLimit: Int { let available = availableFrameLimits; return available.contains(frameLimit) ? frameLimit : (available.last { $0 <= frameLimit } ?? available.last!) }
     var link: CADisplayLink?
     /// Creates the display link that drives rendering at the chosen frame rate.
     func applyFrameRate() {

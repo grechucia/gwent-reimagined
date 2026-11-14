@@ -62,12 +62,12 @@ extension Scene {
                 renderer.frame(cr.inset(-3), RGBA(r: 1, g: 0.84, b: 0.35, a: 0.9 * (1 - k)), 3)
                 renderer.quad(glowTex, R(cr.x - 25, cr.y - 25, cr.w + 50, cr.h + 50), color: RGBA(r: 1, g: 0.8, b: 0.3, a: 0.35 * (1 - k)))
             case .coin(let mine):
-                let k = t / f.dur
-                let spin = abs(cos(min(k / 0.7, 1) * Float.pi * 5))
-                let a: Float = k > 0.85 ? (1 - k) / 0.15 : 1
+                let progress = t / f.dur
+                let spin = abs(cos(min(progress / 0.7, 1) * Float.pi * 5))
+                let a: Float = progress > 0.85 ? (1 - progress) / 0.15 : 1
                 renderer.rect(R(0, 0, virtualWidth, virtualHeight), RGBA.black.alpha(0.35 * a))
-                let face = k < 0.7 ? (Int(k / 0.7 * 10) % 2 == 0) : mine
-                let w = cr.w * max(0.06, k < 0.7 ? spin : 1)
+                let face = progress < 0.7 ? (Int(progress / 0.7 * 10) % 2 == 0) : mine
+                let w = cr.w * max(0.06, progress < 0.7 ? spin : 1)
                 renderer.image("img/icons/notif_\(face ? "me" : "op")_coin.png", R(cr.mid.x - w / 2, cr.y, w, cr.h), color: .white.alpha(a))
             }
         }

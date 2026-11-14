@@ -11,11 +11,11 @@ extension Scene {
     /// Save-location prompt: this device, iCloud Drive or a custom folder.
     func drawSavePrompt() {
         renderer.rect(R(0, 0, virtualWidth, virtualHeight), RGBA.black.alpha(0.82))
-        let p = R(360, 120, 1200, 840)
-        glassPanel(p, alpha: 0.96)
-        renderer.text(L("Where should your progress be saved?"), .gwent(44), x: 960, y: p.y + 30, color: RGBA.gold, align: .center)
+        let area = R(360, 120, 1200, 840)
+        glassPanel(area, alpha: 0.96)
+        renderer.text(L("Where should your progress be saved?"), .gwent(44), x: 960, y: area.y + 30, color: RGBA.gold, align: .center)
         renderer.text(L("Your decks and career are kept in one file. Choose a location – you can change it later in Options."),
-               .serif(19, italic: true), x: 960, y: p.y + 96, color: .gray(0.88), maxWidth: p.w - 120, align: .center)
+               .serif(19, italic: true), x: 960, y: area.y + 96, color: .gray(0.88), maxWidth: area.w - 120, align: .center)
         let ic = SaveStore.iCloudDir
         let opts: [(String, String, Bool, () -> Void)] = [
             (Platform.isDesktop ? L("On this Mac") : L("On this device"),
@@ -30,7 +30,7 @@ extension Scene {
             (L("Choose a folder…"), L("E.g. a network drive, Dropbox or Google Drive – useful if you also want to sync with Android."), true,
              { [weak self] in self?.pickSaveFolder() })]
         for (i, o) in opts.enumerated() {
-            let b = R(p.x + 80, p.y + 180 + Float(i) * 170, p.w - 160, 140)
+            let b = R(area.x + 80, area.y + 180 + Float(i) * 170, area.w - 160, 140)
             let hovered = o.2 && b.contains(mouse)
             renderer.rect(b, RGBA.black.alpha(hovered ? 0.5 : 0.32)); renderer.frame(b, RGBA.gold.alpha(o.2 ? (hovered ? 1 : 0.5) : 0.2), hovered ? 2.5 : 1.5)
             renderer.text(o.0, .serif(28, bold: true), x: b.x + 30, y: b.y + 22, color: o.2 ? (hovered ? .white : RGBA.gold) : .gray(0.45))
@@ -38,8 +38,8 @@ extension Scene {
             if o.2 { button(b, o.3) }
         }
         if SaveStore.shared.chosen {
-            renderer.text(L("Currently") + ": " + SaveStore.shared.displayPath, .ui(15), x: 960, y: p.y + p.h - 70, color: .gray(0.7), maxWidth: p.w - 100, align: .center)
-            smallLink(R(960 - 120, p.y + p.h - 44, 240, 32), L("Cancel")) { [weak self] in self?.savePromptOpen = false; self?.savePromptThen = nil }
+            renderer.text(L("Currently") + ": " + SaveStore.shared.displayPath, .ui(15), x: 960, y: area.y + area.h - 70, color: .gray(0.7), maxWidth: area.w - 100, align: .center)
+            smallLink(R(960 - 120, area.y + area.h - 44, 240, 32), L("Cancel")) { [weak self] in self?.savePromptOpen = false; self?.savePromptThen = nil }
         }
     }
 
@@ -48,7 +48,7 @@ extension Scene {
         SaveStore.shared.choose(url)
         Career.shared.load(); customDecks = DeckBuilder.loadCustom()
         savePromptOpen = false
-        let t = savePromptThen; savePromptThen = nil; t?()
+        let pending = savePromptThen; savePromptThen = nil; pending?()
     }
 
     /// Shows the system folder picker.

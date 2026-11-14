@@ -8,21 +8,21 @@ extension Scene {
     /// Options overlay: player name, audio, graphics, difficulty, save location and language.
     func drawOptions() {
         renderer.rect(R(0, 0, virtualWidth, virtualHeight), RGBA.black.alpha(0.82))
-        let p = R(360, 40, 1200, 1000)
-        glassPanel(p, alpha: 0.96)
-        renderer.text(L("Options"), .gwent(52), x: 960, y: p.y + 24, color: RGBA.gold, align: .center)
+        let panel = R(360, 40, 1200, 1000)
+        glassPanel(panel, alpha: 0.96)
+        renderer.text(L("Options"), .gwent(52), x: 960, y: panel.y + 24, color: RGBA.gold, align: .center)
         goldButton(R(40, 24, 190, 50), "‹  " + L("Back"), font: .serif(22, bold: true)) { [weak self] in self?.optionsOpen = false; self?.game?.paused = false }
-        goldButton(R(p.x + p.w - 250, p.y + 30, 210, 46), L("Licenses"), font: .serif(18, bold: true)) { [weak self] in self?.creditsOpen = true }
-        var y = p.y + 110
-        let lx = p.x + 60, bx = p.x + 420
+        goldButton(R(panel.x + panel.w - 250, panel.y + 30, 210, 46), L("Licenses"), font: .serif(18, bold: true)) { [weak self] in self?.creditsOpen = true }
+        var y = panel.y + 110
+        let lx = panel.x + 60, bx = panel.x + 420
         /// Draws a row label.
         func label(_ text: String) { renderer.text(text, .serif(22, bold: true), x: lx, y: y + 10, color: .white, maxWidth: 340) }
         /// Draws a row of toggle buttons; the selected one is highlighted.
         func choice(_ items: [(String, Bool, Bool)], w width: Float = 140, _ act: @escaping (Int) -> Void) {
             for (i, it) in items.enumerated() {
-                let b = R(bx + Float(i) * (width + 10), y, width, 46)
-                goldButton(b, (it.1 ? "✓ " : "") + it.0, font: .serif(17, bold: true), enabled: it.2) { act(i) }
-                if it.1 { renderer.rect(b, RGBA(r: 1, g: 0.78, b: 0.3, a: 0.22)); renderer.frame(b.inset(-3), RGBA(r: 1, g: 0.85, b: 0.4, a: 1), 3) }
+                let box = R(bx + Float(i) * (width + 10), y, width, 46)
+                goldButton(box, (it.1 ? "✓ " : "") + it.0, font: .serif(17, bold: true), enabled: it.2) { act(i) }
+                if it.1 { renderer.rect(box, RGBA(r: 1, g: 0.78, b: 0.3, a: 0.22)); renderer.frame(box.inset(-3), RGBA(r: 1, g: 0.85, b: 0.4, a: 1), 3) }
             }
         }
         label(L("Player name"))
@@ -31,16 +31,16 @@ extension Scene {
         y += 76
         label(L("Music"))
         choice([(L("On"), audio.musicOn && !audio.muted, true), (L("Off"), !audio.musicOn || audio.muted, true)]) { [weak self] i in
-            guard let s = self else { return }
-            if i == 0 { s.audio.muted = false; s.audio.musicOn = true } else { s.audio.musicOn = false }
-            s.host?.refreshMenus()
+            guard let strongSelf = self else { return }
+            if i == 0 { strongSelf.audio.muted = false; strongSelf.audio.musicOn = true } else { strongSelf.audio.musicOn = false }
+            strongSelf.host?.refreshMenus()
         }
         y += 76
         label(L("Sound effects"))
         choice([(L("On"), !audio.muted, true), (L("Off"), audio.muted, true)]) { [weak self] i in
-            guard let s = self else { return }
-            s.audio.muted = i == 1; if i == 1 { s.audio.musicOn = false }
-            s.host?.refreshMenus()
+            guard let strongSelf = self else { return }
+            strongSelf.audio.muted = i == 1; if i == 1 { strongSelf.audio.musicOn = false }
+            strongSelf.host?.refreshMenus()
         }
         y += 76
         if let h = host {

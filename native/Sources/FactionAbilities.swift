@@ -46,11 +46,11 @@ extension Game {
             }
         case "transform":
             let options = player.rowCards.filter { $0.act("monster_toussaint") && $0.playedTurn < turn - 1 }
-            if let t = await pickOne(player, L("Choose which monster to transform."), options, ai: best1), let k = t.data.targets.first, let d = gameData.cards[k] {
-                t.revertTo = t.key
-                t.transform(into: d); t.playedTurn = turn
+            if let chosen = await pickOne(player, L("Choose which monster to transform."), options, ai: best1), let k = chosen.data.targets.first, let d = gameData.cards[k] {
+                chosen.revertTo = chosen.key
+                chosen.transform(into: d); chosen.playedTurn = turn
                 sound("monster_toussaint")
-                await unitAbilities(t, by: player, side: player, row: player.rowOf(t) ?? .close)
+                await unitAbilities(chosen, by: player, side: player, row: player.rowOf(chosen) ?? .close)
             }
         default: break
         }

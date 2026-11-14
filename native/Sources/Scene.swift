@@ -212,7 +212,7 @@ final class Scene {
         game?.autoHuman = autotest
         game?.showChoices = ProcessInfo.processInfo.environment["GWENT_SHOWCHOICES"] == "1"
         /// Total unit strength and card count of a deck (used in test logs).
-        func power(_ deck: DeckData) -> (Int, Int) { deck.cards.reduce((0, 0)) { acc, e in let c = gameData.cards[e.0]; return (acc.0 + (c?.strength ?? 0) * e.1, acc.1 + e.1) } }
+        func power(_ deck: DeckData) -> (Int, Int) { deck.cards.reduce((0, 0)) { acc, e in let cardData = gameData.cards[e.0]; return (acc.0 + (cardData?.strength ?? 0) * e.1, acc.1 + e.1) } }
         let pm = power(mine), po = power(theirs)
         log("GAME \(gamesPlayed + 1): \(mine.faction) power \(pm.0) / \(pm.1) cards vs \(theirs.faction) power \(po.0) / \(po.1) cards, AI level \(game?.aiLevel ?? -1)")
         selected = nil; notes = []; noteT = 0; aiT = 0

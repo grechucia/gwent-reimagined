@@ -64,10 +64,10 @@ extension Scene {
         let o = cur.mid
         var best: (Float, R)?
         for t in targets where t.mid != o {
-            let v = t.mid - o
-            let along = v.x * d.x + v.y * d.y
+            let offset = t.mid - o
+            let along = offset.x * d.x + offset.y * d.y
             if along <= 4 { continue }
-            let score = along + abs(v.x * d.y - v.y * d.x) * 2.5
+            let score = along + abs(offset.x * d.y - offset.y * d.x) * 2.5
             if best == nil || score < best!.0 { best = (score, t) }
         }
         if let b = best { mouseMoved(b.1.mid) }
@@ -85,7 +85,7 @@ extension Scene {
         let targets = focusTargets
         guard !targets.isEmpty else { return }
         guard let f = focusedRect(targets) else {
-            if let a = autoTarget(targets) { mouseMoved(a.mid) }
+            if let target = autoTarget(targets) { mouseMoved(target.mid) }
             return
         }
         let pulse = 0.75 + 0.25 * sin(time * 5)

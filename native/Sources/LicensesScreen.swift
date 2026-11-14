@@ -20,13 +20,13 @@ extension Scene {
         func para(_ text: String, _ color: RGBA = RGBA(r: 0.92, g: 0.88, b: 0.8, a: 1)) { y += renderer.text(text, .serif(19), x: x, y: y, color: color, maxWidth: w).h + 10 }
         /// Clickable link.
         func link(_ text: String, _ url: String) {
-            let sz = renderer.measure(text, .serif(19, bold: true), maxWidth: w)
-            let b = R(x, y, sz.w, sz.h)
-            let hovered = b.contains(mouse)
+            let textSize = renderer.measure(text, .serif(19, bold: true), maxWidth: w)
+            let area = R(x, y, textSize.w, textSize.h)
+            let hovered = area.contains(mouse)
             renderer.text(text, .serif(19, bold: true), x: x, y: y, color: hovered ? .white : RGBA(r: 0.55, g: 0.78, b: 1, a: 1), maxWidth: w)
-            renderer.rect(R(x, y + sz.h - 2, sz.w, 1), RGBA(r: 0.55, g: 0.78, b: 1, a: hovered ? 1 : 0.6))
-            button(b) { if let u = URL(string: url) { Platform.openURL(u) } }
-            y += sz.h + 12
+            renderer.rect(R(x, y + textSize.h - 2, textSize.w, 1), RGBA(r: 0.55, g: 0.78, b: 1, a: hovered ? 1 : 0.6))
+            button(area) { if let link = URL(string: url) { Platform.openURL(link) } }
+            y += textSize.h + 12
         }
         head(L("Rights holder: CD PROJEKT RED"))
         para(L("All characters, the Witcher universe, Gwent, names, card art, music, sounds and trademarks are the property of CD PROJEKT S.A. / CD PROJEKT RED. The Witcher 3: Wild Hunt © CD PROJEKT S.A."))

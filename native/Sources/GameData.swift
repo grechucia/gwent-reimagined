@@ -51,7 +51,7 @@ final class GameData {
         /// Reads a JSON value as a string.
         func str(_ v: Any?) -> String { if let s = v as? String { return s }; if let n = v as? NSNumber { return n.stringValue }; return "" }
         /// Reads a JSON value as an integer.
-        func int(_ v: Any?) -> Int { if let n = v as? NSNumber { return n.intValue }; return Int(str(v)) ?? 0 }
+        func int(_ v: Any?) -> Int { if let number = v as? NSNumber { return number.intValue }; return Int(str(v)) ?? 0 }
         if let c = json("cards.json") as? [String: [String: Any]] {
             for (k, v) in c {
                 cards[k] = CardData(key: k, name: str(v["name"]), deck: str(v["deck"]), row: str(v["row"]), strength: int(v["strength"]),

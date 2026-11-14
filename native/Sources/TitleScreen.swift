@@ -32,14 +32,14 @@ extension Scene {
         renderer.rect(R(960 + 20, oy, 210, 2), RGBA.goldDark.alpha(0.6))
         renderer.quad(renderer.white, R(953, oy - 6, 14, 14), color: RGBA.gold, rotation: .pi / 4)
         renderer.quad(renderer.white, R(956, oy - 3, 8, 8), color: RGBA(r: 0.25, g: 0.17, b: 0.05, a: 1), rotation: .pi / 4)
-        let b = R(960 - 170, 905, 340, 70)
-        padPrimary = b
-        goldButton(b, gameData.ui("LET'S PLAY"), font: .gwent(38)) { [weak self] in
-            guard let s = self else { return }
-            s.audio.play("menu_opening")
-            let go: () -> Void = { [weak s] in s?.deckStage = -1; s?.deckSwitchT = 0; s?.screen = .decks }
-            let named: () -> Void = { [weak s] in if SaveStore.shared["playerName"] == nil { s?.askPlayerName(then: go) } else { go() } }
-            if SaveStore.shared.chosen { named() } else { s.askSaveLocation(then: named) }
+        let area = R(960 - 170, 905, 340, 70)
+        padPrimary = area
+        goldButton(area, gameData.ui("LET'S PLAY"), font: .gwent(38)) { [weak self] in
+            guard let strongSelf = self else { return }
+            strongSelf.audio.play("menu_opening")
+            let go: () -> Void = { [weak strongSelf] in strongSelf?.deckStage = -1; strongSelf?.deckSwitchT = 0; strongSelf?.screen = .decks }
+            let named: () -> Void = { [weak strongSelf] in if SaveStore.shared["playerName"] == nil { strongSelf?.askPlayerName(then: go) } else { go() } }
+            if SaveStore.shared.chosen { named() } else { strongSelf.askSaveLocation(then: named) }
         }
         goldButton(R(960 + 200, 917, 220, 46), L("How to play"), font: .serif(20, bold: true)) { [weak self] in self?.openRules() }
         goldButton(R(960 - 420, 917, 220, 46), L("Options"), font: .serif(20, bold: true)) { [weak self] in self?.optionsOpen = true }
@@ -57,12 +57,12 @@ extension Scene {
         let lw = renderer.measure(linkText, fb).w, pw = renderer.measure(plain, f).w
         let x1 = 1880 - lw
         renderer.text(plain, f, x: x1 - pw, y: y, color: RGBA(r: 0.91, g: 0.86, b: 0.74, a: 0.9))
-        let b = R(x1, y, lw, 26)
-        let hovered = b.contains(mouse)
+        let area = R(x1, y, lw, 26)
+        let hovered = area.contains(mouse)
         renderer.text(linkText, fb, x: x1, y: y, color: hovered ? .white : RGBA.gold)
         renderer.rect(R(x1, y + 23, lw, 1), RGBA.gold.alpha(hovered ? 1 : 0.5))
-        padNoFocus.append(b)
-        button(b) { if let u = URL(string: url) { Platform.openURL(u) } }
+        padNoFocus.append(area)
+        button(area) { if let link = URL(string: url) { Platform.openURL(link) } }
     }
 
     /// Language dropdown on the title screen.
@@ -79,10 +79,10 @@ extension Scene {
         button(R(0, 0, virtualWidth, virtualHeight)) { [weak self] in self?.langMenuOpen = false }
         let ih: Float = 36
         let list = GameData.languages
-        let lb = R(box.x - 4, box.y - 8 - Float(list.count) * ih, box.w + 8, Float(list.count) * ih + 4)
-        renderer.rect(lb, RGBA(r: 0.05, g: 0.04, b: 0.02, a: 0.97)); renderer.frame(lb, RGBA.goldDark, 1.5)
+        let area = R(box.x - 4, box.y - 8 - Float(list.count) * ih, box.w + 8, Float(list.count) * ih + 4)
+        renderer.rect(area, RGBA(r: 0.05, g: 0.04, b: 0.02, a: 0.97)); renderer.frame(area, RGBA.goldDark, 1.5)
         for (i, l) in list.enumerated() {
-            let ir = R(lb.x + 2, lb.y + 2 + Float(i) * ih, lb.w - 4, ih)
+            let ir = R(area.x + 2, area.y + 2 + Float(i) * ih, area.w - 4, ih)
             let on = l.code == gameData.language, hov = ir.contains(mouse)
             if on { renderer.gradient(ir, RGBA(r: 0.95, g: 0.82, b: 0.49, a: 1), RGBA(r: 0.79, g: 0.59, b: 0.18, a: 1), steps: 6) }
             else if hov { renderer.rect(ir, RGBA.gold.alpha(0.18)) }
@@ -103,12 +103,12 @@ extension Scene {
         let grad = CGGradient(colorsSpace: CGColorSpaceCreateDeviceRGB(), colors: [CGColor(red: 1, green: 1, blue: 1, alpha: 1), CGColor(red: 1, green: 1, blue: 1, alpha: 0.45), CGColor(red: 1, green: 1, blue: 1, alpha: 0)] as CFArray, locations: [0, 0.35, 1])!
         ctx.drawRadialGradient(grad, startCenter: CGPoint(x: n / 2, y: n / 2), startRadius: 0, endCenter: CGPoint(x: n / 2, y: n / 2), endRadius: CGFloat(n / 2), options: [])
         let td = MTLTextureDescriptor.texture2DDescriptor(pixelFormat: .rgba8Unorm, width: n, height: n, mipmapped: false)
-        let t = renderer.device.makeTexture(descriptor: td)!
+        let texture = renderer.device.makeTexture(descriptor: td)!
         let src = ctx.data!.bindMemory(to: UInt8.self, capacity: n * n * 4)
         var px = [UInt8](repeating: 255, count: n * n * 4)
         for i in 0..<(n * n) { px[i * 4 + 3] = src[i * 4 + 3] }
-        t.replace(region: MTLRegionMake2D(0, 0, n, n), mipmapLevel: 0, withBytes: px, bytesPerRow: n * 4)
-        return t
+        texture.replace(region: MTLRegionMake2D(0, 0, n, n), mipmapLevel: 0, withBytes: px, bytesPerRow: n * 4)
+        return texture
     }
 
     /// Creates a background particle.

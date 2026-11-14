@@ -113,7 +113,7 @@ final class Player {
         leader = Card(gameData.cards[deck.leader]!, owner: nil)
         leader.owner = self
         if leader.data.abilities.last == "holger_blakhand" { leaderUses = 2 }
-        for (k, n) in deck.cards { if let d = gameData.cards[k] { for _ in 0..<max(1, n) { self.deck.append(Card(d, owner: self)) } } }
+        for (k, n) in deck.cards { if let cardData = gameData.cards[k] { for _ in 0..<max(1, n) { self.deck.append(Card(cardData, owner: self)) } } }
         self.deck.shuffle()
     }
     var rowCards: [Card] { rows.flatMap { $0.cards } }
@@ -207,7 +207,7 @@ final class Game {
     func summonToBoard(_ player: Player, key: String) {
         let c: Card
         if let i = player.deck.firstIndex(where: { $0.key == key }) { c = player.deck.remove(at: i) }
-        else if let d = gameData.cards[key] { c = Card(d, owner: player) } else { return }
+        else if let cardData = gameData.cards[key] { c = Card(cardData, owner: player) } else { return }
         c.owner = player
         player.row(c.allowedRows.first ?? .close).cards.append(c)
     }
@@ -387,7 +387,7 @@ final class Game {
             if player.leaderAbility == "king_bran", player.leaderUses > 0 {
                 let answer = await pickOption(player, L("Bring the Skellige Storm?"), [L("Bring the Storm [E]"), L("Maybe later [Q]")]) { (self.round > 1 || player.deck.contains { $0.has("storm") }) ? 0 : 1 }
                 if answer == 0 { player.leaderUses = 0; player.halfWeather = true
-                    if let s = player.deck.first(where: { $0.has("storm") }) { player.deck.removeAll { $0 === s }; player.hand.append(s) } }
+                    if let topCard = player.deck.first(where: { $0.has("storm") }) { player.deck.removeAll { $0 === topCard }; player.hand.append(topCard) } }
             }
             if player.leaderAbility == "madman_lugos", player.leaderUses > 0, player.opponent.hand.count >= 2 {
                 let answer = await pickOption(player, L("Discard a card from the hand of the opponent?"), [L("Discard a card [E]"), L("Maybe later [Q]")]) { self.round >= 2 ? 0 : 1 }
@@ -547,9 +547,9 @@ final class Game {
         if round < 3 {
             for (card, player, r) in avengers {
                 for t in card.data.targets {
-                    guard let d = gameData.cards[t], d.isUnit else { continue }
-                    if let i = player.deck.firstIndex(where: { $0.key == t }) { let n = player.deck.remove(at: i); player.row(RowType.from(d.row) ?? r).cards.append(n); n.flash = 1 }
-                    else { let n = Card(d, owner: player); player.row(RowType.from(d.row) ?? r).cards.append(n); n.flash = 1 }
+                    guard let cardData = gameData.cards[t], cardData.isUnit else { continue }
+                    if let i = player.deck.firstIndex(where: { $0.key == t }) { let n = player.deck.remove(at: i); player.row(RowType.from(cardData.row) ?? r).cards.append(n); n.flash = 1 }
+                    else { let newCard = Card(cardData, owner: player); player.row(RowType.from(cardData.row) ?? r).cards.append(newCard); newCard.flash = 1 }
                 }
             }
         }

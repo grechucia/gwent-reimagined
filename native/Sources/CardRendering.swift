@@ -34,16 +34,16 @@ extension Scene {
         if card.data.isLeader { if highlight { renderer.frame(cardRect.inset(-3), RGBA.gold, 3) }; return }
         renderer.image(powerBadge(card), R(cardRect.x - 3 * s, cardRect.y - 5 * s, 60 * s, 61 * s))
         if card.data.isUnit {
-            let v = card.power
-            let col: RGBA = card.hero ? .white : (v > card.basePower ? RGBA(r: 0.1, g: 0.55, b: 0.1, a: 1) : (v < card.basePower ? RGBA(r: 0.75, g: 0.1, b: 0.1, a: 1) : .black))
+            let power = card.power
+            let col: RGBA = card.hero ? .white : (power > card.basePower ? RGBA(r: 0.1, g: 0.55, b: 0.1, a: 1) : (power < card.basePower ? RGBA(r: 0.75, g: 0.1, b: 0.1, a: 1) : .black))
             let cx: Float = 16.3, cy: Float = 14.6
             var pop: Float = 0
-            if let seen = powerSeen[card.id] { pop = seen.0 != v ? 0.45 : max(0, seen.1 - frameDT) }
-            powerSeen[card.id] = (v, pop)
-            let f = Renderer.Font.ui((card.hero ? 21 : 19) * s * (1 + pop * 1.1), bold: true)
-            let textHeight = renderer.measure("\(v)", f).h
+            if let seen = powerSeen[card.id] { pop = seen.0 != power ? 0.45 : max(0, seen.1 - frameDT) }
+            powerSeen[card.id] = (power, pop)
+            let font = Renderer.Font.ui((card.hero ? 21 : 19) * s * (1 + pop * 1.1), bold: true)
+            let textHeight = renderer.measure("\(power)", font).h
             if pop > 0 { renderer.quad(glowTex, R(cardRect.x + cx * s - 22 * s, cardRect.y + cy * s - 22 * s, 44 * s, 44 * s), color: RGBA(r: 1, g: 0.9, b: 0.5, a: pop * 1.6)) }
-            renderer.text("\(v)", f, x: cardRect.x + cx * s, y: cardRect.y + cy * s - textHeight / 2, color: col, align: .center, shadow: nil)
+            renderer.text("\(power)", font, x: cardRect.x + cx * s, y: cardRect.y + cy * s - textHeight / 2, color: col, align: .center, shadow: nil)
             let rowName = card.data.row.hasPrefix("agile") ? card.data.row : card.data.row
             renderer.image("img/icons/card_row_\(rowName).png", R(cardRect.x + 56 * s, cardRect.y + 91 * s, 28 * s, 27 * s))
             let abis = card.data.abilities.filter { $0 != "hero" }
@@ -72,9 +72,9 @@ extension Scene {
         renderer.image(powerBadge(card), R(cardRect.x - 3 * s, cardRect.y - 5 * s, 60 * s, 61 * s))
         if card.data.isUnit {
             let cx: Float = 16.3, cy: Float = 14.6
-            let f = Renderer.Font.ui((card.hero ? 21 : 19) * s, bold: true)
-            let textHeight = renderer.measure("\(card.basePower)", f).h
-            renderer.text("\(card.basePower)", f, x: cardRect.x + cx * s, y: cardRect.y + cy * s - textHeight / 2, color: card.hero ? .white : .black, align: .center, shadow: nil)
+            let font = Renderer.Font.ui((card.hero ? 21 : 19) * s, bold: true)
+            let textHeight = renderer.measure("\(card.basePower)", font).h
+            renderer.text("\(card.basePower)", font, x: cardRect.x + cx * s, y: cardRect.y + cy * s - textHeight / 2, color: card.hero ? .white : .black, align: .center, shadow: nil)
             renderer.image("img/icons/card_row_\(card.data.row).png", R(cardRect.x - 3 * s + 6 * s, cardRect.y + 58 * s, 44 * s, 42 * s))
             if let a = card.data.abilities.filter({ $0 != "hero" }).last { renderer.image(abilityIcon(a), R(cardRect.x + 3 * s, cardRect.y + 102 * s, 44 * s, 42 * s)) }
         }
@@ -86,10 +86,10 @@ extension Scene {
         renderer.rect(cardRect.inset(-6), RGBA.black.alpha(0.55))
         drawCardLarge(card, cardRect)
         var lines: [(String, String)] = []
-        if card.data.isLeader { if let a = card.data.abilities.last { lines.append((L("Leader Ability"), gameData.abilityDesc(a))) } }
+        if card.data.isLeader { if let lastAbility = card.data.abilities.last { lines.append((L("Leader Ability"), gameData.abilityDesc(lastAbility))) } }
         else {
             if card.data.row.hasPrefix("agile") { lines.append((gameData.abilityName("agile"), gameData.abilityDesc("agile"))) }
-            for a in card.data.abilities where a != "hero" { lines.append((gameData.abilityName(a), gameData.abilityDesc(a))) }
+            for lastAbility in card.data.abilities where lastAbility != "hero" { lines.append((gameData.abilityName(lastAbility), gameData.abilityDesc(lastAbility))) }
             if card.hero { lines.append((L("Hero"), gameData.abilityDesc("hero"))) }
         }
         guard !lines.isEmpty else { return }

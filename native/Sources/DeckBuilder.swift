@@ -17,9 +17,9 @@ final class DeckBuilder {
     func cap(_ cardData: CardData) -> Int { min(cardData.count, limit?[cardData.key] ?? cardData.count) }
     /// Loads the career deck and the owned cards as limits.
     func loadCareer() {
-        let c = Career.shared
-        faction = c.faction; leaderKey = c.leader; counts = c.deck; title = ""; editingIndex = nil
-        limit = c.collection; ownedLeaders = c.leaders; scrollL = 0; scrollR = 0
+        let career = Career.shared
+        faction = career.faction; leaderKey = career.leader; counts = career.deck; title = ""; editingIndex = nil
+        limit = career.collection; ownedLeaders = career.leaders; scrollL = 0; scrollR = 0
     }
     var gameData: GameData { GameData.shared }
 
@@ -60,9 +60,9 @@ final class DeckBuilder {
     var deckCards: [CardData] { collection().filter { (counts[$0.key] ?? 0) > 0 } }
     var stats: (total: Int, units: Int, specials: Int, strength: Int, heroes: Int) {
         var t = 0, u = 0, s = 0, str = 0, h = 0
-        for (k, n) in counts { guard let d = gameData.cards[k] else { continue }
+        for (k, n) in counts { guard let cardData = gameData.cards[k] else { continue }
             t += n
-            if d.isUnit { u += n; str += d.strength * n; if d.isHero { h += n } } else { s += n }
+            if cardData.isUnit { u += n; str += cardData.strength * n; if cardData.isHero { h += n } } else { s += n }
         }
         return (t, u, s, str, h)
     }
@@ -98,7 +98,7 @@ final class DeckBuilder {
     }
     /// Saves the edited deck (custom deck or career deck).
     func save() {
-        if careerMode { let c = Career.shared; c.deck = counts.filter { $0.value > 0 }; c.leader = leaderKey; c.save(); return }
+        if careerMode { let career = Career.shared; career.deck = counts.filter { $0.value > 0 }; career.leader = leaderKey; career.save(); return }
         var all = DeckBuilder.loadCustom()
         let d = asDeck()
         if let i = editingIndex, i < all.count { all[i] = d } else { all.append(d); editingIndex = all.count - 1 }
