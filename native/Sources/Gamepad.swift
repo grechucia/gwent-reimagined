@@ -12,20 +12,20 @@ import simd
 
     /// Reads the controller state and moves focus or triggers actions.
     func update(_ dt: Float) {
-        guard let s = scene, let pad = (GCController.current ?? GCController.controllers().first)?.extendedGamepad else { return }
-        let leftX = pad.leftThumbstick.xAxis.value, ly = pad.leftThumbstick.yAxis.value
+        guard let activeScene = scene, let controller = (GCController.current ?? GCController.controllers().first)?.extendedGamepad else { return }
+        let leftX = controller.leftThumbstick.xAxis.value, ly = controller.leftThumbstick.yAxis.value
         let stick: [(String, Bool, SIMD2<Float>)] = [("su", ly > 0.6, SIMD2(0, -1)), ("sd", ly < -0.6, SIMD2(0, 1)),
                                                       ("sl", leftX < -0.6, SIMD2(-1, 0)), ("sr", leftX > 0.6, SIMD2(1, 0))]
-        for (n, on, d) in stick { press(n, on, dt, repeats: true) { if s.padWake() { return }; s.padFocus(d) } }
-        let rightY = pad.rightThumbstick.yAxis.value
-        if abs(rightY) > 0.2 { if s.padWake() { return }; s.scroll(rightY * 1100 * dt) }
-        press("a", pad.buttonA.isPressed, dt, repeats: false) { if s.padWake() { return }; s.click(s.mouse) }
-        press("b", pad.buttonB.isPressed, dt, repeats: false) { if s.padWake() { return }; s.keyDown(53) }
-        press("x", pad.buttonX.isPressed, dt, repeats: false) { if s.padWake() { return }; s.rightClick() }
-        press("menu", pad.buttonMenu.isPressed, dt, repeats: false) { s.optionsOpen.toggle(); s.game?.paused = s.optionsOpen }
-        let dirs: [(String, Bool, SIMD2<Float>)] = [("up", pad.dpad.up.isPressed, SIMD2(0, -1)), ("down", pad.dpad.down.isPressed, SIMD2(0, 1)),
-                                                     ("left", pad.dpad.left.isPressed, SIMD2(-1, 0)), ("right", pad.dpad.right.isPressed, SIMD2(1, 0))]
-        for (n, on, d) in dirs { press(n, on, dt, repeats: true) { if s.padWake() { return }; s.padFocus(d) } }
+        for (n, on, d) in stick { press(n, on, dt, repeats: true) { if activeScene.padWake() { return }; activeScene.padFocus(d) } }
+        let rightY = controller.rightThumbstick.yAxis.value
+        if abs(rightY) > 0.2 { if activeScene.padWake() { return }; activeScene.scroll(rightY * 1100 * dt) }
+        press("a", controller.buttonA.isPressed, dt, repeats: false) { if activeScene.padWake() { return }; activeScene.click(activeScene.mouse) }
+        press("b", controller.buttonB.isPressed, dt, repeats: false) { if activeScene.padWake() { return }; activeScene.keyDown(53) }
+        press("x", controller.buttonX.isPressed, dt, repeats: false) { if activeScene.padWake() { return }; activeScene.rightClick() }
+        press("menu", controller.buttonMenu.isPressed, dt, repeats: false) { activeScene.optionsOpen.toggle(); activeScene.game?.paused = activeScene.optionsOpen }
+        let dirs: [(String, Bool, SIMD2<Float>)] = [("up", controller.dpad.up.isPressed, SIMD2(0, -1)), ("down", controller.dpad.down.isPressed, SIMD2(0, 1)),
+                                                     ("left", controller.dpad.left.isPressed, SIMD2(-1, 0)), ("right", controller.dpad.right.isPressed, SIMD2(1, 0))]
+        for (n, on, d) in dirs { press(n, on, dt, repeats: true) { if activeScene.padWake() { return }; activeScene.padFocus(d) } }
     }
 
     /// Edge-detects a button; held directions repeat after 0.4 s, then every 0.12 s.
@@ -47,30 +47,30 @@ extension Scene {
         padCursor = true; mouse = SIMD2(-1, -1)
         return true
     }
-    var focusTargets: [R] { clicks.map { $0.0 }.filter { t in t.w < virtualWidth * 0.9 && t.h < virtualHeight * 0.9 && !padNoFocus.contains { $0 == t } } }
+    var focusTargets: [R] { clicks.map { $0.0 }.filter { target in target.w < virtualWidth * 0.9 && target.h < virtualHeight * 0.9 && !padNoFocus.contains { $0 == target } } }
 
     /// Element focused automatically: the screen's primary element, otherwise the one nearest the centre.
     func autoTarget(_ targets: [R]) -> R? {
         if let primary = padPrimary, targets.contains(where: { $0 == primary }) { return primary }
-        let pool = targets.filter { t in !padNoAuto.contains { $0 == t } }
+        let pool = targets.filter { target in !padNoAuto.contains { $0 == target } }
         return (pool.isEmpty ? targets : pool).min { simd_length($0.mid - SIMD2(virtualWidth / 2, virtualHeight / 2)) < simd_length($1.mid - SIMD2(virtualWidth / 2, virtualHeight / 2)) }
     }
 
     /// Moves focus to the nearest interactive element in the given direction.
-    func padFocus(_ d: SIMD2<Float>) {
+    func padFocus(_ direction: SIMD2<Float>) {
         let targets = focusTargets
         guard !targets.isEmpty else { return }
-        guard let current = focusedRect(targets) else { if let a = autoTarget(targets) { mouseMoved(a.mid) }; return }
+        guard let current = focusedRect(targets) else { if let fallback = autoTarget(targets) { mouseMoved(fallback.mid) }; return }
         let origin = current.mid
         var best: (Float, R)?
         for target in targets where target.mid != origin {
             let offset = target.mid - origin
-            let along = offset.x * d.x + offset.y * d.y
+            let along = offset.x * direction.x + offset.y * direction.y
             if along <= 4 { continue }
-            let score = along + abs(offset.x * d.y - offset.y * d.x) * 2.5
+            let score = along + abs(offset.x * direction.y - offset.y * direction.x) * 2.5
             if best == nil || score < best!.0 { best = (score, target) }
         }
-        if let b = best { mouseMoved(b.1.mid) }
+        if let nearest = best { mouseMoved(nearest.1.mid) }
     }
 
     /// The interactive element under the focus point.

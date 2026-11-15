@@ -49,8 +49,8 @@ extension Scene {
             choice(options.map { ($0.px == 0 ? L("Native") : "\($0.px)p", $0.px == h.renderRes, true) }, w: 128) { i in h.setRenderRes(options[i].px) }
             y += 76
             label(L("Frame limit"))
-            let fl = h.availableFrameLimits
-            choice(fl.map { ("\($0) FPS", $0 == h.effectiveFrameLimit, true) }, w: 128) { i in h.setFrameLimit(fl[i]) }
+            let frameRates = h.availableFrameLimits
+            choice(frameRates.map { ("\($0) FPS", $0 == h.effectiveFrameLimit, true) }, w: 128) { i in h.setFrameLimit(frameRates[i]) }
             y += 76
             if h.supportsWindowModes {
                 label(L("Display mode"))

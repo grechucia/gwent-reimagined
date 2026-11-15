@@ -3,7 +3,7 @@ import Foundation
 
 
 /// Smoothstep easing used for UI animations.
-func ease(_ t: Float) -> Float { let x = max(0, min(1, t)); return x * x * (3 - 2 * x) }
+func ease(_ value: Float) -> Float { let x = max(0, min(1, value)); return x * x * (3 - 2 * x) }
 
 /// Menu and deck screens.
 extension Scene {
@@ -22,8 +22,8 @@ extension Scene {
     }
     /// Card drawn with a hover glow, used in menus.
     func drawLiveCard(_ card: Card, _ baseRect: R, glow: Float = 1) {
-        let bob = sin(time * 1.3) * 6
-        let cardRect = R(baseRect.x, baseRect.y + bob, baseRect.w, baseRect.h)
+        let bobOffset = sin(time * 1.3) * 6
+        let cardRect = R(baseRect.x, baseRect.y + bobOffset, baseRect.w, baseRect.h)
         renderer.quad(glowTex, R(cardRect.x - 70, cardRect.y - 60, cardRect.w + 140, cardRect.h + 120), color: RGBA(r: 1, g: 0.72, b: 0.3, a: 0.28 * glow * (0.85 + 0.15 * sin(time * 2))))
         renderer.rect(R(cardRect.x + 14, cardRect.y + 22, cardRect.w, cardRect.h), RGBA.black.alpha(0.45))
         drawCardLarge(card, cardRect)
@@ -86,43 +86,43 @@ extension Scene {
                    .ui(18), x: myDeckPanel.mid.x, y: myDeckPanel.y + 410, color: RGBA.gray(0.85, progress), maxWidth: myDeckPanel.w - 100, align: .center)
             goldButton(R(myDeckPanel.x + 70, myDeckPanel.y + myDeckPanel.h - 130, myDeckPanel.w - 140, 64), L("Pick your deck"), font: .serif(24, bold: true)) { [weak self] in self?.deckStage = 0; self?.deckSwitchT = 0 }
         }
-        let M = R(690, 170 + (1 - ease(deckSwitchT * 1.4 - 0.1)) * 24, 540, 780)
-        let hovM = M.contains(mouse)
-        if hovM { renderer.quad(glowTex, R(M.x - 50, M.y - 50, M.w + 100, M.h + 100), color: RGBA(r: 1, g: 0.72, b: 0.3, a: 0.25)) }
-        glassPanel(M, alpha: 0.75 * progress)
-        renderer.frame(M, RGBA.gold.alpha(hovM ? 0.9 : 0.4), 1.5)
-        renderer.text("⚔ " + L("Career"), .gwent(40), x: M.mid.x, y: M.y + 26, color: RGBA.gold.alpha(progress), align: .center)
+        let careerPanel = R(690, 170 + (1 - ease(deckSwitchT * 1.4 - 0.1)) * 24, 540, 780)
+        let hovM = careerPanel.contains(mouse)
+        if hovM { renderer.quad(glowTex, R(careerPanel.x - 50, careerPanel.y - 50, careerPanel.w + 100, careerPanel.h + 100), color: RGBA(r: 1, g: 0.72, b: 0.3, a: 0.25)) }
+        glassPanel(careerPanel, alpha: 0.75 * progress)
+        renderer.frame(careerPanel, RGBA.gold.alpha(hovM ? 0.9 : 0.4), 1.5)
+        renderer.text("⚔ " + L("Career"), .gwent(40), x: careerPanel.mid.x, y: careerPanel.y + 26, color: RGBA.gold.alpha(progress), align: .center)
         let career = Career.shared
         if career.active {
-            renderer.image("img/icons/deck_shield_\(career.faction).png", R(M.mid.x - 60, M.y + 110, 120, 134), color: .white.alpha(progress))
-            renderer.text(gameData.factionName(career.faction), .gwent(30), x: M.mid.x, y: M.y + 262, color: RGBA.gold.alpha(progress), align: .center)
+            renderer.image("img/icons/deck_shield_\(career.faction).png", R(careerPanel.mid.x - 60, careerPanel.y + 110, 120, 134), color: .white.alpha(progress))
+            renderer.text(gameData.factionName(career.faction), .gwent(30), x: careerPanel.mid.x, y: careerPanel.y + 262, color: RGBA.gold.alpha(progress), align: .center)
             let chapterInfo = career.chapter(career.currentChapter)
-            renderer.text(L("Chapter") + " \(career.currentChapter + 1)/\(career.chapterCount): " + chapterInfo.title, .serif(22, bold: true), x: M.mid.x, y: M.y + 320, color: RGBA.white.alpha(progress), maxWidth: M.w - 60, align: .center)
-            renderer.text(L("Opponents defeated") + ": \(career.beaten.count)/\(career.totalFights)", .ui(18), x: M.mid.x, y: M.y + 362, color: RGBA.gray(0.85, progress), align: .center)
-            let area = R(M.x + 70, M.y + 400, M.w - 140, 8)
+            renderer.text(L("Chapter") + " \(career.currentChapter + 1)/\(career.chapterCount): " + chapterInfo.title, .serif(22, bold: true), x: careerPanel.mid.x, y: careerPanel.y + 320, color: RGBA.white.alpha(progress), maxWidth: careerPanel.w - 60, align: .center)
+            renderer.text(L("Opponents defeated") + ": \(career.beaten.count)/\(career.totalFights)", .ui(18), x: careerPanel.mid.x, y: careerPanel.y + 362, color: RGBA.gray(0.85, progress), align: .center)
+            let area = R(careerPanel.x + 70, careerPanel.y + 400, careerPanel.w - 140, 8)
             renderer.rect(area, RGBA.white.alpha(0.12)); renderer.rect(R(area.x, area.y, area.w * min(1, Float(career.beaten.count) / Float(career.totalFights)), area.h), RGBA.gold)
         } else {
-            renderer.text("⚔", .gwent(130), x: M.mid.x, y: M.y + 130, color: RGBA.gold.alpha(0.5 * progress), align: .center)
+            renderer.text("⚔", .gwent(130), x: careerPanel.mid.x, y: careerPanel.y + 130, color: RGBA.gold.alpha(0.5 * progress), align: .center)
             renderer.text(L("Start with weak cards, win new ones and defeat boss after boss. Every career is generated anew."),
-                   .ui(18), x: M.mid.x, y: M.y + 340, color: RGBA.gray(0.85, progress), maxWidth: M.w - 90, align: .center)
+                   .ui(18), x: careerPanel.mid.x, y: careerPanel.y + 340, color: RGBA.gray(0.85, progress), maxWidth: careerPanel.w - 90, align: .center)
         }
-        goldButton(R(M.x + 70, M.y + M.h - 130, M.w - 140, 64), career.active ? L("Continue career") : L("Start career"),
+        goldButton(R(careerPanel.x + 70, careerPanel.y + careerPanel.h - 130, careerPanel.w - 140, 64), career.active ? L("Continue career") : L("Start career"),
                    font: .serif(24, bold: true)) { [weak self] in self?.careerChapter = nil; self?.deckSwitchT = 0; self?.screen = .career }
-        let Rr = R(1270, 170 + (1 - ease(deckSwitchT * 1.4 - 0.2)) * 24, 540, 780)
-        let hovR = Rr.contains(mouse)
-        if hovR { renderer.quad(glowTex, R(Rr.x - 50, Rr.y - 50, Rr.w + 100, Rr.h + 100), color: RGBA(r: 1, g: 0.72, b: 0.3, a: 0.25)) }
-        glassPanel(Rr, alpha: 0.75 * progress)
-        renderer.frame(Rr, RGBA.gold.alpha(hovR ? 0.9 : 0.4), 1.5)
-        renderer.text(L("Choose a faction"), .gwent(40), x: Rr.mid.x, y: Rr.y + 26, color: RGBA.gold.alpha(progress), align: .center)
+        let factionPanel = R(1270, 170 + (1 - ease(deckSwitchT * 1.4 - 0.2)) * 24, 540, 780)
+        let hovR = factionPanel.contains(mouse)
+        if hovR { renderer.quad(glowTex, R(factionPanel.x - 50, factionPanel.y - 50, factionPanel.w + 100, factionPanel.h + 100), color: RGBA(r: 1, g: 0.72, b: 0.3, a: 0.25)) }
+        glassPanel(factionPanel, alpha: 0.75 * progress)
+        renderer.frame(factionPanel, RGBA.gold.alpha(hovR ? 0.9 : 0.4), 1.5)
+        renderer.text(L("Choose a faction"), .gwent(40), x: factionPanel.mid.x, y: factionPanel.y + 26, color: RGBA.gold.alpha(progress), align: .center)
         let facs = DeckBuilder.factionsOrder
         for (index, faction) in facs.enumerated() {
             let col = index % 5, row = index / 5
-            let area = R(Rr.x + 34 + Float(col) * 96, Rr.y + 110 + Float(row) * 116, 78, 87)
+            let area = R(factionPanel.x + 34 + Float(col) * 96, factionPanel.y + 110 + Float(row) * 116, 78, 87)
             renderer.image("img/icons/deck_shield_\(faction).png", area, color: .white.alpha(progress * (hovR ? 1 : 0.85)))
         }
         renderer.text(L("Pick one of 15 factions and one of its decks, or build your own."),
-               .ui(18), x: Rr.mid.x, y: Rr.y + 520, color: RGBA.gray(0.85, progress), maxWidth: Rr.w - 100, align: .center)
-        goldButton(R(Rr.x + 70, Rr.y + Rr.h - 130, Rr.w - 140, 64), L("Choose a faction"), font: .serif(26, bold: true)) { [weak self] in self?.deckStage = 0; self?.deckSwitchT = 0 }
+               .ui(18), x: factionPanel.mid.x, y: factionPanel.y + 520, color: RGBA.gray(0.85, progress), maxWidth: factionPanel.w - 100, align: .center)
+        goldButton(R(factionPanel.x + 70, factionPanel.y + factionPanel.h - 130, factionPanel.w - 140, 64), L("Choose a faction"), font: .serif(26, bold: true)) { [weak self] in self?.deckStage = 0; self?.deckSwitchT = 0 }
     }
     /// Faction grid.
     func drawFactionStep(_ dt: Float) {
@@ -196,27 +196,27 @@ extension Scene {
             renderer.text(desc, .ui(16), x: x, y: textY, color: RGBA(r: 0.92, g: 0.86, b: 0.72, a: progress), maxWidth: tileWidth)
             renderer.clip(nil)
             var units = 0, total = 0
-            for (ck, cn) in deck.cards { total += cn; if gameData.cards[ck]?.isUnit == true { units += cn } }
+            for (cardKey, copies) in deck.cards { total += copies; if gameData.cards[cardKey]?.isUnit == true { units += copies } }
             renderer.text("\(total) " + L("cards") + " · \(units) " + L("units"), .ui(14), x: x, y: tile.y + tile.h - 92, color: RGBA.gold.alpha(0.75 * progress))
             goldButton(R(x, tile.y + tile.h - 66, tileWidth, 52), L("Play this deck"), font: .serif(tileWidth < 260 ? 18 : 21, bold: true)) { [weak self] in
                 self?.myDeckIndex = i; self?.startGame(with: deck)
             }
-            let bw = (tileWidth - 8) / 2, by = tile.y + tile.h + 10, fs: Float = tileWidth < 260 ? 15 : 17
-            goldButton(R(x, by, bw, 42), L("View cards"), font: .serif(fs, bold: true)) { [weak self] in
+            let buttonWidth = (tileWidth - 8) / 2, buttonY = tile.y + tile.h + 10, buttonFontSize: Float = tileWidth < 260 ? 15 : 17
+            goldButton(R(x, buttonY, buttonWidth, 42), L("View cards"), font: .serif(buttonFontSize, bold: true)) { [weak self] in
                 self?.previewDeck = i; self?.previewScroll = 0; self?.previewTarget = 0; self?.deckSwitchT = 0; self?.audio.play("card", volume: 0.5) }
-            goldButton(R(x + bw + 8, by, bw, 42), L("Edit deck"), font: .serif(fs, bold: true)) { [weak self] in
+            goldButton(R(x + buttonWidth + 8, buttonY, buttonWidth, 42), L("Edit deck"), font: .serif(buttonFontSize, bold: true)) { [weak self] in
                 guard let strongSelf = self else { return }; strongSelf.builder.load(deck, customIndex: custom ? i - strongSelf.gameData.decks.count : nil); strongSelf.screen = .builder }
             let isFavorite = favoriteDeckIndex == i
-            let favW = custom ? bw : tileWidth
-            let favR = R(x, by + 50, favW, 42)
+            let favW = custom ? buttonWidth : tileWidth
+            let favR = R(x, buttonY + 50, favW, 42)
             if isFavorite { renderer.rect(favR, RGBA(r: 0.55, g: 0.4, b: 0.1, a: 0.55)) }
-            goldButton(favR, isFavorite ? "★ " + L("My deck") : "☆ " + L("Set as mine"), font: .serif(fs, bold: true)) { [weak self] in
+            goldButton(favR, isFavorite ? "★ " + L("My deck") : "☆ " + L("Set as mine"), font: .serif(buttonFontSize, bold: true)) { [weak self] in
                 guard let strongSelf = self else { return }; strongSelf.favoriteDeckIndex = isFavorite ? nil : i; strongSelf.audio.play("card", volume: 0.5) }
             if custom {
-                goldButton(R(x + bw + 8, by + 50, bw, 42), L("Delete deck"), font: .serif(fs, bold: true)) { [weak self] in
+                goldButton(R(x + buttonWidth + 8, buttonY + 50, buttonWidth, 42), L("Delete deck"), font: .serif(buttonFontSize, bold: true)) { [weak self] in
                     guard let strongSelf = self else { return }
-                    var customDecks = DeckBuilder.loadCustom(); let ci = i - strongSelf.gameData.decks.count
-                    if ci >= 0 && ci < customDecks.count { customDecks.remove(at: ci); DeckBuilder.saveCustom(customDecks) }
+                    var customDecks = DeckBuilder.loadCustom(); let customIndex = i - strongSelf.gameData.decks.count
+                    if customIndex >= 0 && customIndex < customDecks.count { customDecks.remove(at: customIndex); DeckBuilder.saveCustom(customDecks) }
                     strongSelf.customDecks = customDecks
                 }
             }
@@ -260,8 +260,8 @@ extension Scene {
         for (title, description) in lines.prefix(3) {
             let labelBox = R(cardRect.x - 6, y, cardRect.w + 12, renderer.measure(title, .serif(17, bold: true), maxWidth: cardRect.w - 8).h + renderer.measure(description, .ui(15), maxWidth: cardRect.w - 8).h + 14)
             renderer.rect(labelBox, RGBA(r: 0.06, g: 0.05, b: 0.03, a: 0.94)); renderer.frame(labelBox, RGBA.goldDark.alpha(0.6), 1)
-            let h1 = renderer.text(title, .serif(17, bold: true), x: cardRect.x + 2, y: y + 6, color: RGBA.gold, maxWidth: cardRect.w - 8).h
-            renderer.text(description, .ui(15), x: cardRect.x + 2, y: y + 6 + h1, color: .gray(0.9), maxWidth: cardRect.w - 8)
+            let titleHeight = renderer.text(title, .serif(17, bold: true), x: cardRect.x + 2, y: y + 6, color: RGBA.gold, maxWidth: cardRect.w - 8).h
+            renderer.text(description, .ui(15), x: cardRect.x + 2, y: y + 6 + titleHeight, color: .gray(0.9), maxWidth: cardRect.w - 8)
             y += labelBox.h + 6
         }
     }
@@ -283,12 +283,12 @@ extension Scene {
             drawCardLarge(Card(leaderData, owner: nil), cardRect)
             if cardRect.contains(mouse) { builderHover = Card(leaderData, owner: nil) }
         }
-        var list: [CardData] = []; var cnt: [String: Int] = [:]
+        var list: [CardData] = []; var counts: [String: Int] = [:]
         var units = 0, total = 0, specials = 0, heroes = 0, power = 0
         for (key, copies) in deck.cards {
             guard let cardData = gameData.cards[key] else { continue }
-            if cnt[key] == nil { list.append(cardData) }
-            cnt[key, default: 0] += copies; total += copies
+            if counts[key] == nil { list.append(cardData) }
+            counts[key, default: 0] += copies; total += copies
             if cardData.isUnit { units += copies; power += cardData.strength * copies; if cardData.abilities.contains("hero") { heroes += copies } } else { specials += copies }
         }
         /// Grouping order for the preview list.
@@ -309,7 +309,7 @@ extension Scene {
         }
         let area = DeckPreviewLayout.cardsArea
         glassPanel(area, alpha: 0.55 * progress)
-        builderGrid(list, in: area.inset(6), scroll: &previewScroll, target: &previewTarget, dt: dt, cardW: 150, count: { cnt[$0.key] ?? 0 }) { _, _ in }
+        builderGrid(list, in: area.inset(6), scroll: &previewScroll, target: &previewTarget, dt: dt, cardW: 150, count: { counts[$0.key] ?? 0 }) { _, _ in }
         renderer.text(L("Hover a card to see its description. Scroll with the mouse wheel."),
                .serif(17, italic: true), x: area.mid.x, y: area.y + area.h + 14, color: RGBA.gray(0.7, progress), align: .center)
     }

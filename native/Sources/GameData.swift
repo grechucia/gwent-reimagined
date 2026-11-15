@@ -42,16 +42,16 @@ final class GameData {
     /// Native name of a language.
     static func languageName(_ code: String) -> String { languages.first { $0.code == code }?.name ?? code }
 
-    init(dir: URL) {
+    init(directory: URL) {
         /// Loads a JSON file from the data folder.
-        func json(_ n: String) -> Any? {
-            guard let data = try? Data(contentsOf: dir.appendingPathComponent(n)) else { return nil }
+        func json(_ fileName: String) -> Any? {
+            guard let data = try? Data(contentsOf: directory.appendingPathComponent(fileName)) else { return nil }
             return try? JSONSerialization.jsonObject(with: data)
         }
         /// Reads a JSON value as a string.
-        func str(_ v: Any?) -> String { if let string = v as? String { return string }; if let number = v as? NSNumber { return number.stringValue }; return "" }
+        func str(_ value: Any?) -> String { if let string = value as? String { return string }; if let number = value as? NSNumber { return number.stringValue }; return "" }
         /// Reads a JSON value as an integer.
-        func int(_ v: Any?) -> Int { if let number = v as? NSNumber { return number.intValue }; return Int(str(v)) ?? 0 }
+        func int(_ value: Any?) -> Int { if let number = value as? NSNumber { return number.intValue }; return Int(str(value)) ?? 0 }
         if let cardsJSON = json("cards.json") as? [String: [String: Any]] {
             for (k, value) in cardsJSON {
                 cards[k] = CardData(key: k, name: str(value["name"]), deck: str(value["deck"]), row: str(value["row"]), strength: int(value["strength"]),
@@ -61,12 +61,12 @@ final class GameData {
             }
         }
         if let decksJSON = json("decks.json") as? [[String: Any]] {
-            decks = decksJSON.map { e in
-                let cardList = (e["cards"] as? [[Any]] ?? []).compactMap { p -> (String, Int)? in
+            decks = decksJSON.map { entry in
+                let cardList = (entry["cards"] as? [[Any]] ?? []).compactMap { p -> (String, Int)? in
                     guard p.count >= 2, let key = p[0] as? String else { return nil }
                     return (key, (p[1] as? NSNumber)?.intValue ?? 1)
                 }
-                return DeckData(title: str(e["title"]), description: str(e["description"]), leader: str(e["leader"]), faction: str(e["faction"]), cards: cardList)
+                return DeckData(title: str(entry["title"]), description: str(entry["description"]), leader: str(entry["leader"]), faction: str(entry["faction"]), cards: cardList)
             }.filter { cards[$0.leader] != nil }
         }
         factions = (json("factions.json") as? [String: [String: String]]) ?? [:]
@@ -83,7 +83,7 @@ final class GameData {
     }
 
     /// Section of the active translation file.
-    func section(_ text: String) -> [String: Any] { (lang[language]?[text] as? [String: Any]) ?? [:] }
+    func section(_ name: String) -> [String: Any] { (lang[language]?[name] as? [String: Any]) ?? [:] }
 
     /// Localised card name.
     func cardName(_ cardData: CardData) -> String { ((section("cards")[cardData.key] as? [String: String])?["name"]).flatMap { $0.isEmpty ? nil : $0 } ?? cardData.name }
@@ -100,7 +100,7 @@ final class GameData {
     /// Localised rules text, split into headings and paragraphs.
     func rules() -> [(text: String, heading: Bool)] {
         guard let blocks = (lang[language]?["blocks"] ?? lang["en"]?["blocks"]) as? [String: String] else { return [] }
-        var out: [(String, Bool)] = []
+        var paragraphs: [(String, Bool)] = []
         for i in 1...138 {
             guard var h = blocks["b\(i)"] else { continue }
             h = h.replacingOccurrences(of: "<br>", with: "\n").replacingOccurrences(of: "<br/>", with: "\n")
@@ -109,16 +109,16 @@ final class GameData {
             plain = plain.trimmingCharacters(in: .whitespacesAndNewlines)
             if plain.isEmpty { continue }
             let heading = plain.count <= 48 && !plain.hasSuffix(".") && !plain.hasSuffix(":") && !plain.contains("\n")
-            out.append((plain, heading))
+            paragraphs.append((plain, heading))
         }
-        return out
+        return paragraphs
     }
     /// Translates an English UI string into the active language.
-    func ui(_ en: String) -> String {
-        if language == "en" { return en }
-        return (section("ui")[en] as? String) ?? en
+    func ui(_ english: String) -> String {
+        if language == "en" { return english }
+        return (section("ui")[english] as? String) ?? english
     }
 }
 
 /// Translates an English UI string (shorthand used across the UI).
-func L(_ en: String) -> String { GameData.shared.ui(en) }
+func L(_ english: String) -> String { GameData.shared.ui(english) }

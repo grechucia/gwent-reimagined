@@ -257,10 +257,10 @@ extension Scene {
     /// Lets the computer move after a short delay once nothing else is happening on screen.
     func runComputerTurn(_ match: Game, dt: Float) {
         let coinShown = fxList.contains { if case .coin = $0.kind { return true }; return false }
-        guard match.phase == .play && !match.busy && match.choice == nil && notes.isEmpty && !coinShown && !rulesOpen else { aiT = 0; return }
-        aiT += dt
-        guard aiT > (autotest ? 0.35 : 0.85) else { return }
-        aiT = 0
+        guard match.phase == .play && !match.busy && match.choice == nil && notes.isEmpty && !coinShown && !rulesOpen else { computerTurnTimer = 0; return }
+        computerTurnTimer += dt
+        guard computerTurnTimer > (autotest ? 0.35 : 0.85) else { return }
+        computerTurnTimer = 0
         if match.current === match.computer {
             if autotest { logAIMove(match, match.computer, label: "Player 2") }
             Task { @MainActor in await match.aiTurn(match.computer) }
@@ -298,21 +298,21 @@ extension Scene {
     /// Player panel: name, faction, lives, card count and leader.
     func drawStats(_ player: Player, _ match: Game, canAct: Bool) {
         let mine = player === match.human
-        let oy: Float = mine ? 666 : 263
-        renderer.image("img/icons/profile.png", R(128, oy + 13, 99, 108))
-        renderer.image("img/icons/icon_player_border.png", R(118, oy + 7, 116, 127))
+        let panelY: Float = mine ? 666 : 263
+        renderer.image("img/icons/profile.png", R(128, panelY + 13, 99, 108))
+        renderer.image("img/icons/icon_player_border.png", R(118, panelY + 7, 116, 127))
         let shield = R(106, mine ? 748 : 270, 50, 55)
         renderer.image("img/icons/deck_shield_\(player.faction).png", shield)
         if shield.contains(mouse) { hoverText = gameData.factionName(player.faction) + "\n" + gameData.factionDesc(player.faction) }
         let nameY: Float = mine ? 728 : 271
         renderer.text(mine ? playerName : (careerFightName ?? L("Player 2")), .gwent(24), x: 239, y: nameY, color: RGBA(r: 0.96, g: 0.85, b: 0.56, a: 1))
         renderer.text(gameData.factionName(player.faction), .ui(17), x: 239, y: nameY + 27, color: .gray(0.85), maxWidth: 190)
-        let hcY: Float = mine ? 680 : 356
-        renderer.image("img/icons/icon_card_count.png", R(240, hcY + 4, 30, 32))
-        renderer.text("\(player.hand.count)", .ui(30, bold: true), x: 274, y: hcY, color: RGBA(r: 0.93, g: 0.72, b: 0.2, a: 1))
-        let gy: Float = mine ? 678 : 352
-        renderer.image("img/icons/icon_gem_\(player.gems >= 1 ? "on" : "off").png", R(319, gy, 41, 42))
-        renderer.image("img/icons/icon_gem_\(player.gems >= 2 ? "on" : "off").png", R(360, gy, 41, 42))
+        let handCountY: Float = mine ? 680 : 356
+        renderer.image("img/icons/icon_card_count.png", R(240, handCountY + 4, 30, 32))
+        renderer.text("\(player.hand.count)", .ui(30, bold: true), x: 274, y: handCountY, color: RGBA(r: 0.93, g: 0.72, b: 0.2, a: 1))
+        let gemsY: Float = mine ? 678 : 352
+        renderer.image("img/icons/icon_gem_\(player.gems >= 1 ? "on" : "off").png", R(319, gemsY, 41, 42))
+        renderer.image("img/icons/icon_gem_\(player.gems >= 2 ? "on" : "off").png", R(360, gemsY, 41, 42))
         let scoreBadge = R(427, mine ? 708 : 305, 54, 54)
         renderer.image("img/icons/score_total_\(mine ? "me" : "op").png", scoreBadge)
         if player.total > player.opponent.total { renderer.image("img/icons/icon_high_score.png", R(scoreBadge.x - 14, scoreBadge.y - 12, 82, 78)) }
@@ -378,9 +378,9 @@ extension Scene {
     func processEvents(_ match: Game, _ dt: Float) {
         for event in match.events {
             switch event {
-            case .notify(let t, let icon): notes.append((t, icon)); if notes.count > 4 { notes.removeFirst(notes.count - 4) }
-            case .sound(let s): audio.play(s)
-            case .flash(let c): c.flash = 1
+            case .notify(let text, let icon): notes.append((text, icon)); if notes.count > 4 { notes.removeFirst(notes.count - 4) }
+            case .sound(let soundName): audio.play(soundName)
+            case .flash(let flashedCard): flashedCard.flash = 1
             case .anim, .burn, .coin: addFX(event)
             }
         }
@@ -399,14 +399,14 @@ extension Scene {
         hoverText = nil
         guard let note = notes.first else { return }
         noteT += dt
-        let dur: Float = autotest ? 0.5 : 1.25
-        let alpha = max(0, min(1, min(noteT / 0.15, (dur - noteT) / 0.2)))
+        let duration: Float = autotest ? 0.5 : 1.25
+        let alpha = max(0, min(1, min(noteT / 0.15, (duration - noteT) / 0.2)))
         let entry = min(1, noteT / 0.18), ease = 1 - (1 - entry) * (1 - entry)
         let font = Renderer.Font.gwent(34)
         let textWidth = min(900, renderer.measure(note.text, font, maxWidth: 900).w)
         let textHeight = renderer.measure(note.text, font, maxWidth: 900).h
-        let iw: Float = note.icon == nil ? 0 : 96
-        let w = textWidth + iw + 90, h = max(110, textHeight + 50)
+        let iconWidth: Float = note.icon == nil ? 0 : 96
+        let w = textWidth + iconWidth + 90, h = max(110, textHeight + 50)
         let card = R(960 - w / 2, 500 - h / 2 + (1 - ease) * 18, w, h)
         renderer.rect(R(0, 0, virtualWidth, virtualHeight), RGBA.black.alpha(0.25 * alpha))
         renderer.gradient(card, RGBA(r: 0.08, g: 0.07, b: 0.06, a: 0.93 * alpha), RGBA(r: 0.02, g: 0.02, b: 0.03, a: 0.95 * alpha), steps: 8)
@@ -414,9 +414,9 @@ extension Scene {
         renderer.rect(R(card.x, card.y + card.h - 1, card.w, 1), RGBA.goldDark.alpha(0.6 * alpha))
         renderer.frame(card, RGBA.goldDark.alpha(0.35 * alpha), 1)
         var x = card.x + 45
-        if let icon = note.icon { renderer.image("img/icons/\(icon).png", R(x - 10, card.mid.y - 52, 104, 104), color: .white.alpha(alpha)); x += iw + 10 }
+        if let icon = note.icon { renderer.image("img/icons/\(icon).png", R(x - 10, card.mid.y - 52, 104, 104), color: .white.alpha(alpha)); x += iconWidth + 10 }
         renderer.text(note.text, font, x: note.icon == nil ? card.mid.x : x, y: card.mid.y - textHeight / 2, color: RGBA(r: 0.97, g: 0.88, b: 0.62, a: alpha), maxWidth: 900, align: note.icon == nil ? .center : .left, shadow: nil)
-        if noteT >= dur { notes.removeFirst(); noteT = 0 }
+        if noteT >= duration { notes.removeFirst(); noteT = 0 }
     }
 
     /// Full-screen overlay with a set of cards to choose from.
@@ -447,9 +447,9 @@ extension Scene {
     /// Redraw phase overlay.
     func drawRedraw(_ match: Game) {
         let end = overlayCards(match.human.hand, title: L("Click a card to redraw it"),
-                               info: L("Redraws left: ") + "\(match.redrawsLeft)") { [weak self] c in
+                               info: L("Redraws left: ") + "\(match.redrawsLeft)") { [weak self] card in
             guard let match = self?.game, match.redrawsLeft > 0, !match.busy else { return }
-            if let replacement = match.redraw(c) { replacement.hasPos = false }
+            if let replacement = match.redraw(card) { replacement.hasPos = false }
             if match.redrawsLeft == 0 { match.finishRedraw() }
         }
         goldButton(R(960 - 150, min(990, end.y + 10), 300, 60), L("Done"), font: .gwent(30)) { [weak self] in self?.game?.finishRedraw() }
@@ -459,25 +459,25 @@ extension Scene {
     /// Overlay for a pending choice of the human player.
     func drawChoice(_ choice: Choice, _ match: Game) {
         switch choice.kind {
-        case .cards(let cards, let mn, let mx):
-            let multi = mx > 1 || mn != 1
-            let end = overlayCards(cards, title: choice.title, info: multi ? L("Selected: ") + "\(multiSel.count) / \(mx)" : nil, marked: multiSel) { [weak self] c in
+        case .cards(let cards, let minCount, let maxCount):
+            let multi = maxCount > 1 || minCount != 1
+            let end = overlayCards(cards, title: choice.title, info: multi ? L("Selected: ") + "\(multiSel.count) / \(maxCount)" : nil, marked: multiSel) { [weak self] c in
                 guard let strongSelf = self else { return }
                 if !multi { match.resolveChoice([cards.firstIndex { $0 === c }!]); return }
                 if let i = strongSelf.multiSel.firstIndex(where: { $0 === c }) { strongSelf.multiSel.remove(at: i) }
-                else if strongSelf.multiSel.count < mx { strongSelf.multiSel.append(c) }
+                else if strongSelf.multiSel.count < maxCount { strongSelf.multiSel.append(c) }
             }
-            var bx: Float = 960 - 150
+            var buttonX: Float = 960 - 150
             if multi {
-                let ok = multiSel.count >= mn && multiSel.count <= mx
-                goldButton(R(choice.canCancel ? 960 - 320 : bx, min(990, end.y + 10), 300, 60), L("Done"), font: .gwent(30), enabled: ok) { [weak self] in
+                let selectionValid = multiSel.count >= minCount && multiSel.count <= maxCount
+                goldButton(R(choice.canCancel ? 960 - 320 : buttonX, min(990, end.y + 10), 300, 60), L("Done"), font: .gwent(30), enabled: selectionValid) { [weak self] in
                     guard let strongSelf = self else { return }
-                    let idx = strongSelf.multiSel.compactMap { m in cards.firstIndex { $0 === m } }
+                    let idx = strongSelf.multiSel.compactMap { card in cards.firstIndex { $0 === card } }
                     strongSelf.multiSel = []; match.resolveChoice(idx)
                 }
-                bx = 960 + 20
+                buttonX = 960 + 20
             }
-            if choice.canCancel { goldButton(R(multi ? bx : 960 - 150, min(990, end.y + 10), 300, 60), L("Skip"), font: .serif(24, bold: true)) { [weak self] in self?.multiSel = []; match.resolveChoice(nil) } }
+            if choice.canCancel { goldButton(R(multi ? buttonX : 960 - 150, min(990, end.y + 10), 300, 60), L("Skip"), font: .serif(24, bold: true)) { [weak self] in self?.multiSel = []; match.resolveChoice(nil) } }
             if let h = hover { drawPreview(h) }
         case .reveal(let cards):
             let end = overlayCards(cards, title: choice.title, info: nil) { _ in match.resolveChoice(nil) }
@@ -486,9 +486,9 @@ extension Scene {
         case .options(let opts):
             renderer.rect(R(0, 0, virtualWidth, virtualHeight), RGBA.black.alpha(0.55))
             let cols = opts.count > 4 ? 5 : opts.count
-            let bw: Float = opts.count > 4 ? 120 : 340, bh: Float = 64
+            let buttonWidth: Float = opts.count > 4 ? 120 : 340, buttonHeight: Float = 64
             let rowsN = Int((Double(opts.count) / Double(cols)).rounded(.up))
-            let boxH: Float = 170 + Float(rowsN) * (bh + 16)
+            let boxH: Float = 170 + Float(rowsN) * (buttonHeight + 16)
             let box = R(960 - 420, 540 - boxH / 2, 840, boxH)
             renderer.gradient(box, RGBA(r: 0.12, g: 0.09, b: 0.05, a: 0.97), RGBA(r: 0.05, g: 0.04, b: 0.02, a: 0.97), steps: 10)
             renderer.frame(box, RGBA.goldDark, 2)
@@ -496,8 +496,8 @@ extension Scene {
             for (i, option) in opts.enumerated() {
                 let row = i / cols, col = i % cols
                 let inRow = min(cols, opts.count - row * cols)
-                let x0 = 960 - (Float(inRow) * bw + Float(inRow - 1) * 16) / 2
-                goldButton(R(x0 + Float(col) * (bw + 16), box.y + 120 + Float(row) * (bh + 16), bw, bh), option, font: .serif(22, bold: true)) { match.resolveChoice([i]) }
+                let x0 = 960 - (Float(inRow) * buttonWidth + Float(inRow - 1) * 16) / 2
+                goldButton(R(x0 + Float(col) * (buttonWidth + 16), box.y + 120 + Float(row) * (buttonHeight + 16), buttonWidth, buttonHeight), option, font: .serif(22, bold: true)) { match.resolveChoice([i]) }
             }
         case .rows:
             let box = BoardLayout.rowChoiceBar

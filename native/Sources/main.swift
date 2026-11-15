@@ -17,11 +17,11 @@ final class GameView: MTKView {
     var renderHeight = 0 { didSet { updateDrawableSize() } }
     override var acceptsFirstResponder: Bool { true }
     /// Accepts the first click even when the window is not focused.
-    override func acceptsFirstMouse(for e: NSEvent?) -> Bool { true }
+    override func acceptsFirstMouse(for event: NSEvent?) -> Bool { true }
     /// No Touch Bar.
     override func makeTouchBar() -> NSTouchBar? { nil }
     /// Updates the drawable size when the window is resized.
-    override func setFrameSize(_ s: NSSize) { super.setFrameSize(s); updateDrawableSize() }
+    override func setFrameSize(_ size: NSSize) { super.setFrameSize(size); updateDrawableSize() }
     /// Updates the drawable size when the window changes screen scale.
     override func viewDidChangeBackingProperties() { super.viewDidChangeBackingProperties(); updateDrawableSize() }
     /// Sets the drawable size from the view size and the render resolution option.
@@ -103,23 +103,23 @@ final class AppDelegate: NSObject, NSApplicationDelegate, MTKViewDelegate, NSMen
     }
 
     /// Sets up the window, the renderer and the scene; handles the GWENT_* test options.
-    func applicationDidFinishLaunching(_ n: Notification) {
+    func applicationDidFinishLaunching(_ notification: Notification) {
         let defaults = UserDefaults.standard
-        if !defaults.bool(forKey: "migratedLegacyDefaults"), let old = UserDefaults(suiteName: "pl.retronative.gwint.native") {
+        if !defaults.bool(forKey: "migratedLegacyDefaults"), let legacyDefaults = UserDefaults(suiteName: "pl.retronative.gwint.native") {
             for key in ["customDecks", "favoriteDeck", "frameLimit", "lang", "renderRes", "saveDir"] where defaults.object(forKey: key) == nil {
-                if let value = old.object(forKey: key) { defaults.set(value, forKey: key) }
+                if let value = legacyDefaults.object(forKey: key) { defaults.set(value, forKey: key) }
             }
             defaults.set(true, forKey: "migratedLegacyDefaults")
         }
-        let me = NSRunningApplication.current
+        let currentApp = NSRunningApplication.current
         if let other = NSRunningApplication.runningApplications(withBundleIdentifier: Bundle.main.bundleIdentifier ?? "")
-            .first(where: { $0.processIdentifier != me.processIdentifier && !$0.isTerminated }) {
+            .first(where: { $0.processIdentifier != currentApp.processIdentifier && !$0.isTerminated }) {
             other.activate(); NSApp.terminate(nil); return
         }
         if let icon = Bundle.main.image(forResource: "AppIcon") { NSApp.applicationIconImage = icon }
         CTFontManagerRegisterFontsForURL(resources.appendingPathComponent("game/fonts/gwent.ttf") as CFURL, .process, nil)
 
-        GameData.shared = GameData(dir: resources.appendingPathComponent("data"))
+        GameData.shared = GameData(directory: resources.appendingPathComponent("data"))
         GameData.shared.language = lang
 
         window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 1440, height: 810),
@@ -130,8 +130,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, MTKViewDelegate, NSMen
         window.collectionBehavior = [.fullScreenPrimary]
         window.setFrameAutosaveName("GwentReimaginedMain")
         if window.frame.origin == .zero { window.center() }
-        if autotest || env["GWENT_SCREEN"] == "builtin", let builtInScreen = NSScreen.screens.first(where: { scr in
-            let id = (scr.deviceDescription[NSDeviceDescriptionKey("NSScreenNumber")] as? NSNumber)?.uint32Value ?? 0
+        if autotest || env["GWENT_SCREEN"] == "builtin", let builtInScreen = NSScreen.screens.first(where: { screen in
+            let id = (screen.deviceDescription[NSDeviceDescriptionKey("NSScreenNumber")] as? NSNumber)?.uint32Value ?? 0
             return CGDisplayIsBuiltin(id) != 0 }) { window.setFrame(builtInScreen.visibleFrame, display: false) }
         if env["GWENT_SHOT"] == "1" { window.styleMask = [.borderless]; window.setFrame(NSRect(x: 0, y: 0, width: 1280, height: 720), display: false) }
         view = GameView(frame: window.contentView!.bounds)
@@ -147,18 +147,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate, MTKViewDelegate, NSMen
         scene?.onLanguageChange = { [weak self] code in self?.lang = code; self?.refreshMenus() }
         scene?.host = self
         gamepad.scene = scene
-        if autotest { audio.muted = true; audio.musicOn = false; scene?.autotest = true; scene?.log = { [weak self] s in self?.log(s) } }
+        if autotest { audio.muted = true; audio.musicOn = false; scene?.autotest = true; scene?.log = { [weak self] message in self?.log(message) } }
         if env["GWENT_MUTE"] == "1" { audio.muted = true; audio.musicOn = false }
         switch env["GWENT_SHOW"] ?? "" {
         case "builder": scene?.builder.load(GameData.shared.decks[0], customIndex: nil); scene?.screen = .builder; scene?.leaderPickerOpen = env["GWENT_LEADERS"] == "1"
-        case "decks": scene?.screen = .decks; if let faction = env["GWENT_FACTION"] { scene?.selFaction = faction; scene?.deckStage = 1; if let preview = env["GWENT_PREVIEW"], let n = Int(preview) { scene?.previewDeck = n } }
+        case "decks": scene?.screen = .decks; if let faction = env["GWENT_FACTION"] { scene?.selFaction = faction; scene?.deckStage = 1; if let preview = env["GWENT_PREVIEW"], let notification = Int(preview) { scene?.previewDeck = notification } }
         case "rules": scene?.openRules()
         case "options": scene?.optionsOpen = true
         case "saveprompt": scene?.askSaveLocation(then: nil)
         case "career":
             if let faction = env["GWENT_CAREER"], !Career.shared.active { Career.shared.start(faction); for i in 0..<Int(env["GWENT_BEATEN"] ?? "0")! { _ = Career.shared.win(i) } }
             scene?.screen = .career
-            if let fight = env["GWENT_FIGHT"], let fi = Int(fight) { scene?.startCareerFight(fi); scene?.game?.autoHuman = true }
+            if let fight = env["GWENT_FIGHT"], let fightIndex = Int(fight) { scene?.startCareerFight(fightIndex); scene?.game?.autoHuman = true }
             if env["GWENT_REWARD"] == "1" { scene?.careerRewards = Career.shared.rewardOptions(3); scene?.careerNewLeader = Career.shared.leaders.last }
         case "start": scene?.screen = .decks
         case "licenses": scene?.creditsOpen = true
@@ -178,7 +178,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, MTKViewDelegate, NSMen
         NSApp.activate(ignoringOtherApps: true)
     }
     /// Quits when the window is closed.
-    func applicationShouldTerminateAfterLastWindowClosed(_ s: NSApplication) -> Bool { true }
+    func applicationShouldTerminateAfterLastWindowClosed(_ application: NSApplication) -> Bool { true }
 
     /// Not used: the drawable size is managed manually.
     func mtkView(_ metalView: MTKView, drawableSizeWillChange size: CGSize) {}
@@ -204,10 +204,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, MTKViewDelegate, NSMen
             let menuItem = NSMenuItem(); let submenu = menu ?? NSMenu(title: title); submenu.title = title
             items.forEach { submenu.addItem($0) }; menuItem.submenu = submenu; main.addItem(menuItem)
         }
-        func item(_ text: String, _ a: Selector?, _ key: String = "", _ mods: NSEvent.ModifierFlags = .command) -> NSMenuItem {
-            let i = NSMenuItem(title: text, action: a, keyEquivalent: key); i.keyEquivalentModifierMask = mods; return i
+        func item(_ text: String, _ action: Selector?, _ key: String = "", _ mods: NSEvent.ModifierFlags = .command) -> NSMenuItem {
+            let i = NSMenuItem(title: text, action: action, keyEquivalent: key); i.keyEquivalentModifierMask = mods; return i
         }
-        func submenuItem(_ text: String, _ m: NSMenu) -> NSMenuItem { let i = NSMenuItem(title: text, action: nil, keyEquivalent: ""); i.submenu = m; return i }
+        func submenuItem(_ text: String, _ menu: NSMenu) -> NSMenuItem { let i = NSMenuItem(title: text, action: nil, keyEquivalent: ""); i.submenu = menu; return i }
         sub("GwentReimagined", [item(L("About") + " GwentReimagined", #selector(showAbout)), item(L("Licenses") + "…", #selector(showCredits)), .separator(),
                       item(L("Hide") + " GwentReimagined", #selector(NSApplication.hide(_:)), "h"),
                       item(L("Quit") + " GwentReimagined", #selector(NSApplication.terminate(_:)), "q")])
@@ -219,22 +219,22 @@ final class AppDelegate: NSObject, NSApplicationDelegate, MTKViewDelegate, NSMen
         refreshMenus()
     }
     /// Refreshes menu state before it opens.
-    func menuNeedsUpdate(_ m: NSMenu) { refreshMenus() }
+    func menuNeedsUpdate(_ menu: NSMenu) { refreshMenus() }
     /// Updates check marks in the menus.
     func refreshMenus() {
         for menuItem in resMenu.items { menuItem.state = menuItem.tag == renderRes ? .on : .off }
-        let hz = screenFPS
-        for menuItem in fpsMenu.items { menuItem.state = menuItem.tag == frameLimit ? .on : .off; menuItem.title = menuItem.tag > hz ? "\(menuItem.tag) FPS (display: \(hz) Hz)" : "\(menuItem.tag) FPS" }
+        let refreshRate = screenFPS
+        for menuItem in fpsMenu.items { menuItem.state = menuItem.tag == frameLimit ? .on : .off; menuItem.title = menuItem.tag > refreshRate ? "\(menuItem.tag) FPS (display: \(refreshRate) Hz)" : "\(menuItem.tag) FPS" }
         for menuItem in langMenu.items { menuItem.state = (menuItem.representedObject as? String) == lang ? .on : .off }
         for menuItem in soundMenu.items where menuItem.tag == 1 { menuItem.state = audio?.musicOn == true ? .on : .off }
     }
     /// Disables frame limits the screen cannot show.
-    func validateMenuItem(_ m: NSMenuItem) -> Bool { m.menu === fpsMenu ? m.tag <= screenFPS : true }
+    func validateMenuItem(_ menuItem: NSMenuItem) -> Bool { menuItem.menu === fpsMenu ? menuItem.tag <= screenFPS : true }
     /// Changes the render resolution.
     func setRenderRes(_ height: Int) { renderRes = height; view.renderHeight = height; refreshMenus() }
     /// Changes the frame limit.
     func setFrameLimit(_ limit: Int) { frameLimit = limit; applyFrameRate(); refreshMenus() }
-    var availableFrameLimits: [Int] { let hz = screenFPS; let limits = frameLimits.filter { $0 <= hz && hz % $0 == 0 }; return limits.isEmpty ? [hz] : limits }
+    var availableFrameLimits: [Int] { let refreshRate = screenFPS; let limits = frameLimits.filter { $0 <= refreshRate && refreshRate % $0 == 0 }; return limits.isEmpty ? [refreshRate] : limits }
     var effectiveFrameLimit: Int { let available = availableFrameLimits; return available.contains(frameLimit) ? frameLimit : (available.last { $0 <= frameLimit } ?? available.last!) }
     var link: CADisplayLink?
     /// Creates the display link that drives rendering at the chosen frame rate.

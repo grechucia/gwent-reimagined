@@ -174,8 +174,8 @@ extension Game {
         let opponent = player.opponent!
         for q in [player, opponent] {
             let options = q.grave.filter { $0.isUnit }
-            let t = q === player ? await pickOne(player, L("Which card to restore from your grave?"), options, ai: strongestCard) : options.randomElement()
-            if let t = t { q.grave.removeAll { $0 === t }; resetCard(t); await placeUnit(t, by: q, row: t.allowedRows.first ?? .close, side: q) }
+            let revived = q === player ? await pickOne(player, L("Which card to restore from your grave?"), options, ai: strongestCard) : options.randomElement()
+            if let t = revived { q.grave.removeAll { $0 === t }; resetCard(t); await placeUnit(t, by: q, row: t.allowedRows.first ?? .close, side: q) }
         }
     }
 
@@ -262,7 +262,7 @@ extension Game {
     func leaderAnnaHenriettaLadyship(_ player: Player, free: Bool) async {
         let opponent = player.opponent!
         let options = (player.rowCards + opponent.rowCards).filter { $0.revertTo != nil }
-        if let chosen = await pickOne(player, L("Choose the monster to revert to its primal form."), options, ai: { $0.first }), let originalKey = chosen.revertTo, let d = gameData.cards[originalKey] { chosen.transform(into: d); chosen.revertTo = nil }
+        if let chosen = await pickOne(player, L("Choose the monster to revert to its primal form."), options, ai: { $0.first }), let originalKey = chosen.revertTo, let originalData = gameData.cards[originalKey] { chosen.transform(into: originalData); chosen.revertTo = nil }
     }
 
     /// Take from your discard pile in your hand 3 or less unit cards, that died in the current round.
@@ -363,7 +363,7 @@ extension Game {
         let opponent = player.opponent!
         let three = Array(opponent.deck.prefix(3))
         if let chosen = await pickOne(player, L("Choose a card to add to your hand (others will be discarded)"), three, ai: strongestCard) {
-            opponent.deck.removeAll { x in three.contains { $0 === x } }
+            opponent.deck.removeAll { card in three.contains { $0 === card } }
             chosen.owner = player; player.hand.append(chosen)
             for x in three where x !== chosen { opponent.grave.append(x) }
         }

@@ -10,10 +10,10 @@ import UniformTypeIdentifiers
 /// Settings provided by the platform-specific app delegate and shown in Options.
 @MainActor protocol GameHost: AnyObject {
     var renderRes: Int { get }
-    func setRenderRes(_ px: Int)
+    func setRenderRes(_ height: Int)
     var availableFrameLimits: [Int] { get }
     var effectiveFrameLimit: Int { get }
-    func setFrameLimit(_ f: Int)
+    func setFrameLimit(_ limit: Int)
     var supportsWindowModes: Bool { get }
     var isFullScreen: Bool { get }
     func setFullScreen(_ on: Bool)
@@ -108,8 +108,8 @@ import UniformTypeIdentifiers
     final class PickerDelegate: NSObject, UIDocumentPickerDelegate {
         let done: (URL?) -> Void
         init(_ done: @escaping (URL?) -> Void) { self.done = done }
-        func documentPicker(_ c: UIDocumentPickerViewController, didPickDocumentsAt urls: [URL]) { done(urls.first) }
-        func documentPickerWasCancelled(_ c: UIDocumentPickerViewController) { done(nil) }
+        func documentPicker(_ picker: UIDocumentPickerViewController, didPickDocumentsAt urls: [URL]) { done(urls.first) }
+        func documentPickerWasCancelled(_ picker: UIDocumentPickerViewController) { done(nil) }
     }
 
     /// Restores access to the save folder chosen earlier on iOS.

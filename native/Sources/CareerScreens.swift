@@ -25,19 +25,19 @@ extension Scene {
         renderer.text(L("You start with weak cards of the chosen faction. Every career is generated anew: different places, opponents and bosses. Win, earn cards and reach the top."),
                .serif(20, italic: true), x: 960, y: 96, color: .gray(0.88), maxWidth: 1300, align: .center)
         renderer.text(L("Difficulty") + ":", .serif(22, bold: true), x: 960 - 470, y: 160, color: RGBA.gold)
-        let dd: [(String, String)] = [(L("easy · 6 chapters"), ""), (L("normal · 8 chapters"), ""), (L("hard · 10 chapters"), "")]
-        for (i, tile) in dd.enumerated() {
+        let difficultyOptions: [(String, String)] = [(L("easy · 6 chapters"), ""), (L("normal · 8 chapters"), ""), (L("hard · 10 chapters"), "")]
+        for (i, tile) in difficultyOptions.enumerated() {
             let area = R(960 - 230 + Float(i) * 250, 150, 240, 46)
             goldButton(area, (careerDiffPick == i ? "✓ " : "") + tile.0, font: .serif(17, bold: true)) { [weak self] in self?.careerDiffPick = i }
             if careerDiffPick == i { renderer.rect(area, RGBA(r: 1, g: 0.78, b: 0.3, a: 0.22)); renderer.frame(area.inset(-3), RGBA(r: 1, g: 0.85, b: 0.4, a: 1), 3) }
         }
         renderer.text(L("Choose the faction to start your career with:"), .serif(22, bold: true), x: 960, y: 214, color: RGBA.gold, align: .center)
         let facs = DeckBuilder.factionsOrder
-        let tw: Float = 300, th: Float = 214, gx: Float = 24, gy: Float = 18
-        let x0 = 960 - (5 * tw + 4 * gx) / 2
+        let tileWidth: Float = 300, tileHeight: Float = 214, gapX: Float = 24, gapY: Float = 18
+        let x0 = 960 - (5 * tileWidth + 4 * gapX) / 2
         for (i, faction) in facs.enumerated() {
             let progress = ease(deckSwitchT * 1.6 - Float(i) * 0.04)
-            let area = R(x0 + Float(i % 5) * (tw + gx), 256 + Float(i / 5) * (th + gy) + (1 - progress) * 20, tw, th)
+            let area = R(x0 + Float(i % 5) * (tileWidth + gapX), 256 + Float(i / 5) * (tileHeight + gapY) + (1 - progress) * 20, tileWidth, tileHeight)
             let hovered = area.contains(mouse)
             if hovered { renderer.quad(glowTex, R(area.x - 40, area.y - 40, area.w + 80, area.h + 80), color: RGBA(r: 1, g: 0.72, b: 0.3, a: 0.3)) }
             glassPanel(area, alpha: 0.75 * progress)
@@ -53,8 +53,8 @@ extension Scene {
     func drawCareerLadder() {
         let chapterCount = career.chapterCount
         let selectedChapter = min(careerChapter ?? career.currentChapter, chapterCount - 1)
-        let dn = Career.difficultyNames[career.difficulty]
-        renderer.text(gameData.factionName(career.faction) + " · " + L(dn) + " · " + L("opponents defeated") + ": \(career.beaten.count)/\(career.totalFights)",
+        let difficultyName = Career.difficultyNames[career.difficulty]
+        renderer.text(gameData.factionName(career.faction) + " · " + L(difficultyName) + " · " + L("opponents defeated") + ": \(career.beaten.count)/\(career.totalFights)",
                .serif(20, italic: true), x: 960, y: 98, color: .gray(0.85), align: .center)
         let colL = CareerLayout.chaptersColumn
         glassPanel(colL, alpha: 0.7)
@@ -74,32 +74,32 @@ extension Scene {
             if open { button(area) { [weak self] in self?.careerChapter = chapter } }
         }
         let fights = career.chapter(selectedChapter).fights
-        let cw: Float = 230, chh = cw / 0.697, gap: Float = 24
-        let x0: Float = 460 + (1040 - (4 * cw + 3 * gap)) / 2
+        let cardWidthLarge: Float = 230, cardHeightLarge = cardWidthLarge / 0.697, gap: Float = 24
+        let x0: Float = 460 + (1040 - (4 * cardWidthLarge + 3 * gap)) / 2
         renderer.text(L("Chapter") + " \(selectedChapter + 1)/\(chapterCount): " + career.chapter(selectedChapter).title, .gwent(34), x: 980, y: 150, color: RGBA.gold, align: .center)
         for (slot, fight) in fights.enumerated() {
             let fightIndex = career.index(selectedChapter, slot)
             let progress = ease(deckSwitchT * 1.5 - Float(slot) * 0.08)
-            let x = x0 + Float(slot) * (cw + gap)
-            let tile = R(x - 10, 200 + (1 - progress) * 24, cw + 20, chh + 210)
+            let x = x0 + Float(slot) * (cardWidthLarge + gap)
+            let tile = R(x - 10, 200 + (1 - progress) * 24, cardWidthLarge + 20, cardHeightLarge + 210)
             let open = career.unlocked(selectedChapter, slot), won = career.beaten.contains(fightIndex)
             let hovered = tile.contains(mouse) && open
             if hovered { renderer.quad(glowTex, R(tile.x - 40, tile.y - 40, tile.w + 80, tile.h + 80), color: RGBA(r: 1, g: 0.72, b: 0.3, a: 0.28)) }
             glassPanel(tile, alpha: 0.65 * progress)
             renderer.frame(tile, fight.boss ? RGBA(r: 0.95, g: 0.35, b: 0.25, a: 0.8 * progress) : RGBA.gold.alpha(0.35 * progress), fight.boss ? 2.5 : 1.5)
-            let od = career.opponentDeck(fightIndex, fight)
-            let cardRect = R(x, tile.y + 10, cw, chh)
-            if let cardData = gameData.cards[fight.portrait] ?? gameData.cards[od.leader] {
+            let opponentDeck = career.opponentDeck(fightIndex, fight)
+            let cardRect = R(x, tile.y + 10, cardWidthLarge, cardHeightLarge)
+            if let cardData = gameData.cards[fight.portrait] ?? gameData.cards[opponentDeck.leader] {
                 drawCardLarge(Card(cardData, owner: nil), cardRect)
                 if cardRect.contains(mouse) { builderHover = Card(cardData, owner: nil) }
             }
             if !open { renderer.rect(cardRect, RGBA.black.alpha(0.6)); renderer.text("🔒", .ui(54), x: cardRect.mid.x, y: cardRect.mid.y - 34, color: .white, align: .center) }
-            var textY = cardRect.y + chh + 10
-            textY += renderer.text((fight.boss ? "☠ " : "") + fight.name, .serif(20, bold: true), x: x, y: textY, color: fight.boss ? RGBA(r: 1, g: 0.6, b: 0.5, a: progress) : RGBA.white.alpha(progress), maxWidth: cw).h + 2
-            textY += renderer.text(gameData.factionName(fight.faction), .ui(15), x: x, y: textY, color: RGBA.gray(0.8, progress), maxWidth: cw).h + 2
+            var textY = cardRect.y + cardHeightLarge + 10
+            textY += renderer.text((fight.boss ? "☠ " : "") + fight.name, .serif(20, bold: true), x: x, y: textY, color: fight.boss ? RGBA(r: 1, g: 0.6, b: 0.5, a: progress) : RGBA.white.alpha(progress), maxWidth: cardWidthLarge).h + 2
+            textY += renderer.text(gameData.factionName(fight.faction), .ui(15), x: x, y: textY, color: RGBA.gray(0.8, progress), maxWidth: cardWidthLarge).h + 2
             let diff = fight.cap >= 99 ? L("Full strength") : L("Card strength up to") + " \(fight.cap)"
-            renderer.text(diff + (fight.heroes > 0 ? " · " + L("heroes") + ": \(fight.heroes)" : ""), .ui(14), x: x, y: textY, color: RGBA.gold.alpha(0.8 * progress), maxWidth: cw)
-            let area = R(x, tile.y + tile.h - 56, cw, 46)
+            renderer.text(diff + (fight.heroes > 0 ? " · " + L("heroes") + ": \(fight.heroes)" : ""), .ui(14), x: x, y: textY, color: RGBA.gold.alpha(0.8 * progress), maxWidth: cardWidthLarge)
+            let area = R(x, tile.y + tile.h - 56, cardWidthLarge, 46)
             if won {
                 renderer.text("✓ " + L("Defeated"), .serif(18, bold: true), x: area.mid.x, y: area.y - 26, color: RGBA(r: 0.5, g: 0.9, b: 0.5, a: progress), align: .center)
                 goldButton(area, L("Play again"), font: .serif(18, bold: true)) { [weak self] in self?.startCareerFight(fightIndex) }
@@ -107,7 +107,7 @@ extension Scene {
                 goldButton(area, fight.boss ? L("Fight the boss") : L("Fight"), font: .serif(20, bold: true)) { [weak self] in self?.startCareerFight(fightIndex) }
             } else {
                 renderer.text(fight.boss ? L("Defeat the three opponents") : L("Defeat the previous boss"),
-                       .ui(14), x: area.mid.x, y: area.y + 4, color: .gray(0.55), maxWidth: cw, align: .center)
+                       .ui(14), x: area.mid.x, y: area.y + 4, color: .gray(0.55), maxWidth: cardWidthLarge, align: .center)
             }
         }
         if career.finished {
@@ -155,14 +155,14 @@ extension Scene {
         renderer.text(options.isEmpty ? L("You already own every card of this faction.")
                             : L("Choose a card to add to your collection:"),
                .serif(24, italic: true), x: 960, y: 150, color: .white, align: .center)
-        if let nl = careerNewLeader, let lc = gameData.cards[nl] {
-            renderer.text("★ " + L("New leader") + ": " + gameData.cardName(lc), .serif(22, bold: true), x: 960, y: 196, color: RGBA.gold, align: .center)
+        if let newLeaderKey = careerNewLeader, let leaderData = gameData.cards[newLeaderKey] {
+            renderer.text("★ " + L("New leader") + ": " + gameData.cardName(leaderData), .serif(22, bold: true), x: 960, y: 196, color: RGBA.gold, align: .center)
         }
-        let cw: Float = 300, chh = cw / 0.697, gap: Float = 60
-        let x0 = 960 - (Float(options.count) * cw + Float(max(0, options.count - 1)) * gap) / 2
+        let cardWidthLarge: Float = 300, cardHeightLarge = cardWidthLarge / 0.697, gap: Float = 60
+        let x0 = 960 - (Float(options.count) * cardWidthLarge + Float(max(0, options.count - 1)) * gap) / 2
         for (i, slot) in options.enumerated() {
             guard let cardData = gameData.cards[slot] else { continue }
-            let base = R(x0 + Float(i) * (cw + gap), 260, cw, chh)
+            let base = R(x0 + Float(i) * (cardWidthLarge + gap), 260, cardWidthLarge, cardHeightLarge)
             let hovered = base.contains(mouse)
             let cardRect = hovered ? R(base.x - 6, base.y - 10, base.w + 12, base.h + 12) : base
             if hovered { renderer.quad(glowTex, R(cardRect.x - 50, cardRect.y - 50, cardRect.w + 100, cardRect.h + 100), color: RGBA(r: 1, g: 0.75, b: 0.3, a: 0.45)) }

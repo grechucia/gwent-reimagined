@@ -148,9 +148,9 @@ extension Game {
         if card.data.abilities.contains(where: { $0.hasPrefix("avenger") }) {
             for targetKey in card.data.targets {
                 guard let cardData = gameData.cards[targetKey], cardData.isUnit else { continue }
-                let n: Card
-                if let i = side.deck.firstIndex(where: { $0.key == targetKey }) { n = side.deck.remove(at: i) } else { n = Card(cardData, owner: side) }
-                n.owner = side; side.row(RowType.from(cardData.row) ?? currentRow).cards.append(n); n.flash = 1
+                let summoned: Card
+                if let i = side.deck.firstIndex(where: { $0.key == targetKey }) { summoned = side.deck.remove(at: i) } else { summoned = Card(cardData, owner: side) }
+                summoned.owner = side; side.row(RowType.from(cardData.row) ?? currentRow).cards.append(summoned); summoned.flash = 1
             }
         }
     }
@@ -220,8 +220,8 @@ extension Game {
 
     /// Decoy: Swap with a card on the battlefield to return it to your hand.
     func specialDecoy(_ card: Card, by player: Player, row: RowType?, rowOwner: Player?, target: Card?, kind: String) async {
-        if let targetCard = target, let r = player.rowOf(targetCard), let i = player.row(r).cards.firstIndex(where: { $0 === targetCard }) {
-            player.row(r).cards[i] = card
+        if let targetCard = target, let targetRow = player.rowOf(targetCard), let i = player.row(targetRow).cards.firstIndex(where: { $0 === targetCard }) {
+            player.row(targetRow).cards[i] = card
             resetCard(targetCard); targetCard.owner = player; player.hand.append(targetCard)
             sound("decoy")
         } else { player.grave.append(card) }
@@ -238,7 +238,7 @@ extension Game {
 
     /// Curse: Place on your or opponent's battlefield on any row. Next unit card (not hero) that will be placed on this row will be destroyed and it's abilities will not work
     func specialCurse(_ card: Card, by player: Player, row: RowType?, rowOwner: Player?, target: Card?, kind: String) async {
-        var dest: (Player, RowType)? = rowOwner.flatMap { q in row.map { (q, $0) } }
+        var dest: (Player, RowType)? = rowOwner.flatMap { owner in row.map { (owner, $0) } }
         if dest == nil { dest = await pickRow(player, gameData.abilityName("curse"), curseRows(by: player)) { 3 + Int.random(in: 0..<3) } }
         if let (q, rowArea) = dest { q.row(rowArea).curse = card } else { player.grave.append(card) }
         sound("curse")
@@ -252,7 +252,7 @@ extension Game {
         if let chosenRow = rowType {
             let dest: RowType = chosenRow == .close ? .ranged : .siege
             let moving = opponent.row(chosenRow).cards.filter { !$0.hero }
-            opponent.row(chosenRow).cards.removeAll { m in moving.contains { $0 === m } }
+            opponent.row(chosenRow).cards.removeAll { card in moving.contains { $0 === card } }
             opponent.row(dest).cards.append(contentsOf: moving)
             sound("knockback")
         }

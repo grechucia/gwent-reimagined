@@ -41,7 +41,7 @@ final class Scene {
     var hover: Card?
     var notes: [(text: String, icon: String?)] = []
     var noteT: Float = 0
-    var aiT: Float = 0
+    var computerTurnTimer: Float = 0
     var builder = DeckBuilder()
     var builderHover: Card?
     var builderSaved: Float = 0
@@ -87,8 +87,8 @@ final class Scene {
     var deckStage = -1
     var favoriteDeckIndex: Int? {
         get {
-            guard let stored = SaveStore.shared["favoriteDeck"] as? String, let n = Int(stored.dropFirst()) else { return nil }
-            let i = stored.hasPrefix("c") ? gameData.decks.count + n : n
+            guard let stored = SaveStore.shared["favoriteDeck"] as? String, let deckIndex = Int(stored.dropFirst()) else { return nil }
+            let i = stored.hasPrefix("c") ? gameData.decks.count + deckIndex : deckIndex
             return i >= 0 && i < allDecks.count ? i : nil
         }
         set {
@@ -108,7 +108,7 @@ final class Scene {
     var scrollTargetL: Float = 0, scrollTargetR: Float = 0
 
     /// A floating ember or dust particle of the menu background.
-    struct Particle { var p: SIMD2<Float>; var v: SIMD2<Float>; var life: Float; var max: Float; var size: Float; var a: Float; var ember: Bool; var depth: Float }
+    struct Particle { var position: SIMD2<Float>; var velocity: SIMD2<Float>; var life: Float; var lifetime: Float; var size: Float; var alpha: Float; var ember: Bool; var depth: Float }
 
     init(renderer: Renderer, audio: Audio) {
         self.renderer = renderer; self.audio = audio
@@ -129,7 +129,7 @@ final class Scene {
     /// Right click / long press: card details or cancel.
     func rightClick() { selected = nil }
     /// Scroll wheel or drag.
-    func scroll(_ dy: Float) { wheel += dy }
+    func scroll(_ delta: Float) { wheel += delta }
     /// Keyboard input (Esc closes overlays and cancels choices).
     func keyDown(_ code: UInt16) {
         if code == 53 && rulesOpen { closeRules(); return }
@@ -140,7 +140,7 @@ final class Scene {
         if code == 53 && optionsOpen { optionsOpen = false; game?.paused = false; return }
         if screen == .decks && (code == 51 || code == 53) && previewDeck != nil { previewDeck = nil; deckSwitchT = 0; return }
         if screen == .decks && code == 51 && deckStage >= 0 { deckStage -= 1; deckSwitchT = 0; return }
-        if code == 53 { selected = nil; if let match = game, let ch = match.choice, ch.canCancel { multiSel = []; match.resolveChoice(nil) } }
+        if code == 53 { selected = nil; if let match = game, let pending = match.choice, pending.canCancel { multiSel = []; match.resolveChoice(nil) } }
     }
 
     /// Draws one frame of the current screen and overlays.
@@ -179,7 +179,7 @@ final class Scene {
             [1100, 380, 75, 95, 1, 1.0, 7.4, 2.5], [1290, 260, 60, 75, 1, 0.9, 8.1, 0.2], [1500, 390, 70, 90, 1, 1.0, 6.8, 1.4],
             [1680, 300, 55, 70, 1, 0.9, 9.2, 3.1], [1750, 390, 70, 85, 1, 1.0, 7.0, 0.8], [470, 720, 95, 105, 1, 1.1, 7.9, 2.0],
             [1660, 760, 80, 95, 1, 1.2, 6.6, 1.2]]
-        return values.map { Renderer.BgRegion(reg: SIMD4($0[0] / 1920, $0[1] / 1080, $0[2] / 1920, $0[3] / 1080), mot: SIMD4($0[4], $0[5], $0[6], $0[7])) }
+        return values.map { Renderer.BgRegion(bounds: SIMD4($0[0] / 1920, $0[1] / 1080, $0[2] / 1920, $0[3] / 1080), motion: SIMD4($0[4], $0[5], $0[6], $0[7])) }
     }()
     let glints: [SIMD2<Float>] = [SIMD2(605 / 1920, 318 / 1080), SIMD2(1250 / 1920, 382 / 1080)]
     let candles: [SIMD2<Float>] = [SIMD2(1405 / 1920, 290 / 1080), SIMD2(1850 / 1920, 330 / 1080), SIMD2(1245 / 1920, 1062 / 1080)]
@@ -198,24 +198,24 @@ final class Scene {
     }
 
     /// Starts a match with the given decks (random opponent deck if none).
-    func startGame(with deck: DeckData? = nil, against: DeckData? = nil, careerFight cf: Int? = nil) {
+    func startGame(with deck: DeckData? = nil, against: DeckData? = nil, careerFight careerFightIndex: Int? = nil) {
         let decks = gameData.decks
         if autotest { myDeckIndex = Int.random(in: 0..<decks.count) }
         let all = allDecks
         let mine = deck ?? all[min(myDeckIndex, all.count - 1)]
         let others = decks.indices.filter { $0 != myDeckIndex }
         let theirs = against ?? decks[others.randomElement() ?? 0]
-        careerFight = cf
-        if cf == nil { careerFightName = nil }
+        careerFight = careerFightIndex
+        if careerFightIndex == nil { careerFightName = nil }
         game = Game(myDeck: mine, opDeck: theirs)
-        game?.aiLevel = cf != nil ? max(0, Career.shared.difficulty - 1) : aiLevel
+        game?.aiLevel = careerFightIndex != nil ? max(0, Career.shared.difficulty - 1) : aiLevel
         game?.autoHuman = autotest
         game?.showChoices = ProcessInfo.processInfo.environment["GWENT_SHOWCHOICES"] == "1"
         /// Total unit strength and card count of a deck (used in test logs).
-        func power(_ deck: DeckData) -> (Int, Int) { deck.cards.reduce((0, 0)) { acc, e in let cardData = gameData.cards[e.0]; return (acc.0 + (cardData?.strength ?? 0) * e.1, acc.1 + e.1) } }
+        func power(_ deck: DeckData) -> (Int, Int) { deck.cards.reduce((0, 0)) { sum, entry in let cardData = gameData.cards[entry.0]; return (sum.0 + (cardData?.strength ?? 0) * entry.1, sum.1 + entry.1) } }
         let myPower = power(mine), po = power(theirs)
         log("GAME \(gamesPlayed + 1): \(mine.faction) power \(myPower.0) / \(myPower.1) cards vs \(theirs.faction) power \(po.0) / \(po.1) cards, AI level \(game?.aiLevel ?? -1)")
-        selected = nil; notes = []; noteT = 0; aiT = 0
+        selected = nil; notes = []; noteT = 0; computerTurnTimer = 0
         screen = .game
         audio.play("game_start")
     }
@@ -228,9 +228,9 @@ final class Scene {
 
     /// Smaller gold button that shrinks its font to fit.
     func smallButton(_ box: R, _ title: String, enabled: Bool, _ action: @escaping () -> Void) {
-        var f = Renderer.Font.serif(21, bold: true)
-        while renderer.measure(title, f).w > box.w - 18 && f.size > 11 { f = .serif(f.size - 1, bold: true) }
-        goldButton(box, title, font: f, enabled: enabled, action)
+        var fittedFont = Renderer.Font.serif(21, bold: true)
+        while renderer.measure(title, fittedFont).w > box.w - 18 && fittedFont.size > 11 { fittedFont = .serif(fittedFont.size - 1, bold: true) }
+        goldButton(box, title, font: fittedFont, enabled: enabled, action)
     }
 
     var largeCache: [String: Card] = [:]

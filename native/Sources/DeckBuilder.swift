@@ -30,19 +30,19 @@ final class DeckBuilder {
     func leaders() -> [CardData] { gameData.cards.values.filter { $0.isLeader && $0.faction == faction && (ownedLeaders?.contains($0.key) ?? true) }.sorted { $0.key < $1.key } }
     /// Cards that can be added for the current faction, sorted for display.
     func collection() -> [CardData] {
-        gameData.cards.values.filter { d in
-            if d.isLeader { return false }
-            if let limits = limit { return (limits[d.key] ?? 0) > 0 }
-            let parts = d.deck.split(separator: " ").map(String.init)
+        gameData.cards.values.filter { cardData in
+            if cardData.isLeader { return false }
+            if let limits = limit { return (limits[cardData.key] ?? 0) > 0 }
+            let parts = cardData.deck.split(separator: " ").map(String.init)
             if parts.first == "neutral" { return true }
-            if d.isSpecial || d.isWeather { return parts.count == 1 || parts[1] == faction }
+            if cardData.isSpecial || cardData.isWeather { return parts.count == 1 || parts[1] == faction }
             return parts.first == faction
-        }.sorted { a, b in
+        }.sorted { first, second in
             /// Sort order: units first, then specials and weather.
             func rank(_ cardData: CardData) -> Int { cardData.isLeader ? 0 : (cardData.isWeather ? 1 : (cardData.isSpecial ? 2 : 3)) }
-            if rank(a) != rank(b) { return rank(a) < rank(b) }
-            if a.strength != b.strength { return a.strength > b.strength }
-            return a.name < b.name
+            if rank(first) != rank(second) { return rank(first) < rank(second) }
+            if first.strength != second.strength { return first.strength > second.strength }
+            return first.name < second.name
         }
     }
     /// Loads an existing deck for editing.
@@ -53,20 +53,20 @@ final class DeckBuilder {
         scrollL = 0; scrollR = 0
     }
     /// Starts an empty deck for a faction.
-    func newDeck(_ f: String) {
+    func newDeck(_ chosenFaction: String) {
         limit = nil; ownedLeaders = nil
-        faction = f; leaderKey = leaders().first?.key ?? ""; counts = [:]; title = ""; editingIndex = nil; scrollL = 0; scrollR = 0
+        faction = chosenFaction; leaderKey = leaders().first?.key ?? ""; counts = [:]; title = ""; editingIndex = nil; scrollL = 0; scrollR = 0
     }
     var deckCards: [CardData] { collection().filter { (counts[$0.key] ?? 0) > 0 } }
     var stats: (total: Int, units: Int, specials: Int, strength: Int, heroes: Int) {
-        var t = 0, u = 0, s = 0, str = 0, h = 0
+        var total = 0, units = 0, specials = 0, strength = 0, heroes = 0
         for (key, copies) in counts { guard let cardData = gameData.cards[key] else { continue }
-            t += copies
-            if cardData.isUnit { u += copies; str += cardData.strength * copies; if cardData.isHero { h += copies } } else { s += copies }
+            total += copies
+            if cardData.isUnit { units += copies; strength += cardData.strength * copies; if cardData.isHero { heroes += copies } } else { specials += copies }
         }
-        return (t, u, s, str, h)
+        return (total, units, specials, strength, heroes)
     }
-    var valid: Bool { let s = stats; return s.units >= 22 && s.specials <= 10 && !leaderKey.isEmpty }
+    var valid: Bool { let deckStats = stats; return deckStats.units >= 22 && deckStats.specials <= 10 && !leaderKey.isEmpty }
     /// Adds one copy of a card.
     func add(_ cardData: CardData) {
         let current = counts[cardData.key] ?? 0
@@ -84,17 +84,17 @@ final class DeckBuilder {
 
     /// Reads the player's custom decks from the save file.
     static func loadCustom() -> [DeckData] {
-        guard let arr = SaveStore.shared["customDecks"] as? [[String: Any]] else { return [] }
-        return arr.compactMap { e in
-            guard let f = e["faction"] as? String, let l = e["leader"] as? String, let cardList = e["cards"] as? [[Any]] else { return nil }
-            return DeckData(title: e["title"] as? String ?? "", description: "", leader: l, faction: f,
-                            cards: cardList.compactMap { p in (p.first as? String).map { ($0, (p.last as? NSNumber)?.intValue ?? 1) } })
+        guard let savedDecks = SaveStore.shared["customDecks"] as? [[String: Any]] else { return [] }
+        return savedDecks.compactMap { entry in
+            guard let savedFaction = entry["faction"] as? String, let savedLeader = entry["leader"] as? String, let cardList = entry["cards"] as? [[Any]] else { return nil }
+            return DeckData(title: entry["title"] as? String ?? "", description: "", leader: savedLeader, faction: savedFaction,
+                            cards: cardList.compactMap { pair in (pair.first as? String).map { ($0, (pair.last as? NSNumber)?.intValue ?? 1) } })
         }
     }
     /// Writes the player's custom decks to the save file.
     static func saveCustom(_ decks: [DeckData]) {
-        let arr: [[String: Any]] = decks.map { ["title": $0.title, "faction": $0.faction, "leader": $0.leader, "cards": $0.cards.map { [$0.0, $0.1] }] }
-        SaveStore.shared["customDecks"] = arr
+        let encoded: [[String: Any]] = decks.map { ["title": $0.title, "faction": $0.faction, "leader": $0.leader, "cards": $0.cards.map { [$0.0, $0.1] }] }
+        SaveStore.shared["customDecks"] = encoded
     }
     /// Saves the edited deck (custom deck or career deck).
     func save() {

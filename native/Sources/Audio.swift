@@ -10,30 +10,30 @@ final class Audio: NSObject, AVAudioPlayerDelegate {
     var music: AVAudioPlayer?
     var tracks: [URL] = []
     var lastTrack = -1
-    let dir: URL
+    let gameDirectory: URL
     var muted = false
     var musicOn = true { didSet { musicOn ? playMusic() : music?.stop() } }
 
     init(gameDir: URL) {
-        dir = gameDir
+        gameDirectory = gameDir
         super.init()
         let mixer = engine.mainMixerNode
-        let fmt = mixer.outputFormat(forBus: 0)
+        let mixerFormat = mixer.outputFormat(forBus: 0)
         for _ in 0..<10 {
             let node = AVAudioPlayerNode()
             engine.attach(node)
-            engine.connect(node, to: mixer, format: fmt)
+            engine.connect(node, to: mixer, format: mixerFormat)
             players.append(node)
         }
         try? engine.start()
-        tracks = ((try? FileManager.default.contentsOfDirectory(at: dir.appendingPathComponent("audio"), includingPropertiesForKeys: nil)) ?? [])
+        tracks = ((try? FileManager.default.contentsOfDirectory(at: gameDirectory.appendingPathComponent("audio"), includingPropertiesForKeys: nil)) ?? [])
             .filter { $0.pathExtension.lowercased() == "mp3" }.sorted { $0.lastPathComponent < $1.lastPathComponent }
     }
 
     /// Loads and caches a sound effect as a PCM buffer.
     func buffer(_ name: String) -> AVAudioPCMBuffer? {
         if let cached = buffers[name] { return cached }
-        let url = dir.appendingPathComponent("sfx/\(name).mp3")
+        let url = gameDirectory.appendingPathComponent("sfx/\(name).mp3")
         guard let file = try? AVAudioFile(forReading: url),
               let pcmBuffer = AVAudioPCMBuffer(pcmFormat: file.processingFormat, frameCapacity: AVAudioFrameCount(file.length)) else { return nil }
         try? file.read(into: pcmBuffer)
@@ -41,15 +41,15 @@ final class Audio: NSObject, AVAudioPlayerDelegate {
         if pcmBuffer.format == outFmt { buffers[name] = pcmBuffer; return pcmBuffer }
         guard let conv = AVAudioConverter(from: pcmBuffer.format, to: outFmt) else { return nil }
         let cap = AVAudioFrameCount(Double(pcmBuffer.frameLength) * outFmt.sampleRate / pcmBuffer.format.sampleRate) + 1024
-        guard let out = AVAudioPCMBuffer(pcmFormat: outFmt, frameCapacity: cap) else { return nil }
-        var fed = false
-        var err: NSError?
-        conv.convert(to: out, error: &err) { _, status in
-            if fed { status.pointee = .endOfStream; return nil }
-            fed = true; status.pointee = .haveData; return pcmBuffer
+        guard let converted = AVAudioPCMBuffer(pcmFormat: outFmt, frameCapacity: cap) else { return nil }
+        var inputFed = false
+        var conversionError: NSError?
+        conv.convert(to: converted, error: &conversionError) { _, status in
+            if inputFed { status.pointee = .endOfStream; return nil }
+            inputFed = true; status.pointee = .haveData; return pcmBuffer
         }
-        buffers[name] = out
-        return out
+        buffers[name] = converted
+        return converted
     }
     /// Loads the given sound effects in advance.
     func preload(_ names: [String]) { DispatchQueue.global(qos: .utility).async { for name in names { _ = self.buffer(name) } } }
@@ -94,5 +94,5 @@ final class Audio: NSObject, AVAudioPlayerDelegate {
     /// Skips to another music track.
     func skipTrack() { guard !menuMode else { return }; music?.stop(); playMusic() }
     /// Starts the next track when one finishes.
-    func audioPlayerDidFinishPlaying(_ p: AVAudioPlayer, successfully: Bool) { if !menuMode { playMusic() } }
+    func audioPlayerDidFinishPlaying(_ finishedPlayer: AVAudioPlayer, successfully: Bool) { if !menuMode { playMusic() } }
 }

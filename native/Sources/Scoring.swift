@@ -34,29 +34,29 @@ extension Game {
     }
 
     /// Power of a single card on a row after weather, horns, bonds and morale.
-    func cardScore(_ c: Card, _ r: RowType, _ p: Player, bondCounts: [String: Int], morale: Int, wine: Int, horns: Int, weather w: Set<String>,
+    func cardScore(_ card: Card, _ rowType: RowType, _ player: Player, bondCounts: [String: Int], morale: Int, wine: Int, horns: Int, weather w: Set<String>,
                    inspire: Int?, whorshippers: Int, schools: [String: Int]) -> Int {
-        if c.key == "spe_decoy" { return 0 }
-        var basePower = c.tempStrength ?? c.basePower
-        if c.hero { return basePower * c.multiplier + c.bonus }
-        if c.has("spy") || c.has("emissary") || c.has("ofiri_envoy") { basePower = Int(floor(spyMult * Double(basePower))) }
-        if let ins = inspire, c.act("inspire") { basePower = ins }
-        if let fixed = c.setTo { basePower = fixed }
+        if card.key == "spe_decoy" { return 0 }
+        var basePower = card.tempStrength ?? card.basePower
+        if card.hero { return basePower * card.multiplier + card.bonus }
+        if card.has("spy") || card.has("emissary") || card.has("ofiri_envoy") { basePower = Int(floor(spyMult * Double(basePower))) }
+        if let inspired = inspire, card.act("inspire") { basePower = inspired }
+        if let fixed = card.setTo { basePower = fixed }
         if !w.isEmpty {
-            let immune = w.allSatisfy { ($0 == "fog" && c.has("fog_summoning")) || ($0 == "sandstorm" && c.has("sandstorm_immunity")) }
+            let immune = w.allSatisfy { ($0 == "fog" && card.has("fog_summoning")) || ($0 == "sandstorm" && card.has("sandstorm_immunity")) }
             if !immune {
-                let limit = c.has("adaptive") ? 2 : 1
-                basePower = p.halfWeather ? max(min(limit, basePower), basePower / 2) : min(limit, basePower)
+                let limit = card.has("adaptive") ? 2 : 1
+                basePower = player.halfWeather ? max(min(limit, basePower), basePower / 2) : min(limit, basePower)
             }
         }
-        if c.act("bond"), let bondSize = bondCounts[c.groupKey], bondSize > 1 { basePower *= bondSize }
-        basePower += max(0, morale - (c.act("morale") ? 1 : 0))
-        basePower += 2 * max(0, wine - (c.act("toussaint_wine") ? 1 : 0))
-        if let school = c.school, !c.locked, let n = schools[school], n > 1 { basePower += (n - 1) * 2 }
-        if c.act("whorshipped") && whorshippers > 0 { basePower += whorshippers * whorshipMult }
-        if horns - (c.act("horn") ? 1 : 0) > 0 { basePower *= 2 }
-        basePower = basePower * c.multiplier + c.bonus
-        if r == .siege { basePower *= c.siegeMult }
+        if card.act("bond"), let bondSize = bondCounts[card.groupKey], bondSize > 1 { basePower *= bondSize }
+        basePower += max(0, morale - (card.act("morale") ? 1 : 0))
+        basePower += 2 * max(0, wine - (card.act("toussaint_wine") ? 1 : 0))
+        if let school = card.school, !card.locked, let schoolCount = schools[school], schoolCount > 1 { basePower += (schoolCount - 1) * 2 }
+        if card.act("whorshipped") && whorshippers > 0 { basePower += whorshippers * whorshipMult }
+        if horns - (card.act("horn") ? 1 : 0) > 0 { basePower *= 2 }
+        basePower = basePower * card.multiplier + card.bonus
+        if rowType == .siege { basePower *= card.siegeMult }
         return basePower
     }
 }

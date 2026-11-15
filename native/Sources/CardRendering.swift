@@ -27,23 +27,23 @@ extension Scene {
     }
 
     /// Draws a small card with power, row and ability icons.
-    func drawCard(_ card: Card, _ cardRect: R, highlight: Bool = false, dim: Bool = false) {
+    func drawCard(_ card: Card, _ cardRect: R, highlight: Bool = false, dim dimmed: Bool = false) {
         let scale = cardRect.w / cardWidth
-        renderer.imageCover(card.data.image, cardRect, color: dim ? .gray(0.45) : .white)
+        renderer.imageCover(card.data.image, cardRect, color: dimmed ? .gray(0.45) : .white)
         if card.flash > 0 { renderer.rect(cardRect, RGBA(r: 1, g: 0.9, b: 0.6, a: card.flash * 0.35)) }
         if card.data.isLeader { if highlight { renderer.frame(cardRect.inset(-3), RGBA.gold, 3) }; return }
         renderer.image(powerBadge(card), R(cardRect.x - 3 * scale, cardRect.y - 5 * scale, 60 * scale, 61 * scale))
         if card.data.isUnit {
             let power = card.power
             let col: RGBA = card.hero ? .white : (power > card.basePower ? RGBA(r: 0.1, g: 0.55, b: 0.1, a: 1) : (power < card.basePower ? RGBA(r: 0.75, g: 0.1, b: 0.1, a: 1) : .black))
-            let cx: Float = 16.3, cy: Float = 14.6
-            var pop: Float = 0
-            if let seen = powerSeen[card.id] { pop = seen.0 != power ? 0.45 : max(0, seen.1 - frameDT) }
-            powerSeen[card.id] = (power, pop)
-            let font = Renderer.Font.ui((card.hero ? 21 : 19) * scale * (1 + pop * 1.1), bold: true)
+            let badgeCenterX: Float = 16.3, badgeCenterY: Float = 14.6
+            var popAmount: Float = 0
+            if let seen = powerSeen[card.id] { popAmount = seen.0 != power ? 0.45 : max(0, seen.1 - frameDT) }
+            powerSeen[card.id] = (power, popAmount)
+            let font = Renderer.Font.ui((card.hero ? 21 : 19) * scale * (1 + popAmount * 1.1), bold: true)
             let textHeight = renderer.measure("\(power)", font).h
-            if pop > 0 { renderer.quad(glowTex, R(cardRect.x + cx * scale - 22 * scale, cardRect.y + cy * scale - 22 * scale, 44 * scale, 44 * scale), color: RGBA(r: 1, g: 0.9, b: 0.5, a: pop * 1.6)) }
-            renderer.text("\(power)", font, x: cardRect.x + cx * scale, y: cardRect.y + cy * scale - textHeight / 2, color: col, align: .center, shadow: nil)
+            if popAmount > 0 { renderer.quad(glowTex, R(cardRect.x + badgeCenterX * scale - 22 * scale, cardRect.y + badgeCenterY * scale - 22 * scale, 44 * scale, 44 * scale), color: RGBA(r: 1, g: 0.9, b: 0.5, a: popAmount * 1.6)) }
+            renderer.text("\(power)", font, x: cardRect.x + badgeCenterX * scale, y: cardRect.y + badgeCenterY * scale - textHeight / 2, color: col, align: .center, shadow: nil)
             let rowName = card.data.row.hasPrefix("agile") ? card.data.row : card.data.row
             renderer.image("img/icons/card_row_\(rowName).png", R(cardRect.x + 56 * scale, cardRect.y + 91 * scale, 28 * scale, 27 * scale))
             let abis = card.data.abilities.filter { $0 != "hero" }
@@ -71,10 +71,10 @@ extension Scene {
         let scale = cardRect.w / cardWidth * 0.5
         renderer.image(powerBadge(card), R(cardRect.x - 3 * scale, cardRect.y - 5 * scale, 60 * scale, 61 * scale))
         if card.data.isUnit {
-            let cx: Float = 16.3, cy: Float = 14.6
+            let badgeCenterX: Float = 16.3, badgeCenterY: Float = 14.6
             let font = Renderer.Font.ui((card.hero ? 21 : 19) * scale, bold: true)
             let textHeight = renderer.measure("\(card.basePower)", font).h
-            renderer.text("\(card.basePower)", font, x: cardRect.x + cx * scale, y: cardRect.y + cy * scale - textHeight / 2, color: card.hero ? .white : .black, align: .center, shadow: nil)
+            renderer.text("\(card.basePower)", font, x: cardRect.x + badgeCenterX * scale, y: cardRect.y + badgeCenterY * scale - textHeight / 2, color: card.hero ? .white : .black, align: .center, shadow: nil)
             renderer.image("img/icons/card_row_\(card.data.row).png", R(cardRect.x - 3 * scale + 6 * scale, cardRect.y + 58 * scale, 44 * scale, 42 * scale))
             if let lastAbility = card.data.abilities.filter({ $0 != "hero" }).last { renderer.image(abilityIcon(lastAbility), R(cardRect.x + 3 * scale, cardRect.y + 102 * scale, 44 * scale, 42 * scale)) }
         }

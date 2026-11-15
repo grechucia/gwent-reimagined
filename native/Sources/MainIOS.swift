@@ -34,20 +34,20 @@ final class IOSGameView: MTKView {
         }
     }
     /// Converts a touch position to the virtual 1920x1080 space.
-    func virtualPoint(_ p: CGPoint) -> SIMD2<Float> {
+    func virtualPoint(_ location: CGPoint) -> SIMD2<Float> {
         guard let renderer = app?.renderer, bounds.width > 0 else { return .zero }
-        let pixelX = Float(p.x / bounds.width) * Float(drawableSize.width)
-        let pixelY = Float(p.y / bounds.height) * Float(drawableSize.height)
+        let pixelX = Float(location.x / bounds.width) * Float(drawableSize.width)
+        let pixelY = Float(location.y / bounds.height) * Float(drawableSize.height)
         let viewport = renderer.viewportPx
         return SIMD2((pixelX - viewport.x) / viewport.w * virtualWidth, (pixelY - viewport.y) / viewport.h * virtualHeight)
     }
 
     /// Touch down: moves focus and starts the long-press timer (long press = card details).
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
-        guard let touch = touches.first, let s = app?.scene else { return }
+        guard let touch = touches.first, let activeScene = app?.scene else { return }
         start = touch.location(in: self); last = start; dragging = false; longFired = false
-        s.padCursor = false
-        s.mouseMoved(virtualPoint(start))
+        activeScene.padCursor = false
+        activeScene.mouseMoved(virtualPoint(start))
         longTimer?.invalidate()
         longTimer = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: false) { [weak self] _ in
             MainActor.assumeIsolated {
@@ -59,23 +59,23 @@ final class IOSGameView: MTKView {
     }
     /// Dragging scrolls lists.
     override func touchesMoved(_ touches: Set<UITouch>, with event: UIEvent?) {
-        guard let touch = touches.first, let s = app?.scene else { return }
+        guard let touch = touches.first, let activeScene = app?.scene else { return }
         let location = touch.location(in: self)
         if !dragging && hypot(location.x - start.x, location.y - start.y) > 12 { dragging = true; longTimer?.invalidate() }
         if dragging {
             let previous = virtualPoint(last), b = virtualPoint(location)
-            s.scroll((b.y - previous.y) * 1.2)
+            activeScene.scroll((b.y - previous.y) * 1.2)
         }
         last = location
-        s.mouseMoved(virtualPoint(location))
+        activeScene.mouseMoved(virtualPoint(location))
     }
     /// Tap = click, unless the touch was a drag or a long press.
     override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
         longTimer?.invalidate()
-        guard let touch = touches.first, let s = app?.scene else { return }
+        guard let touch = touches.first, let activeScene = app?.scene else { return }
         let point = virtualPoint(touch.location(in: self))
-        if !dragging && !longFired { s.click(point) }
-        s.mouse = SIMD2(-1, -1)
+        if !dragging && !longFired { activeScene.click(point) }
+        activeScene.mouse = SIMD2(-1, -1)
     }
     /// Cancels the current touch.
     override func touchesCancelled(_ touches: Set<UITouch>, with event: UIEvent?) {
@@ -124,7 +124,7 @@ final class IOSAppDelegate: UIResponder, UIApplicationDelegate, MTKViewDelegate,
     /// Not applicable on iOS.
     func refreshMenus() {}
     var screenFPS: Int { max(30, UIScreen.main.maximumFramesPerSecond) }
-    var availableFrameLimits: [Int] { let hz = screenFPS; let limits = frameLimits.filter { $0 <= hz && hz % $0 == 0 }; return limits.isEmpty ? [hz] : limits }
+    var availableFrameLimits: [Int] { let refreshRate = screenFPS; let limits = frameLimits.filter { $0 <= refreshRate && refreshRate % $0 == 0 }; return limits.isEmpty ? [refreshRate] : limits }
     var effectiveFrameLimit: Int { let available = availableFrameLimits; return available.contains(frameLimit) ? frameLimit : (available.last { $0 <= frameLimit } ?? available.last!) }
     /// Changes the render resolution.
     func setRenderRes(_ height: Int) { renderRes = height; view.renderHeight = height }
@@ -137,7 +137,7 @@ final class IOSAppDelegate: UIResponder, UIApplicationDelegate, MTKViewDelegate,
         try? AVAudioSession.sharedInstance().setActive(true)
         Platform.restoreBookmarkedFolder()
         CTFontManagerRegisterFontsForURL(resources.appendingPathComponent("game/fonts/gwent.ttf") as CFURL, .process, nil)
-        GameData.shared = GameData(dir: resources.appendingPathComponent("data"))
+        GameData.shared = GameData(directory: resources.appendingPathComponent("data"))
         GameData.shared.language = lang
 
         view = IOSGameView(frame: CGRect(x: 0, y: 0, width: 1280, height: 720))
@@ -167,8 +167,8 @@ final class IOSAppDelegate: UIResponder, UIApplicationDelegate, MTKViewDelegate,
     }
 
     /// Uses IOSSceneDelegate for the app's window scene.
-    func application(_ a: UIApplication, configurationForConnecting s: UISceneSession, options: UIScene.ConnectionOptions) -> UISceneConfiguration {
-        let configuration = UISceneConfiguration(name: nil, sessionRole: s.role)
+    func application(_ application: UIApplication, configurationForConnecting session: UISceneSession, options: UIScene.ConnectionOptions) -> UISceneConfiguration {
+        let configuration = UISceneConfiguration(name: nil, sessionRole: session.role)
         configuration.delegateClass = IOSSceneDelegate.self
         return configuration
     }

@@ -13,14 +13,14 @@ import Foundation
     var displayPath: String {
         if ProcessInfo.processInfo.environment["GWENT_SHOT"] == "1" { return "~/Library/Application Support/GwentReimagined" }
         #if os(iOS)
-        if dir.path == SaveStore.localDir.path { return L("Files → On My iPhone → GwentReimagined") }
-        return dir.lastPathComponent
+        if directory.path == SaveStore.localDir.path { return L("Files → On My iPhone → GwentReimagined") }
+        return directory.lastPathComponent
         #else
-        return (dir.path as NSString).abbreviatingWithTildeInPath
+        return (directory.path as NSString).abbreviatingWithTildeInPath
         #endif
     }
-    var dir: URL { URL(fileURLWithPath: dirPath ?? SaveStore.localDir.path) }
-    var fileURL: URL { dir.appendingPathComponent(SaveStore.fileName) }
+    var directory: URL { URL(fileURLWithPath: dirPath ?? SaveStore.localDir.path) }
+    var fileURL: URL { directory.appendingPathComponent(SaveStore.fileName) }
 
     static var localDir: URL {
         #if os(macOS)
@@ -44,12 +44,12 @@ import Foundation
     }
     /// Reads the save file from the current location.
     func load() {
-        if let d = try? Data(contentsOf: fileURL), let o = try? JSONSerialization.jsonObject(with: d) as? [String: Any] { data = o }
+        if let fileData = try? Data(contentsOf: fileURL), let object = try? JSONSerialization.jsonObject(with: fileData) as? [String: Any] { data = object }
     }
     /// Writes the save file to the current location.
     func save() {
-        try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
-        if let d = try? JSONSerialization.data(withJSONObject: data, options: [.prettyPrinted, .sortedKeys]) { try? d.write(to: fileURL, options: .atomic) }
+        try? FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        if let encodedData = try? JSONSerialization.data(withJSONObject: data, options: [.prettyPrinted, .sortedKeys]) { try? encodedData.write(to: fileURL, options: .atomic) }
     }
     subscript(_ key: String) -> Any? {
         get { data[key] }

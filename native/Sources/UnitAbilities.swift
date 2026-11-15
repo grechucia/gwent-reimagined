@@ -122,7 +122,7 @@ extension Game {
     /// Berserker: transforms berserkers on a row when mardroeme is present.
     func berserk(_ side: Player, _ rowType: RowType) async {
         for berserker in side.row(rowType).cards where berserker.act("berserker") {
-            if let targetKey = berserker.data.targets.first, let d = gameData.cards[targetKey] { berserker.transform(into: d); events.append(.anim(berserker, "mardroeme")) }
+            if let targetKey = berserker.data.targets.first, let transformData = gameData.cards[targetKey] { berserker.transform(into: transformData); events.append(.anim(berserker, "mardroeme")) }
         }
         sound("mardroeme")
         recalc()

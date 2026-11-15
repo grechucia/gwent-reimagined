@@ -16,17 +16,17 @@ extension Scene {
         renderer.text(L("Where should your progress be saved?"), .gwent(44), x: 960, y: area.y + 30, color: RGBA.gold, align: .center)
         renderer.text(L("Your decks and career are kept in one file. Choose a location – you can change it later in Options."),
                .serif(19, italic: true), x: 960, y: area.y + 96, color: .gray(0.88), maxWidth: area.w - 120, align: .center)
-        let ic = SaveStore.iCloudDir
+        let iCloudFolder = SaveStore.iCloudDir
         let opts: [(String, String, Bool, () -> Void)] = [
             (Platform.isDesktop ? L("On this Mac") : L("On this device"),
              Platform.isDesktop ? L("Local save. The simplest choice if you only play on this computer.")
                                 : L("Local save, visible in the Files app. The simplest choice if you only play on this device."), true,
              { [weak self] in self?.finishSaveChoice(SaveStore.localDir) }),
-            (L("iCloud Drive"), ic == nil
+            (L("iCloud Drive"), iCloudFolder == nil
                 ? (Platform.isDesktop ? L("iCloud Drive is off on this Mac (System Settings → Apple ID → iCloud).")
                                       : L("Choose a folder in iCloud Drive with “Choose a folder…”."))
                 : L("Syncs between Apple devices: your Mac, iPhone and iPad share the same progress."),
-             ic != nil, { [weak self] in if let u = ic { self?.finishSaveChoice(u) } }),
+             iCloudFolder != nil, { [weak self] in if let folder = iCloudFolder { self?.finishSaveChoice(folder) } }),
             (L("Choose a folder…"), L("E.g. a network drive, Dropbox or Google Drive – useful if you also want to sync with Android."), true,
              { [weak self] in self?.pickSaveFolder() })]
         for (i, option) in opts.enumerated() {
@@ -53,8 +53,8 @@ extension Scene {
 
     /// Shows the system folder picker.
     func pickSaveFolder() {
-        Platform.pickFolder(message: L("Folder for GwentReimagined saves")) { [weak self] u in
-            if let u = u { self?.finishSaveChoice(u) }
+        Platform.pickFolder(message: L("Folder for GwentReimagined saves")) { [weak self] folder in
+            if let folder = folder { self?.finishSaveChoice(folder) }
         }
     }
 }
