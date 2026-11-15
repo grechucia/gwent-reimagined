@@ -2,10 +2,10 @@
 
 # Gwent Reimagined
 
-**The Witcher 3 Gwent card game as a fast, native app for macOS and iOS (Swift + Metal). Android: work in progress.**
+**The Witcher 3 Gwent card game as a fast, native app for macOS and iOS (Swift + Metal) and Android (Java + OpenGL ES).**
 
 ![Platform](https://img.shields.io/badge/platform-macOS%2014%2B%20%7C%20iOS%2017%2B-black)
-![Android](https://img.shields.io/badge/Android-work%20in%20progress-lightgrey)
+![Android](https://img.shields.io/badge/Android-8.0%2B-3DDC84)
 ![Apple Silicon](https://img.shields.io/badge/arch-arm64-blue)
 ![Swift](https://img.shields.io/badge/Swift-5-orange)
 ![License](https://img.shields.io/badge/license-MIT%20%2B%20Commons%20Clause-green)
@@ -108,7 +108,21 @@ On iOS, saves are stored in **Files → On My iPhone → GwentReimagined**, or i
 
 ### Android
 
-Android support is **work in progress**.
+Android 8.0 or newer with OpenGL ES 3.0 is required.
+
+1. Download `GwentReimagined.apk` from the [Releases](https://github.com/grechucia/gwent-reimagined/releases) page.
+2. Open it on your phone or tablet and allow installing apps from this source when Android asks.
+
+To build it yourself you need the Android SDK (build-tools 36, platform 36) and JDK 17 or newer; Gradle is not needed.
+The script takes the game assets from the macOS build, so build that first:
+
+```bash
+./native/build.sh && ./android/build-android.sh
+```
+
+The APK is written to `android/build/GwentReimagined.apk`; `--install` also installs it on a connected device or emulator.
+The Android version is a native Java port of the Swift code with the same rules, AI, screens and save file format.
+Saves are kept in the app's storage, or in any folder you choose with the system folder picker (for example a synced cloud folder).
 
 ## Controls
 

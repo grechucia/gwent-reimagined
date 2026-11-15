@@ -2,3 +2,4 @@ native/build/
 .claude/
 .DS_Store
 *.o
+android/build/
