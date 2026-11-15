@@ -66,6 +66,8 @@ abstract class SceneBase {
     Box padPrimary;
 
     // MARK: Settings
+    /** Performance mode: decorative animations (animated menu background, particles, weather effects) are skipped. */
+    boolean lowDetail() { return host != null && host.performanceMode(); }
     /** Global AI difficulty for games outside the career (0 easy, 1 normal, 2 hard). */
     int aiLevel() { return host == null ? 1 : host.intSetting("aiLevel", 1); }
     void setAiLevel(int level) { if (host != null) host.setIntSetting("aiLevel", level); }

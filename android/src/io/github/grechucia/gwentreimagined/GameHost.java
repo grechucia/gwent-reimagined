@@ -24,6 +24,11 @@ interface GameHost {
     void askText(String title, String message, String placeholder, String current, Consumer<String> done);
     /** Lets the user choose a folder for the save file; `done` receives true when one was chosen (called with the game lock held). */
     void pickFolder(Consumer<Boolean> done);
+    /** Performance mode for older devices: no decorative animations and an automatic render resolution. */
+    boolean performanceMode();
+    void setPerformanceMode(boolean on);
+    /** Render height currently chosen by the automatic resolution in performance mode. */
+    int automaticRenderHeight();
     /** Integer setting stored on the device. */
     int intSetting(String key, int fallback);
     void setIntSetting(String key, int value);

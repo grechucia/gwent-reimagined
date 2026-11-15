@@ -16,7 +16,7 @@ mkdir -p $OUT
 print "» Assets"
 mkdir -p $OUT/assets
 rsync -a --delete $MAC/game/ $OUT/assets/game/
-rsync -a --delete $MAC/data/ $OUT/assets/data/
+rsync -a --delete $GAME/native/Resources/data/ $OUT/assets/data/
 cp $GAME/LICENSE $GAME/NOTICE.md $OUT/assets/
 
 print "» Resources"

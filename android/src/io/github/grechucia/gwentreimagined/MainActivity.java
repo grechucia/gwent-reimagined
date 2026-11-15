@@ -44,6 +44,17 @@ public final class MainActivity extends Activity implements GameHost, GLSurfaceV
     private Consumer<Boolean> folderDone;
     /** Weak device (little memory or few cores): renders at 720p by default and shades the menu background at lower resolution. */
     private boolean lowEnd;
+    /** Phones with less than about 4 GB of memory start with performance mode on. */
+    private boolean performanceDefault;
+
+    // Automatic resolution in performance mode: steps between 360p and 720p to hold the chosen frame limit
+    // (it starts at 480p for 60 FPS and 720p for 30 FPS).
+    private static final int[] AUTO_HEIGHTS = {360, 480, 600, 720};
+    private volatile int autoHeight = 480;
+    private float autoWindow, autoCooldown, autoWork;
+    private int autoFrames, autoMisses;
+    /** Height the controller just had to leave because frames were too slow, and how long to avoid it. */
+    private int autoBlockedHeight; private float autoBlockedTime;
     private int perfFrames; private float perfTime, perfWorst;
 
     // Touch state: tap = click, long press = cancel selection, drag = scroll.
@@ -63,6 +74,7 @@ public final class MainActivity extends Activity implements GameHost, GLSurfaceV
         android.app.ActivityManager activityManager = (android.app.ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);
         android.app.ActivityManager.MemoryInfo memory = new android.app.ActivityManager.MemoryInfo();
         activityManager.getMemoryInfo(memory);
+        performanceDefault = activityManager.isLowRamDevice() || memory.totalMem < 3400L * 1024 * 1024;
         lowEnd = activityManager.isLowRamDevice() || memory.totalMem < 4500L * 1024 * 1024 || Runtime.getRuntime().availableProcessors() <= 4;
         GameData.shared = new GameData(getAssets());
         GameData.shared.language = prefs.getString("lang", "en");
@@ -72,6 +84,7 @@ public final class MainActivity extends Activity implements GameHost, GLSurfaceV
         renderer = new Renderer(getAssets());
         renderer.fillScreen = fillScreen();
         renderer.backgroundScale = lowEnd ? 0.35f : 0.5f;
+        autoHeight = startHeight();
         Intent intent = getIntent();
         boolean mute = intent.getBooleanExtra("mute", false), autotest = intent.getBooleanExtra("autotest", false);
         if (mute || autotest) { audio.muted = true; audio.setMusicOn(false); }
@@ -124,7 +137,7 @@ public final class MainActivity extends Activity implements GameHost, GLSurfaceV
     }
     @Override public void onWindowFocusChanged(boolean hasFocus) { super.onWindowFocusChanged(hasFocus); if (hasFocus) hideSystemBars(); }
     @Override protected void onPause() { super.onPause(); view.onPause(); audio.suspend(); }
-    @Override protected void onResume() { super.onResume(); view.onResume(); audio.resume(); hideSystemBars(); }
+    @Override protected void onResume() { super.onResume(); cachedRate = 0; view.onResume(); audio.resume(); hideSystemBars(); }
 
     /** Runs scene code on the GL thread with the game lock held. */
     private void onGame(Runnable action) {
@@ -165,6 +178,35 @@ public final class MainActivity extends Activity implements GameHost, GLSurfaceV
             android.util.Log.i("GwentPerf", String.format(java.util.Locale.ROOT, "%.1f fps, worst frame work %.1f ms, %dx%d", perfFrames / perfTime, perfWorst, surfaceWidth, surfaceHeight));
             perfFrames = 0; perfTime = 0; perfWorst = 0;
         }
+        if (performanceMode()) adjustResolution(dt, work, limit);
+    }
+
+    /** Starting automatic height for the frame limit: 480p for 60 FPS, 720p for 30 FPS. */
+    private int startHeight() { return effectiveFrameLimit() >= 60 ? 480 : 720; }
+    /**
+     * Automatic resolution: every 2 seconds checks how many frames missed the frame-limit deadline. Many misses step the
+     * resolution down; no misses and plenty of spare time step it up (a height that was just too slow is avoided for 20 s).
+     */
+    private void adjustResolution(float dt, float workMs, int limit) {
+        float budget = 1000f / limit;
+        autoFrames++; autoWork += workMs; autoWindow += dt;
+        if (dt * 1000 > budget * 1.25f) autoMisses++;
+        autoCooldown = Math.max(0, autoCooldown - dt);
+        autoBlockedTime = Math.max(0, autoBlockedTime - dt);
+        if (autoWindow < 2) return;
+        float missRate = (float) autoMisses / autoFrames, averageWork = autoWork / autoFrames;
+        autoWindow = 0; autoFrames = 0; autoMisses = 0; autoWork = 0;
+        if (autoCooldown > 0) return;
+        int index = 0;
+        for (int i = 0; i < AUTO_HEIGHTS.length; i++) if (AUTO_HEIGHTS[i] <= autoHeight) index = i;
+        int next = autoHeight;
+        if (missRate > 0.15f && index > 0) { next = AUTO_HEIGHTS[index - 1]; autoBlockedHeight = autoHeight; autoBlockedTime = 20; }
+        else if (missRate < 0.03f && averageWork < budget * 0.45f && index < AUTO_HEIGHTS.length - 1
+            && !(AUTO_HEIGHTS[index + 1] == autoBlockedHeight && autoBlockedTime > 0)) next = AUTO_HEIGHTS[index + 1];
+        if (next == autoHeight) return;
+        android.util.Log.i("GwentPerf", "automatic resolution " + autoHeight + "p -> " + next + "p (missed " + Math.round(missRate * 100) + "%, work " + Math.round(averageWork) + " ms)");
+        autoHeight = next; autoCooldown = 3;
+        handler.post(this::applyRenderRes);
     }
 
     // MARK: Touch
@@ -289,13 +331,16 @@ public final class MainActivity extends Activity implements GameHost, GLSurfaceV
     @Override public void setRenderRes(int height) { prefs.edit().putInt("renderRes", height).apply(); handler.post(this::applyRenderRes); }
     /** Renders at a lower resolution than the screen when chosen in Options (the system scales the image up). */
     private void applyRenderRes() {
-        int height = renderRes();
+        int height = performanceMode() ? autoHeight : renderRes();
         if (height <= 0 || height >= viewHeight) view.getHolder().setSizeFromLayout();
         else view.getHolder().setFixedSize(Math.round(viewWidth * (float) height / viewHeight), height);
     }
+    private int cachedRate;
     private int displayRate() {
+        if (cachedRate > 0) return cachedRate;
         float rate = Build.VERSION.SDK_INT >= 30 && getDisplay() != null ? getDisplay().getRefreshRate() : getWindowManager().getDefaultDisplay().getRefreshRate();
-        return Math.max(30, Math.round(rate));
+        cachedRate = Math.max(30, Math.round(rate));
+        return cachedRate;
     }
     @Override public List<Integer> availableFrameLimits() {
         int rate = displayRate();
@@ -312,7 +357,17 @@ public final class MainActivity extends Activity implements GameHost, GLSurfaceV
         for (int limit : available) if (limit <= stored) best = limit;
         return best;
     }
-    @Override public void setFrameLimit(int limit) { prefs.edit().putInt("frameLimit", limit).apply(); }
+    @Override public void setFrameLimit(int limit) {
+        prefs.edit().putInt("frameLimit", limit).apply();
+        if (performanceMode()) { autoHeight = startHeight(); autoCooldown = 3; autoBlockedTime = 0; handler.post(this::applyRenderRes); }
+    }
+    @Override public boolean performanceMode() { return prefs.getBoolean("performanceMode", performanceDefault); }
+    @Override public void setPerformanceMode(boolean on) {
+        prefs.edit().putBoolean("performanceMode", on).apply();
+        autoHeight = startHeight(); autoCooldown = 3; autoBlockedTime = 0;
+        handler.post(this::applyRenderRes);
+    }
+    @Override public int automaticRenderHeight() { return autoHeight; }
     @Override public boolean fillScreen() { return prefs.getBoolean("fillScreen", true); }
     @Override public void setFillScreen(boolean on) { prefs.edit().putBoolean("fillScreen", on).apply(); renderer.fillScreen = on; }
     @Override public boolean isPhone() { return getResources().getConfiguration().smallestScreenWidthDp < 600; }

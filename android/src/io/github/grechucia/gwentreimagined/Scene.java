@@ -53,11 +53,21 @@ final class Scene extends SceneScreens {
         optionsY += 76;
         GameHost h = host;
         if (h != null) {
+            optionLabel(panel, L("Performance mode"));
+            boolean performance = h.performanceMode();
+            optionChoice(panel, new String[]{L("On"), L("Off")}, new boolean[]{performance, !performance}, 140, i -> h.setPerformanceMode(i == 0));
+            renderer.text(L("For older devices: no background animations, resolution adjusts to keep the frame rate."), Font.ui(15), bx + 310, optionsY + 2, RGBA.gray(0.75f), 420);
+            optionsY += 76;
             optionLabel(panel, L("Render resolution"));
+            if (performance) {
+                renderer.text(L("Automatic") + ": " + h.automaticRenderHeight() + "p", Font.serif(20, true), bx, optionsY + 10, RGBA.GOLD);
+                optionsY += 76;
+            } else {
             String[] titles = new String[RESOLUTIONS.length]; boolean[] chosen = new boolean[RESOLUTIONS.length];
             for (int i = 0; i < RESOLUTIONS.length; i++) { titles[i] = RESOLUTIONS[i] == 0 ? L("Native") : RESOLUTIONS[i] + "p"; chosen[i] = RESOLUTIONS[i] == h.renderRes(); }
             optionChoice(panel, titles, chosen, 128, i -> h.setRenderRes(RESOLUTIONS[i]));
             optionsY += 76;
+            }
             optionLabel(panel, L("Frame limit"));
             List<Integer> rates = h.availableFrameLimits();
             String[] rateTitles = new String[rates.size()]; boolean[] rateChosen = new boolean[rates.size()];

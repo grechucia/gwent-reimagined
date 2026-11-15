@@ -47,7 +47,7 @@ abstract class SceneMenus extends SceneBase {
     @Override void drawTitle(float dt) {
         if (autotest) { autotestTimer += dt; if (autotestTimer > 2.5f) { autotestTimer = 0; myDeckIndex = RANDOM.nextInt(gameData().decks.size()); startGame(); return; } }
         smoothMouse = smoothMouse.plus(mouseNorm.minus(smoothMouse).times(Math.min(1, dt * 2.5f)));
-        renderer.titleBackground("img/start_bg.jpg", time, smoothMouse, REGIONS, GLINTS, CANDLES);
+        menuBackdrop(smoothMouse);
         drawParticles(dt);
         String middle = gameData().language.equals("pl") ? "WIN" : "WEN";
         Font bigFont = Font.gwent(146), smallFont = Font.gwent(104);
@@ -134,8 +134,18 @@ abstract class SceneMenus extends SceneBase {
         return p;
     }
 
-    /** Updates and draws the background particles. */
+    /** Animated title background, or the still image in performance mode. */
+    void menuBackdrop(Vec2 parallax) {
+        if (!lowDetail()) { renderer.titleBackground("img/start_bg.jpg", time, parallax, REGIONS, GLINTS, CANDLES); return; }
+        renderer.imageCover("img/start_bg.jpg", renderer.visibleRect);
+        Box v = renderer.visibleRect;
+        renderer.gradient(box(v.x, v.y, v.w, v.h * 0.3f), RGBA.BLACK.alpha(0.42f), RGBA.BLACK.alpha(0), 8);
+        renderer.gradient(box(v.x, v.y + v.h * 0.74f, v.w, v.h * 0.26f), RGBA.BLACK.alpha(0), RGBA.BLACK.alpha(0.5f), 8);
+    }
+
+    /** Updates and draws the background particles (skipped in performance mode). */
     void drawParticles(float dt) {
+        if (lowDetail()) return;
         for (int i = 0; i < particles.size(); i++) {
             Particle p = particles.get(i);
             p.life += dt;
@@ -155,7 +165,7 @@ abstract class SceneMenus extends SceneBase {
     /** Dimmed menu background used by secondary screens. */
     void drawMenuBackground(float dt, float dimming) {
         smoothMouse = smoothMouse.plus(mouseNorm.minus(smoothMouse).times(Math.min(1, dt * 2.5f)));
-        renderer.titleBackground("img/start_bg.jpg", time, smoothMouse.times(0.5f), REGIONS, GLINTS, CANDLES);
+        menuBackdrop(smoothMouse.times(0.5f));
         renderer.rect(renderer.visibleRect, Theme.PANEL_DARK.alpha(dimming));
         drawParticles(dt);
     }
@@ -454,7 +464,7 @@ abstract class SceneMenus extends SceneBase {
     }
     /** Animated weather on a row (rain, frost, fog...). */
     void drawWeatherFX(Set<String> weather, Box rowArea) {
-        if (weather.isEmpty()) return;
+        if (weather.isEmpty() || lowDetail()) return;
         Box area = box(567, rowArea.y + 4, 946, rowArea.h - 6);
         renderer.clip(area);
         if (weather.contains("rain") || weather.contains("storm") || weather.contains("dragon_wrath")) {
