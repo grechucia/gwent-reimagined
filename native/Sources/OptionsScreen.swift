@@ -22,7 +22,7 @@ extension Scene {
             for (i, item) in items.enumerated() {
                 let box = R(bx + Float(i) * (width + 10), y, width, 46)
                 goldButton(box, (item.1 ? "✓ " : "") + item.0, font: .serif(17, bold: true), enabled: item.2) { act(i) }
-                if item.1 { renderer.rect(box, RGBA(r: 1, g: 0.78, b: 0.3, a: 0.22)); renderer.frame(box.inset(-3), RGBA(r: 1, g: 0.85, b: 0.4, a: 1), 3) }
+                if item.1 { renderer.rect(box, Theme.glow.alpha(0.22)); renderer.frame(box.inset(-3), Theme.highlightGold, 3) }
             }
         }
         label(L("Player name"))

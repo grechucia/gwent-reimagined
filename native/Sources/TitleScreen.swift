@@ -7,7 +7,7 @@ import simd
 extension Scene {
     /// Title screen with the animated background.
     func drawTitle(_ dt: Float) {
-        if autotest { autoT += dt; if autoT > 2.5 { autoT = 0; myDeckIndex = Int.random(in: 0..<gameData.decks.count); startGame() } }
+        if autotest { autotestTimer += dt; if autotestTimer > 2.5 { autotestTimer = 0; myDeckIndex = Int.random(in: 0..<gameData.decks.count); startGame() } }
         smoothMouse += (mouseNorm - smoothMouse) * min(1, dt * 2.5)
         renderer.titleBackground("img/start_bg.jpg", time: time, mouse: smoothMouse, regions: Scene.regions, glints: glints, candles: candles)
         drawParticles(dt)
@@ -18,12 +18,12 @@ extension Scene {
         var x = 960 - total / 2
         let y: Float = 34
         let witcherLabel = L("The Witcher 3").uppercased()
-        renderer.text(witcherLabel, .gwent(26), x: 962, y: 16, color: RGBA(r: 0, g: 0, b: 0, a: 0.7), align: .center, shadow: nil)
-        renderer.text(witcherLabel, .gwent(26), x: 960, y: 14, color: RGBA(r: 0.96, g: 0.85, b: 0.6, a: 0.7), align: .center, shadow: nil)
+        renderer.text(witcherLabel, .gwent(26), x: 962, y: 16, color: RGBA.black.alpha(0.7), align: .center, shadow: nil)
+        renderer.text(witcherLabel, .gwent(26), x: 960, y: 14, color: Theme.textGold.alpha(0.7), align: .center, shadow: nil)
         for (s, f, dy) in [("G", bigFont, Float(0)), (mid, smallFont, Float(30)), ("T", bigFont, Float(0))] {
-            renderer.text(s, f, x: x + 3, y: y + dy + 5, color: RGBA(r: 0, g: 0, b: 0, a: 0.85), shadow: nil)
-            renderer.text(s, f, x: x, y: y + dy, color: RGBA(r: 0.96, g: 0.79, b: 0.33, a: 1), shadow: nil)
-            renderer.text(s, f, x: x, y: y + dy - 2, color: RGBA(r: 1, g: 0.93, b: 0.68, a: 0.35), shadow: nil)
+            renderer.text(s, f, x: x + 3, y: y + dy + 5, color: RGBA.black.alpha(0.85), shadow: nil)
+            renderer.text(s, f, x: x, y: y + dy, color: Theme.glow, shadow: nil)
+            renderer.text(s, f, x: x, y: y + dy - 2, color: Theme.paleGold.alpha(0.35), shadow: nil)
             x += renderer.measure(s, f).w - 12
         }
         let ornamentY: Float = 206
@@ -31,13 +31,13 @@ extension Scene {
         renderer.rect(R(960 - 230, ornamentY, 210, 2), RGBA.goldDark.alpha(0.6))
         renderer.rect(R(960 + 20, ornamentY, 210, 2), RGBA.goldDark.alpha(0.6))
         renderer.quad(renderer.white, R(953, ornamentY - 6, 14, 14), color: RGBA.gold, rotation: .pi / 4)
-        renderer.quad(renderer.white, R(956, ornamentY - 3, 8, 8), color: RGBA(r: 0.25, g: 0.17, b: 0.05, a: 1), rotation: .pi / 4)
+        renderer.quad(renderer.white, R(956, ornamentY - 3, 8, 8), color: Theme.ink, rotation: .pi / 4)
         let area = R(960 - 170, 905, 340, 70)
         padPrimary = area
         goldButton(area, gameData.ui("LET'S PLAY"), font: .gwent(38)) { [weak self] in
             guard let strongSelf = self else { return }
             strongSelf.audio.play("menu_opening")
-            let openDecks: () -> Void = { [weak strongSelf] in strongSelf?.deckStage = -1; strongSelf?.deckSwitchT = 0; strongSelf?.screen = .decks }
+            let openDecks: () -> Void = { [weak strongSelf] in strongSelf?.deckStage = -1; strongSelf?.deckTransition = 0; strongSelf?.screen = .decks }
             let named: () -> Void = { [weak strongSelf] in if SaveStore.shared["playerName"] == nil { strongSelf?.askPlayerName(then: openDecks) } else { openDecks() } }
             if SaveStore.shared.chosen { named() } else { strongSelf.askSaveLocation(then: named) }
         }
@@ -47,7 +47,7 @@ extension Scene {
             padNoAuto.append(ScreenLayout.quitButton)
             goldButton(ScreenLayout.quitButton, L("Quit game"), font: .serif(19, bold: true)) { Platform.quit() }
         }
-        renderer.text("v" + appVersion, .serif(17), x: 1880, y: 1044, color: RGBA(r: 0.91, g: 0.86, b: 0.74, a: 0.6), align: .right)
+        renderer.text("v" + appVersion, .serif(17), x: 1880, y: 1044, color: Theme.parchmentText.alpha(0.6), align: .right)
         languageToggle(y: 995)
     }
 
@@ -56,7 +56,7 @@ extension Scene {
         let font = Renderer.Font.serif(18), fb = Renderer.Font.serif(18, bold: true)
         let linkWidth = renderer.measure(linkText, fb).w, plainWidth = renderer.measure(plain, font).w
         let x1 = 1880 - linkWidth
-        renderer.text(plain, font, x: x1 - plainWidth, y: y, color: RGBA(r: 0.91, g: 0.86, b: 0.74, a: 0.9))
+        renderer.text(plain, font, x: x1 - plainWidth, y: y, color: Theme.parchmentText.alpha(0.9))
         let area = R(x1, y, linkWidth, 26)
         let hovered = area.contains(mouse)
         renderer.text(linkText, fb, x: x1, y: y, color: hovered ? .white : RGBA.gold)
@@ -70,7 +70,7 @@ extension Scene {
         let w: Float = 260, h: Float = 40
         let box = R(960 - w / 2, y, w, h)
         let currentName = GameData.languageName(gameData.language)
-        renderer.rect(box.inset(-4), RGBA(r: 0.04, g: 0.03, b: 0.01, a: 0.78))
+        renderer.rect(box.inset(-4), Theme.panelDark.alpha(0.78))
         renderer.frame(box.inset(-4), RGBA.goldDark.alpha(langMenuOpen || box.contains(mouse) ? 0.95 : 0.55), 1.5)
         let textHeight = renderer.measure(currentName, .serif(20, bold: true)).h
         renderer.text(currentName, .serif(20, bold: true), x: box.x + 18, y: box.mid.y - textHeight / 2, color: RGBA.gold)
@@ -80,15 +80,15 @@ extension Scene {
         let itemHeight: Float = 36
         let list = GameData.languages
         let area = R(box.x - 4, box.y - 8 - Float(list.count) * itemHeight, box.w + 8, Float(list.count) * itemHeight + 4)
-        renderer.rect(area, RGBA(r: 0.05, g: 0.04, b: 0.02, a: 0.97)); renderer.frame(area, RGBA.goldDark, 1.5)
+        renderer.rect(area, Theme.panelDark.alpha(0.97)); renderer.frame(area, RGBA.goldDark, 1.5)
         for (i, language) in list.enumerated() {
             let itemRect = R(area.x + 2, area.y + 2 + Float(i) * itemHeight, area.w - 4, itemHeight)
             let isCurrent = language.code == gameData.language, hov = itemRect.contains(mouse)
-            if isCurrent { renderer.gradient(itemRect, RGBA(r: 0.95, g: 0.82, b: 0.49, a: 1), RGBA(r: 0.79, g: 0.59, b: 0.18, a: 1), steps: 6) }
+            if isCurrent { renderer.gradient(itemRect, RGBA(r: 0.95, g: 0.82, b: 0.49, a: 1), Theme.bronze, steps: 6) }
             else if hov { renderer.rect(itemRect, RGBA.gold.alpha(0.18)) }
             let textY = itemRect.mid.y - renderer.measure(language.name, .serif(19, bold: true)).h / 2
-            renderer.text(language.name, .serif(19, bold: true), x: itemRect.x + 16, y: textY, color: isCurrent ? RGBA(r: 0.1, g: 0.07, b: 0.02, a: 1) : (hov ? .white : .gray(0.85)), shadow: isCurrent ? nil : RGBA.black.alpha(0.8))
-            if !gameData.hasTranslation(language.code) { renderer.text("EN", .ui(12, bold: true), x: itemRect.x + itemRect.w - 14, y: itemRect.mid.y - 8, color: isCurrent ? RGBA(r: 0.2, g: 0.14, b: 0.04, a: 1) : .gray(0.5), align: .right, shadow: nil) }
+            renderer.text(language.name, .serif(19, bold: true), x: itemRect.x + 16, y: textY, color: isCurrent ? Theme.panelDark : (hov ? .white : .gray(0.85)), shadow: isCurrent ? nil : RGBA.black.alpha(0.8))
+            if !gameData.hasTranslation(language.code) { renderer.text("EN", .ui(12, bold: true), x: itemRect.x + itemRect.w - 14, y: itemRect.mid.y - 8, color: isCurrent ? Theme.ink : .gray(0.5), align: .right, shadow: nil) }
             button(itemRect) { [weak self] in self?.setLanguage(language.code); self?.langMenuOpen = false }
         }
     }
@@ -139,7 +139,7 @@ extension Scene {
             let alpha = particle.alpha * fade * (particle.ember ? (0.7 + 0.3 * sin(time * 17 + Float(i) * 3)) : 1)
             let size = particle.size * 2.4 * (particle.ember ? 1 : particle.depth)
             let screenPosition = particle.position - smoothMouse * particle.depth * SIMD2(8, 6)
-            let tint = particle.ember ? RGBA(r: 1, g: 0.6, b: 0.25, a: alpha) : RGBA(r: 1, g: 0.93, b: 0.8, a: alpha)
+            let tint = particle.ember ? RGBA(r: 1, g: 0.6, b: 0.25, a: alpha) : Theme.cream.alpha(alpha)
             renderer.quad(glow, R(screenPosition.x - size / 2, screenPosition.y - size / 2, size, size), color: tint)
         }
     }
@@ -148,7 +148,7 @@ extension Scene {
     func drawMenuBackground(_ dt: Float, dim dimming: Float) {
         smoothMouse += (mouseNorm - smoothMouse) * min(1, dt * 2.5)
         renderer.titleBackground("img/start_bg.jpg", time: time, mouse: smoothMouse * 0.5, regions: Scene.regions, glints: glints, candles: candles)
-        renderer.rect(renderer.visibleRect, RGBA(r: 0.02, g: 0.015, b: 0.01, a: dimming))
+        renderer.rect(renderer.visibleRect, Theme.panelDark.alpha(dimming))
         drawParticles(dt)
     }
 }

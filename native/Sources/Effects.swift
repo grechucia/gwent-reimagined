@@ -51,7 +51,7 @@ extension Scene {
                 let phase = elapsed / effect.duration
                 let alpha = phase < 0.15 ? phase / 0.15 : (phase > 0.75 ? (1 - phase) / 0.25 : 1)
                 let flick = 0.85 + 0.15 * sin(time * 40 + cr.x)
-                renderer.quad(glowTex, R(cr.x - 30, cr.y - 30, cr.w + 60, cr.h + 60), color: RGBA(r: 1, g: 0.45, b: 0.1, a: 0.55 * alpha * flick))
+                renderer.quad(glowTex, R(cr.x - 30, cr.y - 30, cr.w + 60, cr.h + 60), color: Theme.fire.alpha(0.55 * alpha * flick))
                 renderer.image("img/icons/anim_scorch.png", R(cr.x - cr.w * 0.1, cr.y - cr.h * 0.15, cr.w * 1.2, cr.h * 1.25), color: .white.alpha(alpha * flick))
             case .hero:
                 let phase = elapsed / effect.duration
@@ -109,7 +109,7 @@ extension Scene {
                 let x = area.x + fract(index * 0.754877) * area.w, y = area.y + fract(index * 0.569840) * area.h
                 let twinkle = max(0, sin(time * 2.4 + index * 1.7))
                 let flakeSize: Float = 6 + 10 * twinkle
-                renderer.quad(glowTex, R(x - flakeSize / 2, y - flakeSize / 2, flakeSize, flakeSize), color: RGBA(r: 0.8, g: 0.92, b: 1, a: 0.7 * twinkle))
+                renderer.quad(glowTex, R(x - flakeSize / 2, y - flakeSize / 2, flakeSize, flakeSize), color: Theme.frostBlue.alpha(0.7 * twinkle))
             }
         }
         if weather.contains("sandstorm") {

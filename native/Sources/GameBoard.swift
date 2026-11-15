@@ -179,9 +179,9 @@ extension Scene {
         let x = BoardLayout.rowScoreX
         let outer = Renderer.Font.ui(78), inner = Renderer.Font.ui(70), digits = Renderer.Font.ui(28, bold: true)
         renderer.text("●", outer, x: x, y: centerY - renderer.measure("●", outer).h / 2, color: RGBA.goldDark.alpha(0.9), align: .center, shadow: nil)
-        renderer.text("●", inner, x: x, y: centerY - renderer.measure("●", inner).h / 2, color: RGBA(r: 0.06, g: 0.05, b: 0.04, a: 1), align: .center, shadow: nil)
+        renderer.text("●", inner, x: x, y: centerY - renderer.measure("●", inner).h / 2, color: Theme.panelDark, align: .center, shadow: nil)
         let text = "\(total)"
-        renderer.text(text, digits, x: x, y: centerY - renderer.measure(text, digits).h / 2, color: RGBA(r: 1, g: 0.9, b: 0.65, a: 1), align: .center, shadow: nil)
+        renderer.text(text, digits, x: x, y: centerY - renderer.measure(text, digits).h / 2, color: Theme.paleGold, align: .center, shadow: nil)
     }
 
     /// Weather cards in play and, for cards without a target, the area that plays them.
@@ -239,15 +239,15 @@ extension Scene {
             padNoAuto.append(box)
             let active = i == 1 || audio.musicOn
             let hovered = box.contains(mouse)
-            renderer.rect(box, RGBA(r: 0.03, g: 0.03, b: 0.04, a: hovered ? 0.9 : 0.7)); renderer.frame(box, RGBA.goldDark.alpha(hovered ? 0.9 : 0.45), 1)
+            renderer.rect(box, Theme.panelDark.alpha(hovered ? 0.9 : 0.7)); renderer.frame(box, RGBA.goldDark.alpha(hovered ? 0.9 : 0.45), 1)
             renderer.text(symbol, .ui(24, bold: true), x: box.mid.x, y: box.y + 8, color: hovered ? .white : RGBA(r: 0.93, g: 0.76, b: 0.35, a: active ? 1 : 0.35), align: .center)
             button(box, action)
         }
-        exitConfirmT = max(0, exitConfirmT - dt)
+        exitConfirmTimer = max(0, exitConfirmTimer - dt)
         padNoAuto.append(BoardLayout.exitButton)
-        smallButton(BoardLayout.exitButton, exitConfirmT > 0 ? L("Are you sure?") : L("Exit to menu"), enabled: true) { [weak self] in
+        smallButton(BoardLayout.exitButton, exitConfirmTimer > 0 ? L("Are you sure?") : L("Exit to menu"), enabled: true) { [weak self] in
             guard let scene = self else { return }
-            if scene.exitConfirmT > 0 { scene.exitConfirmT = 0; scene.game = nil; scene.screen = .title } else { scene.exitConfirmT = 3 }
+            if scene.exitConfirmTimer > 0 { scene.exitConfirmTimer = 0; scene.game = nil; scene.screen = .title } else { scene.exitConfirmTimer = 3 }
         }
         smallButton(BoardLayout.passButton, L("Pass"), enabled: canAct) { [weak self] in self?.selected = nil; self?.game?.humanPass() }
         padNoAuto.append(BoardLayout.giveUpButton)
@@ -280,16 +280,16 @@ extension Scene {
 
     /// Automatic play used by tests (GWENT_AUTOTEST).
     func autoTest(_ match: Game, _ dt: Float) {
-        autoT += dt
+        autotestTimer += dt
         let progressSignature = "\(match.turn)|\(match.round)|\(match.human.hand.count)|\(match.computer.hand.count)|\(match.phase)|\(match.human.total)|\(match.computer.total)"
         if progressSignature != lastSig { lastSig = progressSignature; watchdog = 0 } else { watchdog += dt }
         if watchdog > 25 {
             log("HANG: phase \(match.phase), turn \(match.current === match.human ? "Player 1" : "Player 2"), busy \(match.busy), choice: \(match.choice?.title ?? "none"), leaders \(match.human.leaderAbility)/\(match.computer.leaderAbility)")
             watchdog = 0; gamesPlayed += 1; startGame(); return
         }
-        if match.phase == .redraw && autoT > 1 { autoT = 0; match.finishRedraw() }
-        if match.phase == .over && notes.isEmpty && autoT > 2 {
-            autoT = 0; gamesPlayed += 1
+        if match.phase == .redraw && autotestTimer > 1 { autotestTimer = 0; match.finishRedraw() }
+        if match.phase == .over && notes.isEmpty && autotestTimer > 2 {
+            autotestTimer = 0; gamesPlayed += 1
             log("END: rounds \(match.history.map { "\($0.human):\($0.computer)" }.joined(separator: ", ")) winner: \(match.winner === match.human ? "Player 1" : (match.winner === match.computer ? "Player 2" : "draw"))")
             startGame()
         }
@@ -305,11 +305,11 @@ extension Scene {
         renderer.image("img/icons/deck_shield_\(player.faction).png", shield)
         if shield.contains(mouse) { hoverText = gameData.factionName(player.faction) + "\n" + gameData.factionDesc(player.faction) }
         let nameY: Float = mine ? 728 : 271
-        renderer.text(mine ? playerName : (careerFightName ?? L("Player 2")), .gwent(24), x: 239, y: nameY, color: RGBA(r: 0.96, g: 0.85, b: 0.56, a: 1))
+        renderer.text(mine ? playerName : (careerFightName ?? L("Player 2")), .gwent(24), x: 239, y: nameY, color: Theme.textGold)
         renderer.text(gameData.factionName(player.faction), .ui(17), x: 239, y: nameY + 27, color: .gray(0.85), maxWidth: 190)
         let handCountY: Float = mine ? 680 : 356
         renderer.image("img/icons/icon_card_count.png", R(240, handCountY + 4, 30, 32))
-        renderer.text("\(player.hand.count)", .ui(30, bold: true), x: 274, y: handCountY, color: RGBA(r: 0.93, g: 0.72, b: 0.2, a: 1))
+        renderer.text("\(player.hand.count)", .ui(30, bold: true), x: 274, y: handCountY, color: Theme.amber)
         let gemsY: Float = mine ? 678 : 352
         renderer.image("img/icons/icon_gem_\(player.gems >= 1 ? "on" : "off").png", R(319, gemsY, 41, 42))
         renderer.image("img/icons/icon_gem_\(player.gems >= 2 ? "on" : "off").png", R(360, gemsY, 41, 42))
@@ -318,7 +318,7 @@ extension Scene {
         if player.total > player.opponent.total { renderer.image("img/icons/icon_high_score.png", R(scoreBadge.x - 14, scoreBadge.y - 12, 82, 78)) }
         let textHeight = renderer.measure("\(player.total)", .ui(30, bold: true)).h
         renderer.text("\(player.total)", .ui(30, bold: true), x: scoreBadge.mid.x, y: scoreBadge.mid.y - textHeight / 2, color: .black, align: .center, shadow: RGBA.white.alpha(0.5))
-        if player.passed { renderer.text(L("Passed"), .ui(24, bold: true), x: 330, y: mine ? 640 : 410, color: RGBA(r: 0.93, g: 0.72, b: 0.2, a: 1), align: .center) }
+        if player.passed { renderer.text(L("Passed"), .ui(24, bold: true), x: 330, y: mine ? 640 : 410, color: Theme.amber, align: .center) }
         let leaderArea = leaderRect(player)
         player.leader.pos = SIMD2(leaderArea.x, leaderArea.y); player.leader.hasPos = true
         let avail = match.leaderAvailable(player)
@@ -393,15 +393,15 @@ extension Scene {
             let w: Float = 420
             let h = renderer.measure(tooltip, .ui(17), maxWidth: w - 24).h + 20
             let box = R(min(mouse.x + 18, virtualWidth - w - 10), min(mouse.y + 18, virtualHeight - h - 10), w, h)
-            renderer.rect(box, RGBA(r: 0.06, g: 0.05, b: 0.03, a: 0.94)); renderer.frame(box, RGBA.goldDark.alpha(0.7), 1)
+            renderer.rect(box, Theme.panelDark.alpha(0.94)); renderer.frame(box, RGBA.goldDark.alpha(0.7), 1)
             renderer.text(tooltip, .ui(17), x: box.x + 12, y: box.y + 10, color: .gray(0.92), maxWidth: w - 24)
         }
         hoverText = nil
         guard let note = notes.first else { return }
-        noteT += dt
+        noteTimer += dt
         let duration: Float = autotest ? 0.5 : 1.25
-        let alpha = max(0, min(1, min(noteT / 0.15, (duration - noteT) / 0.2)))
-        let entry = min(1, noteT / 0.18), ease = 1 - (1 - entry) * (1 - entry)
+        let alpha = max(0, min(1, min(noteTimer / 0.15, (duration - noteTimer) / 0.2)))
+        let entry = min(1, noteTimer / 0.18), ease = 1 - (1 - entry) * (1 - entry)
         let font = Renderer.Font.gwent(34)
         let textWidth = min(900, renderer.measure(note.text, font, maxWidth: 900).w)
         let textHeight = renderer.measure(note.text, font, maxWidth: 900).h
@@ -409,14 +409,14 @@ extension Scene {
         let w = textWidth + iconWidth + 90, h = max(110, textHeight + 50)
         let card = R(960 - w / 2, 500 - h / 2 + (1 - ease) * 18, w, h)
         renderer.rect(renderer.visibleRect, RGBA.black.alpha(0.25 * alpha))
-        renderer.gradient(card, RGBA(r: 0.08, g: 0.07, b: 0.06, a: 0.93 * alpha), RGBA(r: 0.02, g: 0.02, b: 0.03, a: 0.95 * alpha), steps: 8)
+        renderer.gradient(card, Theme.panelDark.alpha(0.93 * alpha), Theme.panelDark.alpha(0.95 * alpha), steps: 8)
         renderer.rect(R(card.x, card.y, card.w, 2), RGBA.gold.alpha(0.9 * alpha))
         renderer.rect(R(card.x, card.y + card.h - 1, card.w, 1), RGBA.goldDark.alpha(0.6 * alpha))
         renderer.frame(card, RGBA.goldDark.alpha(0.35 * alpha), 1)
         var x = card.x + 45
         if let icon = note.icon { renderer.image("img/icons/\(icon).png", R(x - 10, card.mid.y - 52, 104, 104), color: .white.alpha(alpha)); x += iconWidth + 10 }
-        renderer.text(note.text, font, x: note.icon == nil ? card.mid.x : x, y: card.mid.y - textHeight / 2, color: RGBA(r: 0.97, g: 0.88, b: 0.62, a: alpha), maxWidth: 900, align: note.icon == nil ? .center : .left, shadow: nil)
-        if noteT >= duration { notes.removeFirst(); noteT = 0 }
+        renderer.text(note.text, font, x: note.icon == nil ? card.mid.x : x, y: card.mid.y - textHeight / 2, color: Theme.paleGold.alpha(alpha), maxWidth: 900, align: note.icon == nil ? .center : .left, shadow: nil)
+        if noteTimer >= duration { notes.removeFirst(); noteTimer = 0 }
     }
 
     /// Full-screen overlay with a set of cards to choose from.
@@ -461,23 +461,23 @@ extension Scene {
         switch choice.kind {
         case .cards(let cards, let minCount, let maxCount):
             let multi = maxCount > 1 || minCount != 1
-            let end = overlayCards(cards, title: choice.title, info: multi ? L("Selected: ") + "\(multiSel.count) / \(maxCount)" : nil, marked: multiSel) { [weak self] c in
+            let end = overlayCards(cards, title: choice.title, info: multi ? L("Selected: ") + "\(multiSelection.count) / \(maxCount)" : nil, marked: multiSelection) { [weak self] c in
                 guard let strongSelf = self else { return }
                 if !multi { match.resolveChoice([cards.firstIndex { $0 === c }!]); return }
-                if let i = strongSelf.multiSel.firstIndex(where: { $0 === c }) { strongSelf.multiSel.remove(at: i) }
-                else if strongSelf.multiSel.count < maxCount { strongSelf.multiSel.append(c) }
+                if let i = strongSelf.multiSelection.firstIndex(where: { $0 === c }) { strongSelf.multiSelection.remove(at: i) }
+                else if strongSelf.multiSelection.count < maxCount { strongSelf.multiSelection.append(c) }
             }
             var buttonX: Float = 960 - 150
             if multi {
-                let selectionValid = multiSel.count >= minCount && multiSel.count <= maxCount
+                let selectionValid = multiSelection.count >= minCount && multiSelection.count <= maxCount
                 goldButton(R(choice.canCancel ? 960 - 320 : buttonX, min(990, end.y + 10), 300, 60), L("Done"), font: .gwent(30), enabled: selectionValid) { [weak self] in
                     guard let strongSelf = self else { return }
-                    let idx = strongSelf.multiSel.compactMap { card in cards.firstIndex { $0 === card } }
-                    strongSelf.multiSel = []; match.resolveChoice(idx)
+                    let idx = strongSelf.multiSelection.compactMap { card in cards.firstIndex { $0 === card } }
+                    strongSelf.multiSelection = []; match.resolveChoice(idx)
                 }
                 buttonX = 960 + 20
             }
-            if choice.canCancel { goldButton(R(multi ? buttonX : 960 - 150, min(990, end.y + 10), 300, 60), L("Skip"), font: .serif(24, bold: true)) { [weak self] in self?.multiSel = []; match.resolveChoice(nil) } }
+            if choice.canCancel { goldButton(R(multi ? buttonX : 960 - 150, min(990, end.y + 10), 300, 60), L("Skip"), font: .serif(24, bold: true)) { [weak self] in self?.multiSelection = []; match.resolveChoice(nil) } }
             if let h = hover { drawPreview(h) }
         case .reveal(let cards):
             let end = overlayCards(cards, title: choice.title, info: nil) { _ in match.resolveChoice(nil) }
@@ -490,7 +490,7 @@ extension Scene {
             let rowsN = Int((Double(opts.count) / Double(cols)).rounded(.up))
             let boxH: Float = 170 + Float(rowsN) * (buttonHeight + 16)
             let box = R(960 - 420, 540 - boxH / 2, 840, boxH)
-            renderer.gradient(box, RGBA(r: 0.12, g: 0.09, b: 0.05, a: 0.97), RGBA(r: 0.05, g: 0.04, b: 0.02, a: 0.97), steps: 10)
+            renderer.gradient(box, RGBA(r: 0.12, g: 0.09, b: 0.05, a: 0.97), Theme.panelDark.alpha(0.97), steps: 10)
             renderer.frame(box, RGBA.goldDark, 2)
             renderer.text(choice.title, .serif(26, bold: true), x: 960, y: box.y + 30, color: RGBA.gold, maxWidth: 760, align: .center)
             for (i, option) in opts.enumerated() {

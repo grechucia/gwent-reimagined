@@ -17,14 +17,14 @@ extension Scene {
         /// Section heading.
         func head(_ text: String) { y += renderer.text(text, .gwent(30), x: x, y: y, color: RGBA.gold, maxWidth: w).h + 4; goldDivider(x, y, min(w, 600)); y += 14 }
         /// Paragraph.
-        func para(_ text: String, _ color: RGBA = RGBA(r: 0.92, g: 0.88, b: 0.8, a: 1)) { y += renderer.text(text, .serif(19), x: x, y: y, color: color, maxWidth: w).h + 10 }
+        func para(_ text: String, _ color: RGBA = Theme.parchment) { y += renderer.text(text, .serif(19), x: x, y: y, color: color, maxWidth: w).h + 10 }
         /// Clickable link.
         func link(_ text: String, _ url: String) {
             let textSize = renderer.measure(text, .serif(19, bold: true), maxWidth: w)
             let area = R(x, y, textSize.w, textSize.h)
             let hovered = area.contains(mouse)
-            renderer.text(text, .serif(19, bold: true), x: x, y: y, color: hovered ? .white : RGBA(r: 0.55, g: 0.78, b: 1, a: 1), maxWidth: w)
-            renderer.rect(R(x, y + textSize.h - 2, textSize.w, 1), RGBA(r: 0.55, g: 0.78, b: 1, a: hovered ? 1 : 0.6))
+            renderer.text(text, .serif(19, bold: true), x: x, y: y, color: hovered ? .white : Theme.linkBlue, maxWidth: w)
+            renderer.rect(R(x, y + textSize.h - 2, textSize.w, 1), Theme.linkBlue.alpha(hovered ? 1 : 0.6))
             button(area) { if let link = URL(string: url) { Platform.openURL(link) } }
             y += textSize.h + 12
         }

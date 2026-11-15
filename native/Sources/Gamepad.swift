@@ -90,7 +90,7 @@ extension Scene {
         }
         let pulse = 0.75 + 0.25 * sin(time * 5)
         renderer.rect(focused.inset(-4), RGBA(r: 1, g: 0.8, b: 0.35, a: 0.10 * pulse))
-        renderer.frame(focused.inset(-4), RGBA(r: 1, g: 0.84, b: 0.4, a: pulse), 3)
-        renderer.frame(focused.inset(-9), RGBA(r: 1, g: 0.75, b: 0.3, a: 0.35 * pulse), 2)
+        renderer.frame(focused.inset(-4), Theme.highlightGold.alpha(pulse), 3)
+        renderer.frame(focused.inset(-9), Theme.glow.alpha(0.35 * pulse), 2)
     }
 }

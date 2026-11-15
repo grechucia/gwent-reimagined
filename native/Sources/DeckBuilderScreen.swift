@@ -11,7 +11,7 @@ extension Scene {
         if leaderPickerOpen { drawLeaderPicker(builder); return }
         renderer.text(L("Deck builder"), .gwent(46), x: 960, y: 14, color: RGBA.gold, align: .center)
         let factionIndex = DeckBuilder.factionsOrder.firstIndex(of: builder.faction) ?? 0
-        renderer.quad(glowTex, R(960 - 240, 60, 100, 100), color: RGBA(r: 1, g: 0.75, b: 0.3, a: 0.3))
+        renderer.quad(glowTex, R(960 - 240, 60, 100, 100), color: Theme.glow.alpha(0.3))
         renderer.image("img/icons/deck_shield_\(builder.faction).png", R(960 - 212, 78, 44, 48))
         renderer.text(gameData.factionName(builder.faction), .serif(28, bold: true), x: 960 - 155, y: 84, color: .white)
         for (arrows, x) in [(-1, Float(960 - 280)), (1, Float(960 + 240))] where !builder.careerMode {
@@ -19,7 +19,7 @@ extension Scene {
             renderer.text(arrows < 0 ? "‹" : "›", .serif(60), x: area.mid.x, y: area.y - 18, color: area.contains(mouse) ? .white : RGBA.gold, align: .center)
             button(area) { [weak self] in
                 let count = DeckBuilder.factionsOrder.count
-                builder.newDeck(DeckBuilder.factionsOrder[(factionIndex + arrows + count) % count]); self?.scrollTargetL = 0; self?.scrollTargetR = 0
+                builder.newDeck(DeckBuilder.factionsOrder[(factionIndex + arrows + count) % count]); self?.collectionScrollTarget = 0; self?.deckScrollTarget = 0
             }
         }
         renderer.text(gameData.factionDesc(builder.faction), .ui(16), x: 960, y: 134, color: .gray(0.78), maxWidth: 900, align: .center)
@@ -39,20 +39,20 @@ extension Scene {
             let w = renderer.measure(n, .ui(15, bold: true)).w + 22
             let area = R(filterX, 192, w, 26)
             let isActive = builderFilter == i
-            if isActive { renderer.gradient(area, RGBA(r: 0.95, g: 0.82, b: 0.49, a: 1), RGBA(r: 0.79, g: 0.59, b: 0.18, a: 1), steps: 6) }
+            if isActive { renderer.gradient(area, RGBA(r: 0.95, g: 0.82, b: 0.49, a: 1), Theme.bronze, steps: 6) }
             else if area.contains(mouse) { renderer.rect(area, RGBA.gold.alpha(0.15)) }
-            renderer.text(n, .ui(15, bold: true), x: area.mid.x, y: area.y + 4, color: isActive ? RGBA(r: 0.1, g: 0.07, b: 0.02, a: 1) : .gray(0.85), align: .center, shadow: nil)
-            button(area) { [weak self] in self?.builderFilter = i; self?.scrollTargetL = 0 }
+            renderer.text(n, .ui(15, bold: true), x: area.mid.x, y: area.y + 4, color: isActive ? Theme.panelDark : .gray(0.85), align: .center, shadow: nil)
+            button(area) { [weak self] in self?.builderFilter = i; self?.collectionScrollTarget = 0 }
             filterX += w + 6
         }
         let pred = filters[min(builderFilter, filters.count - 1)].1
         let coll = builder.collection().filter { pred($0) && ($0.count - (builder.counts[$0.key] ?? 0)) > 0 }
-        builderGrid(coll, in: colL, scroll: &builder.scrollL, target: &scrollTargetL, dt: dt, count: { cardData in builder.cap(cardData) - (builder.counts[cardData.key] ?? 0) }) { [weak self] d, from in
+        builderGrid(coll, in: colL, scroll: &builder.scrollL, target: &collectionScrollTarget, dt: dt, count: { cardData in builder.cap(cardData) - (builder.counts[cardData.key] ?? 0) }) { [weak self] d, from in
             let before = builder.counts[d.key] ?? 0
             builder.add(d)
             if (builder.counts[d.key] ?? 0) > before { self?.audio.play("card", volume: 0.4); self?.flyCards.append((d, from, R(colR.mid.x - 50, colR.y + 40, 100, 143), 0)) }
         }
-        builderGrid(builder.deckCards, in: colR, scroll: &builder.scrollR, target: &scrollTargetR, dt: dt, count: { cardData in builder.counts[cardData.key] ?? 0 }) { [weak self] d, from in
+        builderGrid(builder.deckCards, in: colR, scroll: &builder.scrollR, target: &deckScrollTarget, dt: dt, count: { cardData in builder.counts[cardData.key] ?? 0 }) { [weak self] d, from in
             builder.remove(d); self?.audio.play("discard", volume: 0.4)
             self?.flyCards.append((d, from, R(colL.mid.x - 50, colL.y + 40, 100, 143), 0))
         }
@@ -61,7 +61,7 @@ extension Scene {
             if builder.leaderKey.isEmpty { builder.leaderKey = leaderCards[leaderIndex].key }
             let lc = Card(leaderCards[leaderIndex], owner: nil)
             let leaderArea = BuilderLayout.leaderCard
-            renderer.quad(glowTex, R(leaderArea.x - 40, leaderArea.y - 40, leaderArea.w + 80, leaderArea.h + 80), color: RGBA(r: 1, g: 0.72, b: 0.3, a: 0.22 + 0.06 * sin(time * 2)))
+            renderer.quad(glowTex, R(leaderArea.x - 40, leaderArea.y - 40, leaderArea.w + 80, leaderArea.h + 80), color: Theme.glow.alpha(0.22 + 0.06 * sin(time * 2)))
             drawCard(lc, leaderArea)
             renderer.frame(leaderArea.inset(-2), RGBA.gold.alpha(0.6), 2)
             if leaderArea.contains(mouse) { builderHover = lc }
@@ -89,8 +89,8 @@ extension Scene {
         renderer.rect(area, RGBA.white.alpha(0.12))
         renderer.rect(R(area.x, area.y, area.w * min(1, Float(stats.units) / 22), area.h), stats.units >= 22 ? RGBA(r: 0.45, g: 0.85, b: 0.4, a: 1) : RGBA.gold)
         y += 18
-        if stats.units < 22 { renderer.text(L("Your deck must have at least 22 unit cards."), .ui(13), x: 960, y: y, color: RGBA(r: 1, g: 0.55, b: 0.45, a: 1), maxWidth: 200, align: .center) }
-        goldButton(BuilderLayout.saveButton, L("Save"), font: .serif(22, bold: true), enabled: builder.valid) { [weak self] in builder.save(); self?.audio.play("game_buy"); self?.builderSaved = 1.5 }
+        if stats.units < 22 { renderer.text(L("Your deck must have at least 22 unit cards."), .ui(13), x: 960, y: y, color: Theme.negative, maxWidth: 200, align: .center) }
+        goldButton(BuilderLayout.saveButton, L("Save"), font: .serif(22, bold: true), enabled: builder.valid) { [weak self] in builder.save(); self?.audio.play("game_buy"); self?.builderSavedTimer = 1.5 }
         if !builder.careerMode {
         goldButton(BuilderLayout.startButton, L("Start game"), font: .serif(20, bold: true), enabled: builder.valid) { [weak self] in
             guard let self = self else { return }
@@ -99,17 +99,17 @@ extension Scene {
         }
         goldButton(ScreenLayout.backButton, "‹  " + L("Back"), font: .serif(22, bold: true)) { [weak self] in
             if builder.careerMode { builder.save(); self?.screen = .career; return }
-            self?.customDecks = DeckBuilder.loadCustom(); self?.selFaction = builder.faction; self?.deckStage = 1; self?.deckSwitchT = 0; self?.screen = .decks }
-        if builderSaved > 0 { renderer.text(L("Deck Saved!"), .serif(22, bold: true), x: 960, y: 760, color: RGBA(r: 0.5, g: 1, b: 0.5, a: min(1, builderSaved)), align: .center); builderSaved -= dt }
+            self?.customDecks = DeckBuilder.loadCustom(); self?.selectedFaction = builder.faction; self?.deckStage = 1; self?.deckTransition = 0; self?.screen = .decks }
+        if builderSavedTimer > 0 { renderer.text(L("Deck Saved!"), .serif(22, bold: true), x: 960, y: 760, color: RGBA(r: 0.5, g: 1, b: 0.5, a: min(1, builderSavedTimer)), align: .center); builderSavedTimer -= dt }
         for i in flyCards.indices.reversed() {
-            flyCards[i].t += dt / 0.35
+            flyCards[i].progress += dt / 0.35
             let flight = flyCards[i]
-            if flight.t >= 1 { flyCards.remove(at: i); continue }
-            let progress = ease(flight.t)
+            if flight.progress >= 1 { flyCards.remove(at: i); continue }
+            let progress = ease(flight.progress)
             let arcOffset = sin(progress * .pi) * -60
             let cardRect = R(flight.from.x + (flight.to.x - flight.from.x) * progress, flight.from.y + (flight.to.y - flight.from.y) * progress + arcOffset, flight.from.w, flight.from.h)
             renderer.rect(R(cardRect.x + 10, cardRect.y + 14, cardRect.w, cardRect.h), RGBA.black.alpha(0.35 * (1 - progress)))
-            drawCard(Card(flight.d, owner: nil), cardRect)
+            drawCard(Card(flight.cardData, owner: nil), cardRect)
             renderer.rect(cardRect, RGBA.black.alpha(progress * 0.6))
         }
         if let h = builderHover { drawPreview(h) }
@@ -133,7 +133,7 @@ extension Scene {
             let isHovered = base.contains(mouse)
             let isSelected = leaderEntry.key == builder.leaderKey
             let cardRect = isHovered ? R(base.x, base.y - 8, base.w, base.h) : base
-            if isHovered || isSelected { renderer.quad(glowTex, R(cardRect.x - 40, cardRect.y - 40, cardRect.w + 80, cardRect.h + 80), color: RGBA(r: 1, g: 0.72, b: 0.3, a: isSelected ? 0.45 : 0.3)) }
+            if isHovered || isSelected { renderer.quad(glowTex, R(cardRect.x - 40, cardRect.y - 40, cardRect.w + 80, cardRect.h + 80), color: Theme.glow.alpha(isSelected ? 0.45 : 0.3)) }
             let newCard = Card(leaderEntry, owner: nil)
             drawCardLarge(newCard, cardRect)
             renderer.frame(cardRect.inset(-3), isSelected ? RGBA.gold : RGBA.gold.alpha(isHovered ? 0.7 : 0.25), isSelected ? 3 : 1.5)
@@ -176,7 +176,7 @@ extension Scene {
             let hoverAmount = cardHover[key, default: 0]
             let zoom = 1 + 0.07 * hoverAmount
             let cardRect = R(base.mid.x - gridCardWidth * zoom / 2, base.mid.y - gridCardHeight * zoom / 2 - 4 * hoverAmount, gridCardWidth * zoom, gridCardHeight * zoom)
-            if hoverAmount > 0.02 { renderer.quad(glowTex, R(cardRect.x - 20, cardRect.y - 20, cardRect.w + 40, cardRect.h + 40), color: RGBA(r: 1, g: 0.75, b: 0.3, a: 0.35 * hoverAmount)) }
+            if hoverAmount > 0.02 { renderer.quad(glowTex, R(cardRect.x - 20, cardRect.y - 20, cardRect.w + 40, cardRect.h + 40), color: Theme.glow.alpha(0.35 * hoverAmount)) }
             let newCard = Card(cardData, owner: nil)
             drawCard(newCard, cardRect)
             let copies = count(cardData)

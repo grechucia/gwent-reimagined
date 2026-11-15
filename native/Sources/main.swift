@@ -151,7 +151,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, MTKViewDelegate, NSMen
         if env["GWENT_MUTE"] == "1" { audio.muted = true; audio.musicOn = false }
         switch env["GWENT_SHOW"] ?? "" {
         case "builder": scene?.builder.load(GameData.shared.decks[0], customIndex: nil); scene?.screen = .builder; scene?.leaderPickerOpen = env["GWENT_LEADERS"] == "1"
-        case "decks": scene?.screen = .decks; if let faction = env["GWENT_FACTION"] { scene?.selFaction = faction; scene?.deckStage = 1; if let preview = env["GWENT_PREVIEW"], let notification = Int(preview) { scene?.previewDeck = notification } }
+        case "decks": scene?.screen = .decks; if let faction = env["GWENT_FACTION"] { scene?.selectedFaction = faction; scene?.deckStage = 1; if let preview = env["GWENT_PREVIEW"], let notification = Int(preview) { scene?.previewDeck = notification } }
         case "rules": scene?.openRules()
         case "options": scene?.optionsOpen = true
         case "saveprompt": scene?.askSaveLocation(then: nil)

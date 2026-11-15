@@ -38,7 +38,7 @@ extension Scene {
             let col: RGBA = card.hero ? .white : (power > card.basePower ? RGBA(r: 0.1, g: 0.55, b: 0.1, a: 1) : (power < card.basePower ? RGBA(r: 0.75, g: 0.1, b: 0.1, a: 1) : .black))
             let badgeCenterX: Float = 16.3, badgeCenterY: Float = 14.6
             var popAmount: Float = 0
-            if let seen = powerSeen[card.id] { popAmount = seen.0 != power ? 0.45 : max(0, seen.1 - frameDT) }
+            if let seen = powerSeen[card.id] { popAmount = seen.0 != power ? 0.45 : max(0, seen.1 - frameDelta) }
             powerSeen[card.id] = (power, popAmount)
             let font = Renderer.Font.ui((card.hero ? 21 : 19) * scale * (1 + popAmount * 1.1), bold: true)
             let textHeight = renderer.measure("\(power)", font).h
@@ -59,10 +59,10 @@ extension Scene {
         renderer.imageCover(card.data.image, cardRect)
         let bandHeight = cardRect.h * 0.26
         let band = R(cardRect.x, cardRect.y + cardRect.h - bandHeight, cardRect.w, bandHeight)
-        renderer.gradient(band, RGBA(r: 0.95, g: 0.91, b: 0.82, a: 1), RGBA(r: 0.84, g: 0.77, b: 0.63, a: 1), steps: 10)
+        renderer.gradient(band, Theme.parchment, Theme.parchmentShade, steps: 10)
         renderer.rect(R(band.x, band.y, band.w, max(1.5, cardRect.w * 0.008)), RGBA(r: 0.55, g: 0.42, b: 0.2, a: 1))
         let nameFont = Renderer.Font.serif(max(10, cardRect.w * 0.078), bold: true)
-        let nameHeight = renderer.text(gameData.cardName(card.data), nameFont, x: band.mid.x, y: band.y + bandHeight * 0.08, color: RGBA(r: 0.22, g: 0.15, b: 0.06, a: 1), maxWidth: band.w - cardRect.w * 0.08, align: .center, shadow: nil).h
+        let nameHeight = renderer.text(gameData.cardName(card.data), nameFont, x: band.mid.x, y: band.y + bandHeight * 0.08, color: Theme.ink, maxWidth: band.w - cardRect.w * 0.08, align: .center, shadow: nil).h
         let quote = gameData.cardQuote(card.data)
         if !quote.isEmpty && cardRect.w >= 150 {
             renderer.text(quote, .serif(max(9, cardRect.w * 0.053), italic: true), x: band.mid.x, y: band.y + bandHeight * 0.06 + nameHeight, color: RGBA(r: 0.13, g: 0.09, b: 0.04, a: 1), maxWidth: band.w - cardRect.w * 0.1, align: .center, shadow: nil)
@@ -109,7 +109,7 @@ extension Scene {
             contentHeight += renderer.measure(title, titleFont, maxWidth: textWidth).h + renderer.measure(description, bodyFont, maxWidth: textWidth).h + 10
         }
         let panel = R(box.x, box.y, box.w, min(box.h, contentHeight))
-        renderer.rect(panel, RGBA(r: 0.06, g: 0.05, b: 0.03, a: 0.94))
+        renderer.rect(panel, Theme.panelDark.alpha(0.94))
         renderer.frame(panel, RGBA.goldDark.alpha(0.6), 1)
         var y = box.y + 6
         for (title, description) in lines {

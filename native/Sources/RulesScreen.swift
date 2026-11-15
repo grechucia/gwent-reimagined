@@ -15,7 +15,7 @@ extension Scene {
     func drawRules() {
         renderer.rect(renderer.visibleRect, RGBA.black.alpha(0.82))
         let panel = ScreenLayout.rulesPanel
-        renderer.gradient(panel, RGBA(r: 0.13, g: 0.1, b: 0.06, a: 0.98), RGBA(r: 0.07, g: 0.05, b: 0.03, a: 0.98), steps: 12)
+        renderer.gradient(panel, RGBA(r: 0.13, g: 0.1, b: 0.06, a: 0.98), Theme.panelDark.alpha(0.98), steps: 12)
         renderer.frame(panel, RGBA.goldDark, 2)
         renderer.frame(panel.inset(6), RGBA.goldDark.alpha(0.4), 1)
         renderer.text(L("Rules of Gwent"), .gwent(48), x: 960, y: 22, color: RGBA.gold, align: .center)
@@ -40,7 +40,7 @@ extension Scene {
                     renderer.text(block.text, .gwent(30), x: content.x, y: y + 10, color: RGBA.gold, maxWidth: content.w)
                     renderer.rect(R(content.x, y + h - 6, min(content.w, 520), 1.5), RGBA.goldDark.alpha(0.6))
                 } else {
-                    renderer.text(block.text, .serif(21), x: content.x, y: y, color: RGBA(r: 0.92, g: 0.88, b: 0.8, a: 1), maxWidth: content.w)
+                    renderer.text(block.text, .serif(21), x: content.x, y: y, color: Theme.parchment, maxWidth: content.w)
                 }
             }
             y += h

@@ -7,68 +7,61 @@ import Metal
 /// The whole UI: screens, overlays, input handling and drawing of the game.
 @MainActor
 final class Scene {
+    // MARK: Services
     let renderer: Renderer
     let audio: Audio
     var gameData: GameData { GameData.shared }
+    /// Platform app delegate that applies window and graphics settings.
+    weak var host: GameHost?
+    /// Called after the player changes the language.
+    var onLanguageChange: ((String) -> Void)?
+    var appVersion: String { (Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String) ?? "1.0.1" }
+
+    // MARK: Navigation
     /// Top-level screens.
     enum Screen { case title, decks, game, builder, career }
     var screen: Screen = .title { didSet { if screen != oldValue { audio.setMenuMode(screen != .game); if padCursor { mouse = SIMD2(-1, -1) } } } }
+    var optionsOpen = false
+    var rulesOpen = false
+    var creditsOpen = false
+    var savePromptOpen = false
+    /// Action to continue with after the save location has been chosen.
+    var savePromptThen: (() -> Void)?
+    var langMenuOpen = false
+
+    // MARK: Time and input
+    /// Seconds since the app started (drives animations).
     var time: Float = 0
+    /// Duration of the current frame, zero while an overlay pauses the screen below.
+    var frameDelta: Float = 1 / 60
+    /// Pointer position in virtual coordinates; (-1, -1) when there is no pointer.
     var mouse = SIMD2<Float>(-1, -1)
+    /// Pointer position normalised to -1...1, used for parallax.
     var mouseNorm = SIMD2<Float>(0, 0)
+    /// Accumulated scroll distance of the current frame.
+    var wheel: Float = 0
+    /// Buttons registered while drawing this frame.
     var clicks: [(R, () -> Void)] = []
+    /// Buttons of the previous frame; clicks are matched against these.
     var hits: [(R, () -> Void)] = []
     var clickTargets: [R] { hits.map { $0.0 } }
+
+    // MARK: Gamepad focus
+    /// True while the game is controlled with a gamepad (the focused element is highlighted).
     var padCursor = false
-    var exitConfirmT: Float = 0
+    /// Elements that can never receive gamepad focus (e.g. web links).
+    var padNoFocus: [R] = []
+    /// Elements that are never focused automatically (e.g. Quit, Give up).
+    var padNoAuto: [R] = []
+    /// Element focused first on the current screen.
+    var padPrimary: R?
+
+    // MARK: Settings
     /// Global AI difficulty for games outside the career (0 easy, 1 normal, 2 hard), stored in UserDefaults.
     var aiLevel: Int {
         get { UserDefaults.standard.object(forKey: "aiLevel") as? Int ?? 1 }
         set { UserDefaults.standard.set(newValue, forKey: "aiLevel") }
     }
-    var padNoFocus: [R] = []
-    var padNoAuto: [R] = []
-    var padPrimary: R?
-    var appVersion: String { (Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String) ?? "1.0.1" }
-    var onLanguageChange: ((String) -> Void)?
-    var autotest = false
-    var log: (String) -> Void = { _ in }
-    var autoT: Float = 0
-    var gamesPlayed = 0
-
-    var game: Game?
-    var selected: Card?
-    var hover: Card?
-    var notes: [(text: String, icon: String?)] = []
-    var noteT: Float = 0
-    var computerTurnTimer: Float = 0
-    var builder = DeckBuilder()
-    var builderHover: Card?
-    var builderSaved: Float = 0
-    var customDecks: [DeckData] = DeckBuilder.loadCustom()
-    var wheel: Float = 0
-    var allDecks: [DeckData] { gameData.decks + customDecks }
-    var multiSel: [Card] = []
-    var hoverText: String?
-    var myDeckIndex = 0
-    var particles: [Particle] = []
-    var glow: MTLTexture!
-    var glowTex: MTLTexture { glow }
-    var fxList: [FX] = []
-    var rulesOpen = false
-    var rulesScroll: Float = 0
-    var powerSeen: [Int: (Int, Float)] = [:]
-    var frameDT: Float = 1 / 60
-    var langMenuOpen = false
-    var creditsOpen = false
-    var deckFrom = -1
-    var careerFight: Int?
-    var careerRewards: [String]?
-    var careerNewLeader: String?
-    var careerChapter: Int?
-    var careerConfirmReset = false
-    var careerDiffPick = 1
-    var careerFightName: String?
     var playerName: String { (SaveStore.shared["playerName"] as? String).flatMap { $0.isEmpty ? nil : $0 } ?? L("Player 1") }
     /// Asks for the player's name and stores it in the save file.
     func askPlayerName(then: (() -> Void)? = nil) {
@@ -79,12 +72,28 @@ final class Scene {
             then?()
         }
     }
-    var savePromptOpen = false
-    var savePromptThen: (() -> Void)?
-    var optionsOpen = false
-    weak var host: GameHost?
-    var leaderPickerOpen = false
+
+    // MARK: Menu background
+    var particles: [Particle] = []
+    /// Soft round texture used for glows and particles.
+    var glow: MTLTexture!
+    var glowTex: MTLTexture { glow }
+    /// Hover animation amount per card/tile key (0...1).
+    var cardHover: [String: Float] = [:]
+
+    // MARK: Deck selection
+    var customDecks: [DeckData] = DeckBuilder.loadCustom()
+    var allDecks: [DeckData] { gameData.decks + customDecks }
+    /// Deck used for quick play.
+    var myDeckIndex = 0
+    /// Step of the deck selection flow: -1 start menu, 0 factions, 1 decks.
     var deckStage = -1
+    var selectedFaction = "realms"
+    /// Progress (0...1) of the transition animation between deck selection steps.
+    var deckTransition: Float = 1
+    /// Deck shown in the read-only preview, if any.
+    var previewDeck: Int? = nil
+    var previewScroll: Float = 0, previewScrollTarget: Float = 0
     var favoriteDeckIndex: Int? {
         get {
             guard let stored = SaveStore.shared["favoriteDeck"] as? String, let deckIndex = Int(stored.dropFirst()) else { return nil }
@@ -96,16 +105,62 @@ final class Scene {
             SaveStore.shared["favoriteDeck"] = i >= gameData.decks.count ? "c\(i - gameData.decks.count)" : "p\(i)"
         }
     }
-    var previewDeck: Int? = nil
-    var previewScroll: Float = 0, previewTarget: Float = 0
-    var selFaction = "realms"
-    var hoverTextTitle: String?
-    var deckSwitchT: Float = 1
-    var deckDir: Float = 1
+
+    // MARK: Deck builder
+    var builder = DeckBuilder()
+    /// Card under the pointer in menus and the builder (shown in the large preview).
+    var builderHover: Card?
+    /// Time left for the "Deck saved" message.
+    var builderSavedTimer: Float = 0
+    /// Card type filter of the collection (0 = all).
     var builderFilter = 0
-    var cardHover: [String: Float] = [:]
-    var flyCards: [(d: CardData, from: R, to: R, t: Float)] = []
-    var scrollTargetL: Float = 0, scrollTargetR: Float = 0
+    var leaderPickerOpen = false
+    /// Cards flying between the collection and the deck after a click.
+    var flyCards: [(cardData: CardData, from: R, to: R, progress: Float)] = []
+    var collectionScrollTarget: Float = 0, deckScrollTarget: Float = 0
+
+    // MARK: Career
+    /// Index of the career fight being played, if any.
+    var careerFight: Int?
+    /// Reward cards offered after a won fight.
+    var careerRewards: [String]?
+    /// Leader unlocked by beating a boss.
+    var careerNewLeader: String?
+    /// Chapter selected in the career ladder.
+    var careerChapter: Int?
+    var careerConfirmReset = false
+    /// Difficulty selected on the new-career screen.
+    var careerDifficultyChoice = 1
+    /// Opponent name shown on the board during a career fight.
+    var careerFightName: String?
+
+    // MARK: Match
+    var game: Game?
+    /// Card selected in the hand.
+    var selected: Card?
+    /// Card under the pointer on the board.
+    var hover: Card?
+    /// Cards chosen so far in a multi-card choice.
+    var multiSelection: [Card] = []
+    /// Tooltip text shown next to the pointer.
+    var hoverText: String?
+    /// Queued notification banners and how long the current one has been shown.
+    var notes: [(text: String, icon: String?)] = []
+    var noteTimer: Float = 0
+    /// Delay before the computer makes its move.
+    var computerTurnTimer: Float = 0
+    /// Time left to confirm "Exit to menu".
+    var exitConfirmTimer: Float = 0
+    var fxList: [FX] = []
+    /// Last shown power of each card and its "pop" animation amount.
+    var powerSeen: [Int: (Int, Float)] = [:]
+    var rulesScroll: Float = 0
+
+    // MARK: Automated tests
+    var autotest = false
+    var log: (String) -> Void = { _ in }
+    var autotestTimer: Float = 0
+    var gamesPlayed = 0
 
     /// A floating ember or dust particle of the menu background.
     struct Particle { var position: SIMD2<Float>; var velocity: SIMD2<Float>; var life: Float; var lifetime: Float; var size: Float; var alpha: Float; var ember: Bool; var depth: Float }
@@ -138,9 +193,9 @@ final class Scene {
         if code == 53 && leaderPickerOpen { leaderPickerOpen = false; return }
         if code == 53 && savePromptOpen && SaveStore.shared.chosen { savePromptOpen = false; savePromptThen = nil; return }
         if code == 53 && optionsOpen { optionsOpen = false; game?.paused = false; return }
-        if screen == .decks && (code == 51 || code == 53) && previewDeck != nil { previewDeck = nil; deckSwitchT = 0; return }
-        if screen == .decks && code == 51 && deckStage >= 0 { deckStage -= 1; deckSwitchT = 0; return }
-        if code == 53 { selected = nil; if let match = game, let pending = match.choice, pending.canCancel { multiSel = []; match.resolveChoice(nil) } }
+        if screen == .decks && (code == 51 || code == 53) && previewDeck != nil { previewDeck = nil; deckTransition = 0; return }
+        if screen == .decks && code == 51 && deckStage >= 0 { deckStage -= 1; deckTransition = 0; return }
+        if code == 53 { selected = nil; if let match = game, let pending = match.choice, pending.canCancel { multiSelection = []; match.resolveChoice(nil) } }
     }
 
     /// Draws one frame of the current screen and overlays.
@@ -149,7 +204,7 @@ final class Scene {
         hits = clicks; clicks = []
         padNoFocus = []; padNoAuto = []; padPrimary = nil
         let overlay = rulesOpen || creditsOpen || optionsOpen || savePromptOpen
-        frameDT = overlay ? 0 : dt
+        frameDelta = overlay ? 0 : dt
         let frameDelta = overlay ? 0 : dt
         switch screen {
         case .title: drawTitle(frameDelta)
@@ -188,12 +243,12 @@ final class Scene {
     /// Main gold-framed button.
     func goldButton(_ box: R, _ title: String, font: Renderer.Font = .serif(26, bold: true), enabled: Bool = true, _ action: @escaping () -> Void) {
         let hovered = box.contains(mouse) && enabled
-        renderer.gradient(box, RGBA(r: 0.19, g: 0.13, b: 0.05, a: 0.95), RGBA(r: 0.05, g: 0.04, b: 0.02, a: 0.96), steps: 12)
-        if hovered { renderer.rect(box.inset(-6), RGBA(r: 1, g: 0.75, b: 0.3, a: 0.10)) }
+        renderer.gradient(box, Theme.ink.alpha(0.95), Theme.panelDark.alpha(0.96), steps: 12)
+        if hovered { renderer.rect(box.inset(-6), Theme.glow.alpha(0.10)) }
         renderer.frame(box, RGBA.goldDark.alpha(enabled ? 1 : 0.4), 2)
         renderer.frame(box.inset(5), RGBA.goldDark.alpha(hovered ? 0.95 : 0.55), 1)
         let textHeight = renderer.measure(title, font).h
-        renderer.text(title, font, x: box.mid.x, y: box.mid.y - textHeight / 2 + 1, color: enabled ? (hovered ? RGBA(r: 1, g: 0.96, b: 0.8, a: 1) : RGBA(r: 0.96, g: 0.86, b: 0.56, a: 1)) : .gray(0.5), align: .center)
+        renderer.text(title, font, x: box.mid.x, y: box.mid.y - textHeight / 2 + 1, color: enabled ? (hovered ? Theme.cream : Theme.textGold) : .gray(0.5), align: .center)
         if enabled { button(box, action) }
     }
 
@@ -215,7 +270,7 @@ final class Scene {
         func power(_ deck: DeckData) -> (Int, Int) { deck.cards.reduce((0, 0)) { sum, entry in let cardData = gameData.cards[entry.0]; return (sum.0 + (cardData?.strength ?? 0) * entry.1, sum.1 + entry.1) } }
         let myPower = power(mine), po = power(theirs)
         log("GAME \(gamesPlayed + 1): \(mine.faction) power \(myPower.0) / \(myPower.1) cards vs \(theirs.faction) power \(po.0) / \(po.1) cards, AI level \(game?.aiLevel ?? -1)")
-        selected = nil; notes = []; noteT = 0; computerTurnTimer = 0
+        selected = nil; notes = []; noteTimer = 0; computerTurnTimer = 0
         screen = .game
         audio.play("game_start")
     }
