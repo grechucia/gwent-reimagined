@@ -42,6 +42,9 @@ public final class MainActivity extends Activity implements GameHost, GLSurfaceV
     private long lastFrame = System.nanoTime();
     private int surfaceWidth = 1, surfaceHeight = 1, viewWidth = 1, viewHeight = 1;
     private Consumer<Boolean> folderDone;
+    /** Weak device (little memory or few cores): renders at 720p by default and shades the menu background at lower resolution. */
+    private boolean lowEnd;
+    private int perfFrames; private float perfTime, perfWorst;
 
     // Touch state: tap = click, long press = cancel selection, drag = scroll.
     private float startX, startY, lastX, lastY;
@@ -57,6 +60,10 @@ public final class MainActivity extends Activity implements GameHost, GLSurfaceV
     @Override protected void onCreate(Bundle state) {
         super.onCreate(state);
         prefs = getSharedPreferences("settings", Context.MODE_PRIVATE);
+        android.app.ActivityManager activityManager = (android.app.ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);
+        android.app.ActivityManager.MemoryInfo memory = new android.app.ActivityManager.MemoryInfo();
+        activityManager.getMemoryInfo(memory);
+        lowEnd = activityManager.isLowRamDevice() || memory.totalMem < 4500L * 1024 * 1024 || Runtime.getRuntime().availableProcessors() <= 4;
         GameData.shared = new GameData(getAssets());
         GameData.shared.language = prefs.getString("lang", "en");
         SaveStore.shared = new SaveStore(this);
@@ -64,6 +71,7 @@ public final class MainActivity extends Activity implements GameHost, GLSurfaceV
         audio = new Audio(getAssets());
         renderer = new Renderer(getAssets());
         renderer.fillScreen = fillScreen();
+        renderer.backgroundScale = lowEnd ? 0.35f : 0.5f;
         Intent intent = getIntent();
         boolean mute = intent.getBooleanExtra("mute", false), autotest = intent.getBooleanExtra("autotest", false);
         if (mute || autotest) { audio.muted = true; audio.setMusicOn(false); }
@@ -150,6 +158,13 @@ public final class MainActivity extends Activity implements GameHost, GLSurfaceV
             scene.frame(dt);
             renderer.end();
         } finally { GameThread.LOCK.unlock(); }
+        // Average and worst frame time, logged every 5 seconds (tag GwentPerf) for performance checks.
+        float work = (System.nanoTime() - now) / 1e6f;
+        perfFrames++; perfTime += dt; perfWorst = Math.max(perfWorst, work);
+        if (perfTime >= 5) {
+            android.util.Log.i("GwentPerf", String.format(java.util.Locale.ROOT, "%.1f fps, worst frame work %.1f ms, %dx%d", perfFrames / perfTime, perfWorst, surfaceWidth, surfaceHeight));
+            perfFrames = 0; perfTime = 0; perfWorst = 0;
+        }
     }
 
     // MARK: Touch
@@ -270,7 +285,7 @@ public final class MainActivity extends Activity implements GameHost, GLSurfaceV
 
     // MARK: GameHost
 
-    @Override public int renderRes() { return prefs.getInt("renderRes", 0); }
+    @Override public int renderRes() { return prefs.getInt("renderRes", lowEnd ? 720 : 0); }
     @Override public void setRenderRes(int height) { prefs.edit().putInt("renderRes", height).apply(); handler.post(this::applyRenderRes); }
     /** Renders at a lower resolution than the screen when chosen in Options (the system scales the image up). */
     private void applyRenderRes() {

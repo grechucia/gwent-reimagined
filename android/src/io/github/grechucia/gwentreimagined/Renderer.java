@@ -14,10 +14,16 @@ import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /** GPU texture with its size in pixels. */
 final class Texture {
@@ -55,15 +61,27 @@ final class BgRegion {
     BgRegion(float[] bounds, float[] motion) { this.bounds = bounds; this.motion = motion; }
 }
 
-/** Batches textured quads into OpenGL draw calls; letterboxes to 16:9 or extends the virtual area to fill the screen. */
+/**
+ * Batches textured quads into OpenGL draw calls; letterboxes to 16:9 or extends the virtual area to fill the screen.
+ * Performance notes (for weak phones): vertices are collected in a plain float array and uploaded once per frame,
+ * draw calls are recorded as commands and executed at the end of the frame, images are decoded on a background
+ * thread (card art at half size), unused textures are freed, and the title background is shaded at reduced resolution.
+ */
 final class Renderer {
     private static final int FLOATS_PER_VERTEX = 9, MAX_VERTS = 60000;
+    /** Card art is decoded at half size (300x450): sharp enough for the largest card preview and four times less memory. */
+    private static final int CARD_SAMPLE = 2;
+    /** Card textures are freed when more than this many are loaded. */
+    private static final int MAX_CARD_TEXTURES = 140;
+    /** Images uploaded to the GPU per frame at most (spreads the work while scrolling). */
+    private static final int UPLOADS_PER_FRAME = 4;
+
     private final AssetManager assets;
-    private int program, bgProgram, vbo;
-    private int uProjection, uTexture, bgTexture, bgTime, bgMouse, bgTexel, bgCover, bgRegions, bgGlints, bgCandles;
-    private final FloatBuffer verts = ByteBuffer.allocateDirect(MAX_VERTS * FLOATS_PER_VERTEX * 4).order(ByteOrder.nativeOrder()).asFloatBuffer();
-    private int vcount, flushedFrom;
-    private Texture curTex;
+    private int program, bgProgram, blitProgram, vbo;
+    private int uProjection, uTexture, bgTexture, bgTime, bgMouse, bgTexel, bgCover, bgRegions, bgGlints, bgCandles, blitTexture;
+    private final float[] vertices = new float[MAX_VERTS * FLOATS_PER_VERTEX];
+    private final FloatBuffer vertexBuffer = ByteBuffer.allocateDirect(MAX_VERTS * FLOATS_PER_VERTEX * 4).order(ByteOrder.nativeOrder()).asFloatBuffer();
+    private int vcount;
     private final float[] projection = new float[16];
     Texture white, glow;
     float pxScale = 1;
@@ -71,18 +89,69 @@ final class Renderer {
     int drawableWidth = 1, drawableHeight = 1;
     /** When true the whole screen is used: the virtual area grows beyond 1920x1080 instead of showing black bars. */
     boolean fillScreen = true;
+    /** Resolution factor of the title background shader (0.5 = a quarter of the pixels). */
+    float backgroundScale = 0.5f;
     /** Part of the virtual space that is visible on screen. */
     Box visibleRect = new Box(0, 0, Virtual.WIDTH, Virtual.HEIGHT);
-    private final Map<String, Texture> texCache = new HashMap<>();
-    private final Map<String, TextTex> textCache = new HashMap<>();
     int frameNo;
     private Typeface gwentTypeface;
+
+    // MARK: Recorded commands
+
+    private static final int DRAW = 0, SCISSOR = 1, NO_SCISSOR = 2, BACKGROUND = 3;
+    /** One recorded GPU command; reused between frames to avoid garbage. */
+    private static final class Command {
+        int kind, texture, first, count, x, y, w, h;
+        Texture image; float time, mouseX, mouseY, cover;
+    }
+    private final List<Command> commands = new ArrayList<>();
+    private int commandCount;
+    private Command current;
+    private Command nextCommand(int kind) {
+        if (commandCount == commands.size()) commands.add(new Command());
+        Command c = commands.get(commandCount++);
+        c.kind = kind; c.image = null;
+        current = kind == DRAW ? c : null;
+        return c;
+    }
+
+    // MARK: Textures
+
+    /** A cached image texture and the frame it was last drawn in. */
+    private static final class Entry { Texture texture; int lastUsed; boolean card; }
+    private final Map<String, Entry> texCache = new HashMap<>();
+    private final Set<String> pending = new HashSet<>();
+    /** An image decoded on the background thread, waiting for upload on the GL thread. */
+    private static final class Decoded { final String path; final Bitmap bitmap; Decoded(String path, Bitmap bitmap) { this.path = path; this.bitmap = bitmap; } }
+    private final ConcurrentLinkedQueue<Decoded> decoded = new ConcurrentLinkedQueue<>();
+    private final ExecutorService decoder = Executors.newSingleThreadExecutor();
+    private volatile int generation;
+
+    /** Text texture cache key (font size rounded to whole pixels so animated sizes reuse textures). */
+    private static final class TextKey {
+        final String text, font; final int pixelSize, maxWidth, lineSpacing; final boolean bold, italic; final Align align;
+        final int hash;
+        TextKey(String text, Font f, int pixelSize, float maxWidth, Align align, float lineSpacing) {
+            this.text = text; font = f.name; this.pixelSize = pixelSize; bold = f.bold; italic = f.italic;
+            this.maxWidth = Math.round(maxWidth * 4); this.align = align; this.lineSpacing = Math.round(lineSpacing * 4);
+            hash = ((((text.hashCode() * 31 + font.hashCode()) * 31 + pixelSize) * 31 + this.maxWidth) * 31 + align.ordinal()) * 31 + (bold ? 1 : 0) + (italic ? 2 : 0) + this.lineSpacing * 7;
+        }
+        @Override public int hashCode() { return hash; }
+        @Override public boolean equals(Object o) {
+            if (!(o instanceof TextKey)) return false;
+            TextKey k = (TextKey) o;
+            return k.hash == hash && k.pixelSize == pixelSize && k.maxWidth == maxWidth && k.align == align && k.bold == bold && k.italic == italic
+                && k.lineSpacing == lineSpacing && k.font.equals(font) && k.text.equals(text);
+        }
+    }
+    private final Map<TextKey, TextTex> textCache = new HashMap<>();
 
     Renderer(AssetManager assets) { this.assets = assets; }
 
     /** Creates GPU resources; called when the GL context is (re)created. */
     void init() {
-        texCache.clear(); textCache.clear();
+        texCache.clear(); textCache.clear(); pending.clear(); decoded.clear(); generation++;
+        backgroundTarget = 0; backgroundTexture = 0; backgroundWidth = 0; backgroundHeight = 0;
         program = link(VERTEX_SHADER, FRAGMENT_SHADER);
         uProjection = GLES30.glGetUniformLocation(program, "projection");
         uTexture = GLES30.glGetUniformLocation(program, "tex");
@@ -95,10 +164,10 @@ final class Renderer {
         bgRegions = GLES30.glGetUniformLocation(bgProgram, "regions");
         bgGlints = GLES30.glGetUniformLocation(bgProgram, "glints");
         bgCandles = GLES30.glGetUniformLocation(bgProgram, "candles");
+        blitProgram = link(BLIT_VERTEX_SHADER, BLIT_FRAGMENT_SHADER);
+        blitTexture = GLES30.glGetUniformLocation(blitProgram, "tex");
         int[] ids = new int[1];
         GLES30.glGenBuffers(1, ids, 0); vbo = ids[0];
-        GLES30.glBindBuffer(GLES30.GL_ARRAY_BUFFER, vbo);
-        GLES30.glBufferData(GLES30.GL_ARRAY_BUFFER, MAX_VERTS * FLOATS_PER_VERTEX * 4, null, GLES30.GL_DYNAMIC_DRAW);
         ByteBuffer px = ByteBuffer.allocateDirect(4).order(ByteOrder.nativeOrder());
         px.put(new byte[]{(byte) 255, (byte) 255, (byte) 255, (byte) 255}).position(0);
         white = upload(px, 1, 1, GLES30.GL_RGBA8, GLES30.GL_RGBA, false);
@@ -155,27 +224,68 @@ final class Renderer {
         if (mipmaps) GLES30.glGenerateMipmap(GLES30.GL_TEXTURE_2D);
         return new Texture(ids[0], w, h);
     }
+    private static void delete(Texture t) { GLES30.glDeleteTextures(1, new int[]{t.id}, 0); }
 
-    /** Loads (and caches) an image from the game assets as a texture (colours not premultiplied, like the Metal version). */
-    Texture texture(String path) {
-        Texture cached = texCache.get(path);
-        if (cached != null) return cached;
-        Bitmap bitmap;
+    /** Decodes an image from the game assets (colours not premultiplied, like the Metal version). */
+    private Bitmap decode(String path) {
         try (InputStream in = assets.open("game/" + path)) {
             BitmapFactory.Options options = new BitmapFactory.Options();
             options.inPremultiplied = false;
             options.inPreferredConfig = Bitmap.Config.ARGB_8888;
-            bitmap = BitmapFactory.decodeStream(in, null, options);
+            if (path.startsWith("img/sm/")) options.inSampleSize = CARD_SAMPLE;
+            return BitmapFactory.decodeStream(in, null, options);
         } catch (Exception e) { return null; }
-        if (bitmap == null) return null;
+    }
+    /** Uploads a decoded bitmap and caches it. */
+    private Texture store(String path, Bitmap bitmap) {
         ByteBuffer pixels = ByteBuffer.allocateDirect(bitmap.getWidth() * bitmap.getHeight() * 4).order(ByteOrder.nativeOrder());
         bitmap.copyPixelsToBuffer(pixels); pixels.position(0);
         Texture t = upload(pixels, bitmap.getWidth(), bitmap.getHeight(), GLES30.GL_RGBA8, GLES30.GL_RGBA, true);
         bitmap.recycle();
-        texCache.put(path, t);
+        Entry entry = new Entry();
+        entry.texture = t; entry.lastUsed = frameNo; entry.card = path.startsWith("img/sm/");
+        texCache.put(path, entry);
         return t;
     }
-    void preload(String... paths) { for (String p : paths) texture(p); }
+    /** Returns a cached image texture; images not loaded yet are decoded in the background and appear a moment later. */
+    Texture texture(String path) {
+        Entry entry = texCache.get(path);
+        if (entry != null) { entry.lastUsed = frameNo; return entry.texture; }
+        if (pending.add(path)) {
+            int requested = generation;
+            decoder.execute(() -> { Bitmap bitmap = decode(path); if (requested == generation) decoded.add(new Decoded(path, bitmap)); });
+        }
+        return null;
+    }
+    /** Loads images immediately (used for the large backgrounds shown first). */
+    void preload(String... paths) {
+        for (String path : paths) {
+            if (texCache.containsKey(path)) continue;
+            Bitmap bitmap = decode(path);
+            if (bitmap != null) store(path, bitmap);
+        }
+    }
+    /** Uploads images decoded in the background, a few per frame. */
+    private void uploadDecoded() {
+        for (int i = 0; i < UPLOADS_PER_FRAME; i++) {
+            Decoded d = decoded.poll();
+            if (d == null) return;
+            pending.remove(d.path);
+            if (d.bitmap != null && !texCache.containsKey(d.path)) store(d.path, d.bitmap);
+        }
+    }
+    /** Frees card textures that have not been drawn for a while when too many are loaded. */
+    private void trimTextures() {
+        int cards = 0;
+        for (Entry e : texCache.values()) if (e.card) cards++;
+        if (cards <= MAX_CARD_TEXTURES) return;
+        for (Iterator<Map.Entry<String, Entry>> it = texCache.entrySet().iterator(); it.hasNext();) {
+            Entry e = it.next().getValue();
+            if (e.card && frameNo - e.lastUsed > 60) { delete(e.texture); it.remove(); }
+        }
+    }
+
+    // MARK: Frame
 
     /** Starts a frame: computes the viewport (letterboxed or filling the screen). */
     void begin(int width, int height) {
@@ -193,27 +303,56 @@ final class Renderer {
             visibleRect = new Box(0, 0, Virtual.WIDTH, Virtual.HEIGHT);
         }
         pxScale = viewportPx.w / visibleRect.w;
-        GLES30.glViewport(0, 0, width, height);
-        GLES30.glDisable(GLES30.GL_SCISSOR_TEST);
-        GLES30.glClearColor(0, 0, 0, 1);
-        GLES30.glClear(GLES30.GL_COLOR_BUFFER_BIT);
-        GLES30.glViewport((int) viewportPx.x, (int) (height - viewportPx.y - viewportPx.h), (int) viewportPx.w, (int) viewportPx.h);
         Box v = visibleRect;
         // Column-major orthographic projection from the visible virtual area to clip space (y down).
         java.util.Arrays.fill(projection, 0);
         projection[0] = 2 / v.w; projection[12] = -1 - 2 * v.x / v.w;
         projection[5] = -2 / v.h; projection[13] = 1 + 2 * v.y / v.h;
         projection[10] = 1; projection[15] = 1;
-        verts.clear(); vcount = 0; flushedFrom = 0; curTex = null;
-        GLES30.glBindBuffer(GLES30.GL_ARRAY_BUFFER, vbo);
-        GLES30.glBufferData(GLES30.GL_ARRAY_BUFFER, MAX_VERTS * FLOATS_PER_VERTEX * 4, null, GLES30.GL_DYNAMIC_DRAW);
-        useQuadProgram();
+        vcount = 0; commandCount = 0; current = null;
         frameNo++;
+        uploadDecoded();
+    }
+
+    /** Uploads all vertices once and executes the recorded commands. */
+    void end() {
+        GLES30.glBindFramebuffer(GLES30.GL_FRAMEBUFFER, 0);
+        GLES30.glViewport(0, 0, drawableWidth, drawableHeight);
+        GLES30.glDisable(GLES30.GL_SCISSOR_TEST);
+        GLES30.glClearColor(0, 0, 0, 1);
+        GLES30.glClear(GLES30.GL_COLOR_BUFFER_BIT);
+        setMainViewport();
+        vertexBuffer.clear();
+        vertexBuffer.put(vertices, 0, vcount * FLOATS_PER_VERTEX);
+        vertexBuffer.position(0);
+        GLES30.glBindBuffer(GLES30.GL_ARRAY_BUFFER, vbo);
+        GLES30.glBufferData(GLES30.GL_ARRAY_BUFFER, Math.max(4, vcount * FLOATS_PER_VERTEX * 4), vertexBuffer, GLES30.GL_STREAM_DRAW);
+        useQuadProgram();
+        int boundTexture = -1;
+        for (int i = 0; i < commandCount; i++) {
+            Command c = commands.get(i);
+            switch (c.kind) {
+                case DRAW:
+                    if (c.count == 0) break;
+                    if (c.texture != boundTexture) { GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, c.texture); boundTexture = c.texture; }
+                    GLES30.glDrawArrays(GLES30.GL_TRIANGLES, c.first, c.count);
+                    break;
+                case SCISSOR: GLES30.glEnable(GLES30.GL_SCISSOR_TEST); GLES30.glScissor(c.x, c.y, c.w, c.h); break;
+                case NO_SCISSOR: GLES30.glDisable(GLES30.GL_SCISSOR_TEST); break;
+                case BACKGROUND: drawBackground(c); useQuadProgram(); boundTexture = -1; break;
+                default: break;
+            }
+        }
+        if (frameNo % 120 == 0) { trimTextCache(); trimTextures(); }
+    }
+    private void setMainViewport() {
+        GLES30.glViewport((int) viewportPx.x, (int) (drawableHeight - viewportPx.y - viewportPx.h), (int) viewportPx.w, (int) viewportPx.h);
     }
     private void useQuadProgram() {
         GLES30.glUseProgram(program);
         GLES30.glUniformMatrix4fv(uProjection, 1, false, projection, 0);
         GLES30.glUniform1i(uTexture, 0);
+        GLES30.glActiveTexture(GLES30.GL_TEXTURE0);
         GLES30.glBindBuffer(GLES30.GL_ARRAY_BUFFER, vbo);
         int stride = FLOATS_PER_VERTEX * 4;
         GLES30.glEnableVertexAttribArray(0); GLES30.glVertexAttribPointer(0, 2, GLES30.GL_FLOAT, false, stride, 0);
@@ -221,38 +360,39 @@ final class Renderer {
         GLES30.glEnableVertexAttribArray(2); GLES30.glVertexAttribPointer(2, 4, GLES30.GL_FLOAT, false, stride, 16);
         GLES30.glEnableVertexAttribArray(3); GLES30.glVertexAttribPointer(3, 1, GLES30.GL_FLOAT, false, stride, 32);
     }
-    /** Finishes the frame. */
-    void end() {
-        flush();
-        if (frameNo % 600 == 0) trimTextCache();
-    }
-    /** Sends the queued quads to the GPU. */
-    private void flush() {
-        if (vcount <= flushedFrom || curTex == null) return;
-        int count = vcount - flushedFrom;
-        verts.position(flushedFrom * FLOATS_PER_VERTEX);
-        GLES30.glBufferSubData(GLES30.GL_ARRAY_BUFFER, flushedFrom * FLOATS_PER_VERTEX * 4, count * FLOATS_PER_VERTEX * 4, verts);
-        GLES30.glActiveTexture(GLES30.GL_TEXTURE0);
-        GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, curTex.id);
-        GLES30.glDrawArrays(GLES30.GL_TRIANGLES, flushedFrom, count);
-        flushedFrom = vcount;
-    }
 
     /** Queues a textured quad. mode 1 draws a greyscale text mask in the given colour. */
     void quad(Texture texture, Box rect, Box uv, RGBA tint, float mode, float rotation) {
         if (texture == null || vcount + 6 > MAX_VERTS) return;
-        if (texture != curTex) { flush(); curTex = texture; }
-        float[] xs = {rect.x, rect.x + rect.w, rect.x, rect.x + rect.w}, ys = {rect.y, rect.y, rect.y + rect.h, rect.y + rect.h};
+        if (current == null || current.texture != texture.id) {
+            Command c = nextCommand(DRAW);
+            c.texture = texture.id; c.first = vcount; c.count = 0;
+        }
+        float x0 = rect.x, y0 = rect.y, x1 = rect.x + rect.w, y1 = rect.y + rect.h;
+        float ax = x0, ay = y0, bx = x1, by = y0, cx = x0, cy = y1, dx = x1, dy = y1;
         if (rotation != 0) {
-            float cx = rect.x + rect.w / 2, cy = rect.y + rect.h / 2, cs = (float) Math.cos(rotation), sn = (float) Math.sin(rotation);
-            for (int i = 0; i < 4; i++) { float ox = xs[i] - cx, oy = ys[i] - cy; xs[i] = cx + ox * cs - oy * sn; ys[i] = cy + ox * sn + oy * cs; }
+            float mx = rect.x + rect.w / 2, my = rect.y + rect.h / 2, cs = (float) Math.cos(rotation), sn = (float) Math.sin(rotation);
+            float hx = rect.w / 2, hy = rect.h / 2;
+            ax = mx - hx * cs + hy * sn; ay = my - hx * sn - hy * cs;
+            bx = mx + hx * cs + hy * sn; by = my + hx * sn - hy * cs;
+            cx = mx - hx * cs - hy * sn; cy = my - hx * sn + hy * cs;
+            dx = mx + hx * cs - hy * sn; dy = my + hx * sn + hy * cs;
         }
-        float[] us = {uv.x, uv.x + uv.w, uv.x, uv.x + uv.w}, vs = {uv.y, uv.y, uv.y + uv.h, uv.y + uv.h};
-        verts.position(vcount * FLOATS_PER_VERTEX);
-        for (int i : new int[]{0, 1, 2, 1, 3, 2}) {
-            verts.put(xs[i]).put(ys[i]).put(us[i]).put(vs[i]).put(tint.r).put(tint.g).put(tint.b).put(tint.a).put(mode);
-            vcount++;
-        }
+        float u0 = uv.x, v0 = uv.y, u1 = uv.x + uv.w, v1 = uv.y + uv.h;
+        int o = vcount * FLOATS_PER_VERTEX;
+        o = vertex(o, ax, ay, u0, v0, tint, mode);
+        o = vertex(o, bx, by, u1, v0, tint, mode);
+        o = vertex(o, cx, cy, u0, v1, tint, mode);
+        o = vertex(o, bx, by, u1, v0, tint, mode);
+        o = vertex(o, dx, dy, u1, v1, tint, mode);
+        vertex(o, cx, cy, u0, v1, tint, mode);
+        vcount += 6;
+        current.count += 6;
+    }
+    private int vertex(int o, float x, float y, float u, float v, RGBA c, float mode) {
+        float[] a = vertices;
+        a[o] = x; a[o + 1] = y; a[o + 2] = u; a[o + 3] = v; a[o + 4] = c.r; a[o + 5] = c.g; a[o + 6] = c.b; a[o + 7] = c.a; a[o + 8] = mode;
+        return o + FLOATS_PER_VERTEX;
     }
     private static final Box FULL_UV = new Box(0, 0, 1, 1);
     void quad(Texture texture, Box rect, RGBA tint) { quad(texture, rect, FULL_UV, tint, 0, 0); }
@@ -266,7 +406,8 @@ final class Renderer {
     /** Draws an image filling a rectangle, cropping to keep its aspect ratio. */
     void imageCover(String path, Box rect) { imageCover(path, rect, RGBA.WHITE); }
     void imageCover(String path, Box rect, RGBA color) {
-        Texture t = texture(path); if (t == null) return;
+        Texture t = texture(path);
+        if (t == null) { quad(white, rect, FULL_UV, new RGBA(0.12f, 0.1f, 0.08f, color.a), 0, 0); return; }
         float textureAspect = (float) t.width / t.height, ra = rect.w / rect.h;
         Box uv;
         if (textureAspect > ra) { float w = ra / textureAspect; uv = new Box((1 - w) / 2, 0, w, 1); }
@@ -304,14 +445,13 @@ final class Renderer {
     }
     /** Restricts drawing to a rectangle (null removes the clip). */
     void clip(Box rect) {
-        flush();
-        if (rect == null) { GLES30.glDisable(GLES30.GL_SCISSOR_TEST); return; }
+        if (rect == null) { nextCommand(NO_SCISSOR); return; }
         Box viewport = viewportPx;
+        Command c = nextCommand(SCISSOR);
         int x = Math.max(0, (int) (viewport.x + (rect.x - visibleRect.x) * pxScale));
         int y = Math.max(0, (int) (viewport.y + (rect.y - visibleRect.y) * pxScale));
-        int w = Math.max(1, (int) (rect.w * pxScale)), h = Math.max(1, (int) (rect.h * pxScale));
-        GLES30.glEnable(GLES30.GL_SCISSOR_TEST);
-        GLES30.glScissor(x, drawableHeight - y - h, w, h);
+        c.w = Math.max(1, (int) (rect.w * pxScale)); c.h = Math.max(1, (int) (rect.h * pxScale));
+        c.x = x; c.y = drawableHeight - y - c.h;
     }
     /** Draws a filled rectangle. */
     void rect(Box rect, RGBA color) { quad(white, rect, color); }
@@ -344,12 +484,13 @@ final class Renderer {
     TextTex textTex(String text, Font font, float maxWidth, Align align, float lineSpacing) {
         if (text == null || text.isEmpty()) return null;
         float scale = Math.max(0.5f, pxScale);
-        String key = text + "|" + font.name + "|" + font.size + "|" + font.bold + "|" + font.italic + "|" + maxWidth + "|" + align + "|" + lineSpacing + "|" + scale;
+        int pixelSize = Math.max(1, Math.round(font.size * scale));
+        TextKey key = new TextKey(text, font, pixelSize, maxWidth * scale, align, lineSpacing);
         TextTex cached = textCache.get(key);
         if (cached != null) { cached.lastUsed = frameNo; return cached; }
         TextPaint paint = new TextPaint(TextPaint.ANTI_ALIAS_FLAG);
         paint.setTypeface(typeface(font));
-        paint.setTextSize(font.size * scale);
+        paint.setTextSize(pixelSize);
         paint.setColor(0xFFFFFFFF);
         Layout.Alignment alignment = align == Align.CENTER ? Layout.Alignment.ALIGN_CENTER : (align == Align.RIGHT ? Layout.Alignment.ALIGN_OPPOSITE : Layout.Alignment.ALIGN_NORMAL);
         int constraint = maxWidth > 0 ? (int) Math.ceil(maxWidth * scale) : (int) Math.ceil(Layout.getDesiredWidth(text, paint)) + 1;
@@ -364,7 +505,7 @@ final class Renderer {
         int rowWidth = (pixelWidth + 3) & ~3;
         Bitmap bitmap = Bitmap.createBitmap(rowWidth, pixelHeight, Bitmap.Config.ALPHA_8);
         Canvas canvas = new Canvas(bitmap);
-        canvas.translate(padding + (maxWidth > 0 && align != Align.LEFT ? 0 : 0), padding);
+        canvas.translate(padding, padding);
         if (maxWidth <= 0 && align != Align.LEFT) canvas.translate(-(constraint - width) * (align == Align.CENTER ? 0.5f : 1f), 0);
         layout.draw(canvas);
         ByteBuffer pixels = ByteBuffer.allocateDirect(bitmap.getRowBytes() * pixelHeight).order(ByteOrder.nativeOrder());
@@ -373,21 +514,24 @@ final class Renderer {
         if (bitmap.getRowBytes() == rowWidth) t = upload(pixels, rowWidth, pixelHeight, GLES30.GL_R8, GLES30.GL_RED, false);
         else {
             ByteBuffer tight = ByteBuffer.allocateDirect(rowWidth * pixelHeight).order(ByteOrder.nativeOrder());
-            for (int y = 0; y < pixelHeight; y++) for (int x = 0; x < rowWidth; x++) tight.put(pixels.get(y * bitmap.getRowBytes() + x));
+            byte[] row = new byte[rowWidth];
+            for (int y = 0; y < pixelHeight; y++) { pixels.position(y * bitmap.getRowBytes()); pixels.get(row); tight.put(row); }
             tight.position(0);
             t = upload(tight, rowWidth, pixelHeight, GLES30.GL_R8, GLES30.GL_RED, false);
         }
         bitmap.recycle();
-        TextTex textTexture = new TextTex(t, rowWidth / scale, pixelHeight / scale);
+        // Report the size of the requested font, so layout is identical whatever the rounding to whole pixels.
+        float sizeFix = font.size * scale / pixelSize;
+        TextTex textTexture = new TextTex(t, rowWidth / scale * sizeFix, pixelHeight / scale * sizeFix);
         textTexture.lastUsed = frameNo;
         textCache.put(key, textTexture);
         return textTexture;
     }
     /** Drops text textures that were not used recently. */
     private void trimTextCache() {
-        for (Iterator<Map.Entry<String, TextTex>> it = textCache.entrySet().iterator(); it.hasNext();) {
+        for (Iterator<Map.Entry<TextKey, TextTex>> it = textCache.entrySet().iterator(); it.hasNext();) {
             TextTex t = it.next().getValue();
-            if (frameNo - t.lastUsed >= 600) { GLES30.glDeleteTextures(1, new int[]{t.texture.id}, 0); it.remove(); }
+            if (frameNo - t.lastUsed >= 120) { delete(t.texture); it.remove(); }
         }
     }
     static final RGBA DEFAULT_SHADOW = new RGBA(0, 0, 0, 0.85f);
@@ -414,35 +558,87 @@ final class Renderer {
 
     // MARK: Title background
 
+    private int backgroundTarget, backgroundTexture, backgroundWidth, backgroundHeight;
+    private final float[] regionData = new float[48 * 8], glintData = new float[4], candleData = new float[6];
+    private List<BgRegion> regionSource;
+
     /** Draws the animated title background with the dedicated shader. */
     void titleBackground(String path, float time, Vec2 mouse, List<BgRegion> regions, List<Vec2> glints, List<Vec2> candles) {
         Texture t = texture(path); if (t == null) return;
-        flush();
+        if (regionSource != regions) {
+            regionSource = regions;
+            java.util.Arrays.fill(regionData, 0);
+            for (int i = 0; i < Math.min(48, regions.size()); i++) {
+                System.arraycopy(regions.get(i).bounds, 0, regionData, i * 8, 4);
+                System.arraycopy(regions.get(i).motion, 0, regionData, i * 8 + 4, 4);
+            }
+        }
+        java.util.Arrays.fill(glintData, 0);
+        for (int i = 0; i < Math.min(2, glints.size()); i++) { glintData[i * 2] = glints.get(i).x; glintData[i * 2 + 1] = glints.get(i).y; }
+        java.util.Arrays.fill(candleData, -1);
+        for (int i = 0; i < Math.min(3, candles.size()); i++) { candleData[i * 2] = candles.get(i).x; candleData[i * 2 + 1] = candles.get(i).y; }
+        Command c = nextCommand(BACKGROUND);
+        c.image = t; c.time = time; c.mouseX = mouse.x; c.mouseY = mouse.y;
+        c.cover = (Virtual.WIDTH / Virtual.HEIGHT) / (visibleRect.w / visibleRect.h);
+    }
+    /** Shades the title background into a smaller offscreen texture, then stretches it over the viewport. */
+    private void drawBackground(Command c) {
+        int w = Math.max(1, Math.round(viewportPx.w * backgroundScale)), h = Math.max(1, Math.round(viewportPx.h * backgroundScale));
+        if (w != backgroundWidth || h != backgroundHeight || backgroundTarget == 0) createBackgroundTarget(w, h);
+        boolean scissor = GLES30.glIsEnabled(GLES30.GL_SCISSOR_TEST);
+        GLES30.glDisable(GLES30.GL_SCISSOR_TEST);
+        GLES30.glDisable(GLES30.GL_BLEND);
+        GLES30.glBindFramebuffer(GLES30.GL_FRAMEBUFFER, backgroundTarget);
+        GLES30.glViewport(0, 0, w, h);
         GLES30.glUseProgram(bgProgram);
         GLES30.glDisableVertexAttribArray(0); GLES30.glDisableVertexAttribArray(1); GLES30.glDisableVertexAttribArray(2); GLES30.glDisableVertexAttribArray(3);
-        GLES30.glUniform1f(bgTime, time);
-        GLES30.glUniform2f(bgMouse, mouse.x, mouse.y);
-        GLES30.glUniform2f(bgTexel, 1f / t.width, 1f / t.height);
-        GLES30.glUniform1f(bgCover, (Virtual.WIDTH / Virtual.HEIGHT) / (visibleRect.w / visibleRect.h));
-        float[] regionData = new float[48 * 8];
-        for (int i = 0; i < Math.min(48, regions.size()); i++) {
-            System.arraycopy(regions.get(i).bounds, 0, regionData, i * 8, 4);
-            System.arraycopy(regions.get(i).motion, 0, regionData, i * 8 + 4, 4);
-        }
+        GLES30.glUniform1f(bgTime, c.time);
+        GLES30.glUniform2f(bgMouse, c.mouseX, c.mouseY);
+        GLES30.glUniform2f(bgTexel, 1f / c.image.width, 1f / c.image.height);
+        GLES30.glUniform1f(bgCover, c.cover);
         GLES30.glUniform4fv(bgRegions, 96, regionData, 0);
-        float[] glintData = new float[4];
-        for (int i = 0; i < Math.min(2, glints.size()); i++) { glintData[i * 2] = glints.get(i).x; glintData[i * 2 + 1] = glints.get(i).y; }
         GLES30.glUniform2fv(bgGlints, 2, glintData, 0);
-        float[] candleData = {-1, -1, -1, -1, -1, -1};
-        for (int i = 0; i < Math.min(3, candles.size()); i++) { candleData[i * 2] = candles.get(i).x; candleData[i * 2 + 1] = candles.get(i).y; }
         GLES30.glUniform2fv(bgCandles, 3, candleData, 0);
         GLES30.glActiveTexture(GLES30.GL_TEXTURE0);
-        GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, t.id);
+        GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, c.image.id);
         GLES30.glUniform1i(bgTexture, 0);
         GLES30.glDrawArrays(GLES30.GL_TRIANGLE_STRIP, 0, 4);
-        useQuadProgram();
-        curTex = null;
+        GLES30.glBindFramebuffer(GLES30.GL_FRAMEBUFFER, 0);
+        setMainViewport();
+        GLES30.glUseProgram(blitProgram);
+        GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, backgroundTexture);
+        GLES30.glUniform1i(blitTexture, 0);
+        GLES30.glDrawArrays(GLES30.GL_TRIANGLE_STRIP, 0, 4);
+        GLES30.glEnable(GLES30.GL_BLEND);
+        if (scissor) GLES30.glEnable(GLES30.GL_SCISSOR_TEST);
     }
+    private void createBackgroundTarget(int w, int h) {
+        if (backgroundTarget != 0) {
+            GLES30.glDeleteFramebuffers(1, new int[]{backgroundTarget}, 0);
+            GLES30.glDeleteTextures(1, new int[]{backgroundTexture}, 0);
+        }
+        int[] ids = new int[1];
+        GLES30.glGenTextures(1, ids, 0); backgroundTexture = ids[0];
+        GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, backgroundTexture);
+        GLES30.glTexImage2D(GLES30.GL_TEXTURE_2D, 0, GLES30.GL_RGBA8, w, h, 0, GLES30.GL_RGBA, GLES30.GL_UNSIGNED_BYTE, null);
+        GLES30.glTexParameteri(GLES30.GL_TEXTURE_2D, GLES30.GL_TEXTURE_MIN_FILTER, GLES30.GL_LINEAR);
+        GLES30.glTexParameteri(GLES30.GL_TEXTURE_2D, GLES30.GL_TEXTURE_MAG_FILTER, GLES30.GL_LINEAR);
+        GLES30.glTexParameteri(GLES30.GL_TEXTURE_2D, GLES30.GL_TEXTURE_WRAP_S, GLES30.GL_CLAMP_TO_EDGE);
+        GLES30.glTexParameteri(GLES30.GL_TEXTURE_2D, GLES30.GL_TEXTURE_WRAP_T, GLES30.GL_CLAMP_TO_EDGE);
+        GLES30.glGenFramebuffers(1, ids, 0); backgroundTarget = ids[0];
+        GLES30.glBindFramebuffer(GLES30.GL_FRAMEBUFFER, backgroundTarget);
+        GLES30.glFramebufferTexture2D(GLES30.GL_FRAMEBUFFER, GLES30.GL_COLOR_ATTACHMENT0, GLES30.GL_TEXTURE_2D, backgroundTexture, 0);
+        GLES30.glBindFramebuffer(GLES30.GL_FRAMEBUFFER, 0);
+        backgroundWidth = w; backgroundHeight = h;
+    }
+
+    private static final String BLIT_VERTEX_SHADER =
+        "#version 300 es\nout vec2 vUV;\n" +
+        "void main() { int id = gl_VertexID; vec2 p = vec2((id & 1) != 0 ? 1.0 : -1.0, (id & 2) != 0 ? -1.0 : 1.0);\n" +
+        "  gl_Position = vec4(p, 0.0, 1.0); vUV = p * 0.5 + 0.5; }\n";
+    private static final String BLIT_FRAGMENT_SHADER =
+        "#version 300 es\nprecision mediump float;\nin vec2 vUV; uniform sampler2D tex; out vec4 fragColor;\n" +
+        "void main() { fragColor = vec4(texture(tex, vUV).rgb, 1.0); }\n";
 
     private static final String VERTEX_SHADER =
         "#version 300 es\n" +
@@ -479,8 +675,9 @@ final class Renderer {
         "  for (int i = 0; i < 48; i++) {\n" +
         "    vec4 R = regions[i * 2]; vec4 M = regions[i * 2 + 1];\n" +
         "    if (R.z <= 0.0) continue;\n" +
-        "    float w = gauss(uv, R);\n" +
-        "    if (w < 0.002) continue;\n" +
+        "    vec2 dr = (uv - R.xy) / R.zw; float dd = dot(dr, dr);\n" +
+        "    if (dd > 2.8) continue;\n" +
+        "    float w = exp(-dd * 2.2);\n" +
         "    float sn = sin(t * 6.2831853 / M.z + M.w);\n" +
         "    if (M.x < 0.5) { float b = 0.5 + 0.5 * sn; b = b * b * (3.0 - 2.0 * b);\n" +
         "      disp -= (uv - R.xy) * (M.y * 0.014 * b) * w; disp.y += M.y * (2.4 / 1080.0) * b * w; }\n" +
