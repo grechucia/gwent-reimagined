@@ -54,8 +54,7 @@ final class GameView: MTKView {
         guard let renderer = app?.renderer else { return .zero }
         let pixelX = Float(location.x / bounds.width) * Float(drawableSize.width)
         let pixelY = Float((bounds.height - location.y) / bounds.height) * Float(drawableSize.height)
-        let viewport = renderer.viewportPx
-        return SIMD2((pixelX - viewport.x) / viewport.w * virtualWidth, (pixelY - viewport.y) / viewport.h * virtualHeight)
+        return renderer.virtualPoint(pixelX: pixelX, pixelY: pixelY)
     }
     override func mouseMoved(with event: NSEvent) { app?.scene?.padCursor = false; app?.scene?.mouseMoved(virtualPoint(event)) }
     override func mouseDragged(with event: NSEvent) { app?.scene?.mouseMoved(virtualPoint(event)) }
@@ -139,6 +138,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, MTKViewDelegate, NSMen
         view.autoresizingMask = [.width, .height]
         renderer = Renderer(view: view, gameDir: resources.appendingPathComponent("game"))
         view.delegate = self
+        renderer.fillScreen = fillScreen
         window.contentView = view
         applyFrameRate()
         view.renderHeight = renderRes
@@ -231,6 +231,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, MTKViewDelegate, NSMen
     /// Disables frame limits the screen cannot show.
     func validateMenuItem(_ menuItem: NSMenuItem) -> Bool { menuItem.menu === fpsMenu ? menuItem.tag <= screenFPS : true }
     /// Changes the render resolution.
+    /// Scaling mode stored in UserDefaults; the default fills the screen on iOS and keeps 16:9 on macOS.
+    var fillScreen: Bool { (UserDefaults.standard.object(forKey: "fillScreen") as? Bool) ?? false }
+    func setFillScreen(_ on: Bool) { UserDefaults.standard.set(on, forKey: "fillScreen"); renderer.fillScreen = on }
     func setRenderRes(_ height: Int) { renderRes = height; view.renderHeight = height; refreshMenus() }
     /// Changes the frame limit.
     func setFrameLimit(_ limit: Int) { frameLimit = limit; applyFrameRate(); refreshMenus() }

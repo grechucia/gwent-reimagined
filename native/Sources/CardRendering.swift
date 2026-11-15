@@ -82,27 +82,40 @@ extension Scene {
 
     /// Card preview with the ability description.
     func drawPreview(_ card: Card) {
-        let cardRect = ScreenLayout.cardPreviewCard
+        // On phones the preview is larger and uses the extra screen width available in fill mode.
+        let large = Platform.isPhone
+        let visible = renderer.visibleRect
+        let columnWidth: Float = large ? 560 : 350
+        // Keep clear of the rounded corners and the camera housing at the screen edges.
+        let edgeMargin: Float = 130
+        let columnX = large ? visible.x + visible.w - columnWidth - edgeMargin : ScreenLayout.cardPreviewText.x
+        let cardRect = large ? R(columnX + (columnWidth - 300) / 2, 40, 300, 431) : ScreenLayout.cardPreviewCard
         renderer.rect(cardRect.inset(-6), RGBA.black.alpha(0.55))
         drawCardLarge(card, cardRect)
         var lines: [(String, String)] = []
-        if card.data.isLeader { if let lastAbility = card.data.abilities.last { lines.append((L("Leader Ability"), gameData.abilityDesc(lastAbility))) } }
-        else {
+        if card.data.isLeader {
+            if let leaderAbility = card.data.abilities.last { lines.append((L("Leader Ability"), gameData.abilityDesc(leaderAbility))) }
+        } else {
             if card.data.row.hasPrefix("agile") { lines.append((gameData.abilityName("agile"), gameData.abilityDesc("agile"))) }
-            for lastAbility in card.data.abilities where lastAbility != "hero" { lines.append((gameData.abilityName(lastAbility), gameData.abilityDesc(lastAbility))) }
+            for ability in card.data.abilities where ability != "hero" { lines.append((gameData.abilityName(ability), gameData.abilityDesc(ability))) }
             if card.hero { lines.append((L("Hero"), gameData.abilityDesc("hero"))) }
         }
         guard !lines.isEmpty else { return }
-        var y: Float = 720
-        let box = ScreenLayout.cardPreviewText
-        var h: Float = 12
-        for (title, description) in lines { h += renderer.measure(title, .serif(19, bold: true), maxWidth: 326).h + renderer.measure(description, .ui(16), maxWidth: 326).h + 10 }
-        renderer.rect(R(box.x, box.y, box.w, min(box.h, h)), RGBA(r: 0.06, g: 0.05, b: 0.03, a: 0.92))
-        renderer.frame(R(box.x, box.y, box.w, min(box.h, h)), RGBA.goldDark.alpha(0.6), 1)
+        let titleFont = Renderer.Font.serif(large ? 26 : 19, bold: true), bodyFont = Renderer.Font.ui(large ? 22 : 16)
+        let textWidth = columnWidth - 24
+        let box = R(columnX, cardRect.y + cardRect.h + 12, columnWidth, virtualHeight - (cardRect.y + cardRect.h + 12) - 8)
+        var contentHeight: Float = 12
         for (title, description) in lines {
-            if y > 1050 { break }
-            y += renderer.text(title, .serif(19, bold: true), x: box.x + 12, y: y, color: RGBA.gold, maxWidth: 326).h
-            y += renderer.text(description, .ui(16), x: box.x + 12, y: y, color: .gray(0.92), maxWidth: 326).h + 10
+            contentHeight += renderer.measure(title, titleFont, maxWidth: textWidth).h + renderer.measure(description, bodyFont, maxWidth: textWidth).h + 10
+        }
+        let panel = R(box.x, box.y, box.w, min(box.h, contentHeight))
+        renderer.rect(panel, RGBA(r: 0.06, g: 0.05, b: 0.03, a: 0.94))
+        renderer.frame(panel, RGBA.goldDark.alpha(0.6), 1)
+        var y = box.y + 6
+        for (title, description) in lines {
+            if y > box.y + box.h - 20 { break }
+            y += renderer.text(title, titleFont, x: box.x + 12, y: y, color: RGBA.gold, maxWidth: textWidth).h
+            y += renderer.text(description, bodyFont, x: box.x + 12, y: y, color: .gray(0.95), maxWidth: textWidth).h + 10
         }
     }
 }

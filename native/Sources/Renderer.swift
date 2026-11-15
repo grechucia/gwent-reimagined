@@ -60,6 +60,10 @@ final class Renderer {
     let white: MTLTexture
     private(set) var pxScale: Float = 1
     private(set) var viewportPx = R(0, 0, 1, 1)
+    /// When true the whole screen is used: the virtual area grows beyond 1920x1080 instead of showing black bars.
+    var fillScreen = false
+    /// Part of the virtual space that is visible on screen (wider or taller than 1920x1080 in fill mode).
+    private(set) var visibleRect = R(0, 0, virtualWidth, virtualHeight)
     var texCache: [String: MTLTexture] = [:]
     var textCache: [String: (TextTex, Int)] = [:]
     var frameNo = 0
@@ -145,14 +149,31 @@ final class Renderer {
         guard let passDescriptor = view.currentRenderPassDescriptor, let commandBuffer = queue.makeCommandBuffer() else { inflight.signal(); return nil }
         let drawableSize = view.drawableSize
         let drawableWidth = Float(drawableSize.width), drawableHeight = Float(drawableSize.height)
-        var w = drawableWidth, h = drawableWidth * virtualHeight / virtualWidth
-        if h > drawableHeight { h = drawableHeight; w = drawableHeight * virtualWidth / virtualHeight }
-        viewportPx = R(((drawableWidth - w) / 2).rounded(), ((drawableHeight - h) / 2).rounded(), w.rounded(), h.rounded())
-        pxScale = viewportPx.w / virtualWidth
+        if fillScreen {
+            // Use every pixel: extend the virtual area on the longer side and keep the 1920x1080 content centred.
+            viewportPx = R(0, 0, drawableWidth, drawableHeight)
+            let aspect = drawableWidth / drawableHeight
+            if aspect >= virtualWidth / virtualHeight {
+                let visibleWidth = virtualHeight * aspect
+                visibleRect = R(-(visibleWidth - virtualWidth) / 2, 0, visibleWidth, virtualHeight)
+            } else {
+                let visibleHeight = virtualWidth / aspect
+                visibleRect = R(0, -(visibleHeight - virtualHeight) / 2, virtualWidth, visibleHeight)
+            }
+        } else {
+            // Letterbox: keep exactly 16:9 and leave black bars.
+            var w = drawableWidth, h = drawableWidth * virtualHeight / virtualWidth
+            if h > drawableHeight { h = drawableHeight; w = drawableHeight * virtualWidth / virtualHeight }
+            viewportPx = R(((drawableWidth - w) / 2).rounded(), ((drawableHeight - h) / 2).rounded(), w.rounded(), h.rounded())
+            visibleRect = R(0, 0, virtualWidth, virtualHeight)
+        }
+        pxScale = viewportPx.w / visibleRect.w
         guard let renderEncoder = commandBuffer.makeRenderCommandEncoder(descriptor: passDescriptor) else { inflight.signal(); return nil }
         encoder = renderEncoder
         renderEncoder.setViewport(MTLViewport(originX: Double(viewportPx.x), originY: Double(viewportPx.y), width: Double(viewportPx.w), height: Double(viewportPx.h), znear: 0, zfar: 1))
-        projection = float4x4(rows: [SIMD4(2 / virtualWidth, 0, 0, -1), SIMD4(0, -2 / virtualHeight, 0, 1), SIMD4(0, 0, 1, 0), SIMD4(0, 0, 0, 1)])
+        let visible = visibleRect
+        projection = float4x4(rows: [SIMD4(2 / visible.w, 0, 0, -1 - 2 * visible.x / visible.w), SIMD4(0, -2 / visible.h, 0, 1 + 2 * visible.y / visible.h),
+                                     SIMD4(0, 0, 1, 0), SIMD4(0, 0, 0, 1)])
         verts = buffers[bufIndex].contents().bindMemory(to: Vtx.self, capacity: maxVerts)
         vcount = 0; flushedFrom = 0; curTex = nil
         renderEncoder.setRenderPipelineState(pipeline)
@@ -215,13 +236,34 @@ final class Renderer {
         if textureAspect > ra { destination.h = rect.w / textureAspect; if !alignTop { destination.y = rect.y + (rect.h - destination.h) / 2 } } else { destination.w = rect.h * textureAspect; destination.x = rect.x + (rect.w - destination.w) / 2 }
         quad(loadedTexture, destination, color: color)
     }
+    /// Converts a position in drawable pixels to the virtual coordinate space.
+    func virtualPoint(pixelX: Float, pixelY: Float) -> SIMD2<Float> {
+        let viewport = viewportPx, visible = visibleRect
+        return SIMD2(visible.x + (pixelX - viewport.x) / viewport.w * visible.w, visible.y + (pixelY - viewport.y) / viewport.h * visible.h)
+    }
+
+    /// Draws an image over the 1920x1080 area and stretches its outermost pixels over the extra screen area in fill mode.
+    func imageFillingScreen(_ path: String) {
+        guard let loadedTexture = texture(path) else { return }
+        let visible = visibleRect, edge: Float = 0.004
+        quad(loadedTexture, R(0, 0, virtualWidth, virtualHeight))
+        if visible.x < 0 {
+            quad(loadedTexture, R(visible.x, 0, -visible.x, virtualHeight), uv: R(0, 0, edge, 1))
+            quad(loadedTexture, R(virtualWidth, 0, -visible.x, virtualHeight), uv: R(1 - edge, 0, edge, 1))
+        }
+        if visible.y < 0 {
+            quad(loadedTexture, R(0, visible.y, virtualWidth, -visible.y), uv: R(0, 0, 1, edge))
+            quad(loadedTexture, R(0, virtualHeight, virtualWidth, -visible.y), uv: R(0, 1 - edge, 1, edge))
+        }
+    }
+
     /// Restricts drawing to a rectangle (nil removes the clip).
     func clip(_ rect: R?) {
         flush()
         guard let encoder = encoder else { return }
         let viewport = viewportPx
         if let rect = rect {
-            let x = max(0, Int(viewport.x + rect.x * pxScale)), y = max(0, Int(viewport.y + rect.y * pxScale))
+            let x = max(0, Int(viewport.x + (rect.x - visibleRect.x) * pxScale)), y = max(0, Int(viewport.y + (rect.y - visibleRect.y) * pxScale))
             let w = max(1, Int(rect.w * pxScale)), h = max(1, Int(rect.h * pxScale))
             encoder.setScissorRect(MTLScissorRect(x: x, y: y, width: w, height: h))
         } else {
@@ -329,7 +371,7 @@ final class Renderer {
     }
 
     /// Uniforms for the title-screen shader.
-    struct BgParams { var time: Float; var mouse: SIMD2<Float>; var texel: SIMD2<Float>; var pad: Float = 0 }
+    struct BgParams { var time: Float; var mouse: SIMD2<Float>; var texel: SIMD2<Float>; var cover: Float = 1 }
     /// An animated region of the title background (position/size and motion).
     struct BgRegion { var bounds: SIMD4<Float>; var motion: SIMD4<Float> }
     /// Draws the animated title background with the dedicated shader.
@@ -337,7 +379,8 @@ final class Renderer {
         guard let loadedTexture = texture(path), let encoder = encoder else { return }
         flush()
         encoder.setRenderPipelineState(bgPipeline)
-        var params = BgParams(time: time, mouse: mouse, texel: SIMD2(1 / Float(loadedTexture.width), 1 / Float(loadedTexture.height)))
+        var params = BgParams(time: time, mouse: mouse, texel: SIMD2(1 / Float(loadedTexture.width), 1 / Float(loadedTexture.height)),
+                              cover: (virtualWidth / virtualHeight) / (visibleRect.w / visibleRect.h))
         var regs = regions; while regs.count < 48 { regs.append(BgRegion(bounds: .zero, motion: .zero)) }
         var glintPositions = glints; while glintPositions.count < 2 { glintPositions.append(.zero) }
         var candlePositions = candles; while candlePositions.count < 3 { candlePositions.append(SIMD2(-1, -1)) }
@@ -371,7 +414,7 @@ final class Renderer {
         float2 p = float2((id & 1) ? 1.0 : -1.0, (id & 2) ? -1.0 : 1.0);
         BVO o; o.pos = float4(p, 0, 1); o.uv = float2(p.x * 0.5 + 0.5, 0.5 - p.y * 0.5); return o;
     }
-    struct BgParams { float time; float2 mouse; float2 texel; float pad; };
+    struct BgParams { float time; float2 mouse; float2 texel; float cover; };
     struct BgRegion { float4 reg; float4 mot; };
     static float hash2(float2 p) { return fract(sin(dot(p, float2(127.1, 311.7))) * 43758.5453); }
     static float flick(float t) { return 0.5*sin(t*7.3) + 0.3*sin(t*13.1+1.7) + 0.2*sin(t*23.7+4.1); }
@@ -381,6 +424,8 @@ final class Renderer {
                         constant float2* glint [[buffer(2)]], constant float2* candle [[buffer(3)]]) {
         float t = P.time;
         float2 uv = in.uv;
+        // cover < 1: the screen is wider than 16:9, crop the image vertically; cover > 1: crop it horizontally.
+        if (P.cover < 1.0) uv.y = 0.5 + (uv.y - 0.5) * P.cover; else if (P.cover > 1.0) uv.x = 0.5 + (uv.x - 0.5) / P.cover;
         float z = 1.03 + 0.012 * sin(t * 0.045);
         uv = (uv - 0.5) / z + 0.5 + float2(sin(t * 0.031), cos(t * 0.027)) * 0.003;
         float depth = 0.25 + 0.45 * smoothstep(0.12, 0.35, uv.y)

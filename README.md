@@ -40,7 +40,7 @@
 - **Deck builder**: premade decks, custom decks, a favourite "My deck", and leader selection.
 - **Gamepad support**: any controller supported by Apple's GameController framework (Xbox, PlayStation, MFi). The focused element is highlighted, with no cursor.
 - **11 languages**: English, Polish, German, French, Italian, Spanish, Portuguese, Russian, Chinese, Japanese and Korean.
-- **In-app options**: music, sound, render resolution, frame limit (30/40/60 FPS, depending on the display), AI difficulty, full screen, language, save location and player name.
+- **In-app options**: music, sound, scaling (fill the screen or 16:9), render resolution, frame limit (30/40/60 FPS, depending on the display), AI difficulty, full screen, language, save location and player name.
 - **Synced saves**: a single JSON save file that can live in iCloud Drive or any folder.
 
 ## Screenshots
@@ -150,6 +150,10 @@ python3 split.py       # split new strings into parts -> src_<n>.json (existing 
    ```
 3. Register the language in `GameData.languages` (`native/Sources/GameData.swift`), using its native name.
 4. Rebuild with `./native/build.sh`. The language appears in **Options** and on the title screen.
+
+### Extra UI strings
+
+Strings added after a language was assembled can be translated in `native/Resources/data/ui_<code>.json` (a JSON object mapping the English text to its translation). These files are merged into the language at startup; `ui_pl.json` holds all Polish UI texts, because the code itself is written only in English.
 
 ### Updating an existing language
 

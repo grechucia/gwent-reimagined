@@ -13,7 +13,7 @@ extension Scene {
 
     /// Rules screen.
     func drawRules() {
-        renderer.rect(R(0, 0, virtualWidth, virtualHeight), RGBA.black.alpha(0.82))
+        renderer.rect(renderer.visibleRect, RGBA.black.alpha(0.82))
         let panel = ScreenLayout.rulesPanel
         renderer.gradient(panel, RGBA(r: 0.13, g: 0.1, b: 0.06, a: 0.98), RGBA(r: 0.07, g: 0.05, b: 0.03, a: 0.98), steps: 12)
         renderer.frame(panel, RGBA.goldDark, 2)

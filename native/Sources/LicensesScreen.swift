@@ -7,7 +7,7 @@ import simd
 extension Scene {
     /// Draws the licenses and credits.
     func drawCredits() {
-        renderer.rect(R(0, 0, virtualWidth, virtualHeight), RGBA.black.alpha(0.85))
+        renderer.rect(renderer.visibleRect, RGBA.black.alpha(0.85))
         let panel = ScreenLayout.licensesPanel
         glassPanel(panel, alpha: 0.95)
         renderer.text(L("Licenses"), .gwent(52), x: 960, y: 24, color: RGBA.gold, align: .center)

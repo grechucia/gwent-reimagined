@@ -13,7 +13,7 @@ import Foundation
     var displayPath: String {
         if ProcessInfo.processInfo.environment["GWENT_SHOT"] == "1" { return "~/Library/Application Support/GwentReimagined" }
         #if os(iOS)
-        if directory.path == SaveStore.localDir.path { return L("Files → On My iPhone → GwentReimagined") }
+        if directory.resolvingSymlinksInPath().standardizedFileURL.path == SaveStore.localDir.resolvingSymlinksInPath().standardizedFileURL.path || directory.lastPathComponent == "Documents" { return L("Files → On My iPhone → GwentReimagined") }
         return directory.lastPathComponent
         #else
         return (directory.path as NSString).abbreviatingWithTildeInPath

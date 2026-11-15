@@ -7,7 +7,7 @@ import simd
 extension Scene {
     /// Options overlay: player name, audio, graphics, difficulty, save location and language.
     func drawOptions() {
-        renderer.rect(R(0, 0, virtualWidth, virtualHeight), RGBA.black.alpha(0.82))
+        renderer.rect(renderer.visibleRect, RGBA.black.alpha(0.82))
         let panel = ScreenLayout.optionsPanel
         glassPanel(panel, alpha: 0.96)
         renderer.text(L("Options"), .gwent(52), x: 960, y: panel.y + 24, color: RGBA.gold, align: .center)
@@ -62,6 +62,11 @@ extension Scene {
         renderer.text(SaveStore.shared.chosen ? SaveStore.shared.displayPath : L("not chosen yet"), .ui(15), x: bx, y: y + 4, color: .gray(0.8), maxWidth: 680)
         goldButton(R(bx, y + 50, 200, 44), L("Change…"), font: .serif(17, bold: true)) { [weak self] in self?.askSaveLocation(then: nil) }
         y += 126
+        if let h = host {
+            label(L("Scaling"))
+            choice([(L("Fill screen"), h.fillScreen, true), ("16:9", !h.fillScreen, true)], w: 180) { i in h.setFillScreen(i == 0) }
+            y += 76
+        }
         label(L("Difficulty (outside career)"))
         choice([(L("Easy"), aiLevel == 0, true), (L("Normal"), aiLevel == 1, true), (L("Hard"), aiLevel == 2, true)], w: 180) { [weak self] i in self?.aiLevel = i }
         y += 76

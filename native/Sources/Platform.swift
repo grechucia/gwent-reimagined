@@ -15,6 +15,9 @@ import UniformTypeIdentifiers
     var effectiveFrameLimit: Int { get }
     func setFrameLimit(_ limit: Int)
     var supportsWindowModes: Bool { get }
+    /// Fill the whole screen (true) or keep 16:9 with black bars (false).
+    var fillScreen: Bool { get }
+    func setFillScreen(_ on: Bool)
     var isFullScreen: Bool { get }
     func setFullScreen(_ on: Bool)
     func refreshMenus()
@@ -24,8 +27,11 @@ import UniformTypeIdentifiers
 @MainActor enum Platform {
     #if os(macOS)
     static let isDesktop = true
+    static let isPhone = false
     #else
     static let isDesktop = false
+    /// Small screens get larger card descriptions.
+    static let isPhone = UIDevice.current.userInterfaceIdiom == .phone
     #endif
 
     /// Opens a URL in the default browser.

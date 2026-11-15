@@ -76,7 +76,7 @@ extension Scene {
         renderer.text(currentName, .serif(20, bold: true), x: box.x + 18, y: box.mid.y - textHeight / 2, color: RGBA.gold)
         renderer.text(langMenuOpen ? "▴" : "▾", .ui(20, bold: true), x: box.x + box.w - 18, y: box.mid.y - textHeight / 2, color: RGBA.gold, align: .right)
         if !langMenuOpen { button(box) { [weak self] in self?.langMenuOpen = true }; return }
-        button(R(0, 0, virtualWidth, virtualHeight)) { [weak self] in self?.langMenuOpen = false }
+        button(renderer.visibleRect) { [weak self] in self?.langMenuOpen = false }
         let itemHeight: Float = 36
         let list = GameData.languages
         let area = R(box.x - 4, box.y - 8 - Float(list.count) * itemHeight, box.w + 8, Float(list.count) * itemHeight + 4)
@@ -148,7 +148,7 @@ extension Scene {
     func drawMenuBackground(_ dt: Float, dim dimming: Float) {
         smoothMouse += (mouseNorm - smoothMouse) * min(1, dt * 2.5)
         renderer.titleBackground("img/start_bg.jpg", time: time, mouse: smoothMouse * 0.5, regions: Scene.regions, glints: glints, candles: candles)
-        renderer.rect(R(0, 0, virtualWidth, virtualHeight), RGBA(r: 0.02, g: 0.015, b: 0.01, a: dimming))
+        renderer.rect(renderer.visibleRect, RGBA(r: 0.02, g: 0.015, b: 0.01, a: dimming))
         drawParticles(dt)
     }
 }

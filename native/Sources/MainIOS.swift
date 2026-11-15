@@ -38,8 +38,7 @@ final class IOSGameView: MTKView {
         guard let renderer = app?.renderer, bounds.width > 0 else { return .zero }
         let pixelX = Float(location.x / bounds.width) * Float(drawableSize.width)
         let pixelY = Float(location.y / bounds.height) * Float(drawableSize.height)
-        let viewport = renderer.viewportPx
-        return SIMD2((pixelX - viewport.x) / viewport.w * virtualWidth, (pixelY - viewport.y) / viewport.h * virtualHeight)
+        return renderer.virtualPoint(pixelX: pixelX, pixelY: pixelY)
     }
 
     /// Touch down: moves focus and starts the long-press timer (long press = card details).
@@ -90,7 +89,6 @@ final class GameViewController: UIViewController {
     weak var app: IOSAppDelegate?
     override var prefersStatusBarHidden: Bool { true }
     override var prefersHomeIndicatorAutoHidden: Bool { true }
-    override var preferredScreenEdgesDeferringSystemGestures: UIRectEdge { .all }
     override var supportedInterfaceOrientations: UIInterfaceOrientationMask { .landscape }
     /// Uses the shared Metal view as its view.
     override func loadView() { view = app?.view }
@@ -127,6 +125,9 @@ final class IOSAppDelegate: UIResponder, UIApplicationDelegate, MTKViewDelegate,
     var availableFrameLimits: [Int] { let refreshRate = screenFPS; let limits = frameLimits.filter { $0 <= refreshRate && refreshRate % $0 == 0 }; return limits.isEmpty ? [refreshRate] : limits }
     var effectiveFrameLimit: Int { let available = availableFrameLimits; return available.contains(frameLimit) ? frameLimit : (available.last { $0 <= frameLimit } ?? available.last!) }
     /// Changes the render resolution.
+    /// Scaling mode stored in UserDefaults; the default fills the screen on iOS and keeps 16:9 on macOS.
+    var fillScreen: Bool { (UserDefaults.standard.object(forKey: "fillScreen") as? Bool) ?? true }
+    func setFillScreen(_ on: Bool) { UserDefaults.standard.set(on, forKey: "fillScreen"); renderer.fillScreen = on }
     func setRenderRes(_ height: Int) { renderRes = height; view.renderHeight = height }
     /// Changes the frame limit.
     func setFrameLimit(_ limit: Int) { frameLimit = limit; view.preferredFramesPerSecond = effectiveFrameLimit }
@@ -145,6 +146,7 @@ final class IOSAppDelegate: UIResponder, UIApplicationDelegate, MTKViewDelegate,
         view.isMultipleTouchEnabled = false
         renderer = Renderer(view: view, gameDir: resources.appendingPathComponent("game"))
         view.delegate = self
+        renderer.fillScreen = fillScreen
         view.preferredFramesPerSecond = effectiveFrameLimit
         view.renderHeight = renderRes
         audio = Audio(gameDir: resources.appendingPathComponent("game"))

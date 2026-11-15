@@ -10,7 +10,7 @@ extension Scene {
 
     /// Save-location prompt: this device, iCloud Drive or a custom folder.
     func drawSavePrompt() {
-        renderer.rect(R(0, 0, virtualWidth, virtualHeight), RGBA.black.alpha(0.82))
+        renderer.rect(renderer.visibleRect, RGBA.black.alpha(0.82))
         let area = ScreenLayout.savePromptPanel
         glassPanel(area, alpha: 0.96)
         renderer.text(L("Where should your progress be saved?"), .gwent(44), x: 960, y: area.y + 30, color: RGBA.gold, align: .center)

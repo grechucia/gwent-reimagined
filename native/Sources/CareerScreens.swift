@@ -150,7 +150,7 @@ extension Scene {
     func drawCareerReward() {
         guard let options = careerRewards else { return }
         clicks.removeAll()
-        renderer.rect(R(0, 0, virtualWidth, virtualHeight), RGBA.black.alpha(0.8))
+        renderer.rect(renderer.visibleRect, RGBA.black.alpha(0.8))
         renderer.text(L("Victory!"), .gwent(64), x: 960, y: 60, color: RGBA.gold, align: .center)
         renderer.text(options.isEmpty ? L("You already own every card of this faction.")
                             : L("Choose a card to add to your collection:"),

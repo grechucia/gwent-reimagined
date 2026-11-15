@@ -65,7 +65,7 @@ extension Scene {
                 let progress = elapsed / effect.duration
                 let spin = abs(cos(min(progress / 0.7, 1) * Float.pi * 5))
                 let alpha: Float = progress > 0.85 ? (1 - progress) / 0.15 : 1
-                renderer.rect(R(0, 0, virtualWidth, virtualHeight), RGBA.black.alpha(0.35 * alpha))
+                renderer.rect(renderer.visibleRect, RGBA.black.alpha(0.35 * alpha))
                 let face = progress < 0.7 ? (Int(progress / 0.7 * 10) % 2 == 0) : mine
                 let w = cr.w * max(0.06, progress < 0.7 ? spin : 1)
                 renderer.image("img/icons/notif_\(face ? "me" : "op")_coin.png", R(cr.mid.x - w / 2, cr.y, w, cr.h), color: .white.alpha(alpha))

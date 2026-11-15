@@ -7,7 +7,7 @@ import simd
 extension Scene {
     /// Board background.
     func drawModernBoard(_ match: Game) {
-        renderer.image("img/board.jpg", R(0, 0, virtualWidth, virtualHeight))
+        renderer.imageFillingScreen("img/board.jpg")
         renderer.gradient(R(0, virtualHeight - 120, virtualWidth, 120), RGBA.black.alpha(0), RGBA.black.alpha(0.35), steps: 8)
     }
 
@@ -408,7 +408,7 @@ extension Scene {
         let iconWidth: Float = note.icon == nil ? 0 : 96
         let w = textWidth + iconWidth + 90, h = max(110, textHeight + 50)
         let card = R(960 - w / 2, 500 - h / 2 + (1 - ease) * 18, w, h)
-        renderer.rect(R(0, 0, virtualWidth, virtualHeight), RGBA.black.alpha(0.25 * alpha))
+        renderer.rect(renderer.visibleRect, RGBA.black.alpha(0.25 * alpha))
         renderer.gradient(card, RGBA(r: 0.08, g: 0.07, b: 0.06, a: 0.93 * alpha), RGBA(r: 0.02, g: 0.02, b: 0.03, a: 0.95 * alpha), steps: 8)
         renderer.rect(R(card.x, card.y, card.w, 2), RGBA.gold.alpha(0.9 * alpha))
         renderer.rect(R(card.x, card.y + card.h - 1, card.w, 1), RGBA.goldDark.alpha(0.6 * alpha))
@@ -421,7 +421,7 @@ extension Scene {
 
     /// Full-screen overlay with a set of cards to choose from.
     func overlayCards(_ cards: [Card], title: String, info: String?, marked: [Card] = [], _ onClick: @escaping (Card) -> Void) -> R {
-        renderer.rect(R(0, 0, virtualWidth, virtualHeight), RGBA.black.alpha(0.74))
+        renderer.rect(renderer.visibleRect, RGBA.black.alpha(0.74))
         renderer.text(title, .serif(32, bold: true), x: 960, y: 70, color: RGBA.gold, maxWidth: 1500, align: .center)
         if let info = info { renderer.text(info, .ui(22), x: 960, y: 150, color: .gray(0.9), align: .center) }
         let count = cards.count
@@ -484,7 +484,7 @@ extension Scene {
             goldButton(R(960 - 150, min(990, end.y + 10), 300, 60), L("Close"), font: .serif(24, bold: true)) { match.resolveChoice(nil) }
             if let h = hover { drawPreview(h) }
         case .options(let opts):
-            renderer.rect(R(0, 0, virtualWidth, virtualHeight), RGBA.black.alpha(0.55))
+            renderer.rect(renderer.visibleRect, RGBA.black.alpha(0.55))
             let cols = opts.count > 4 ? 5 : opts.count
             let buttonWidth: Float = opts.count > 4 ? 120 : 340, buttonHeight: Float = 64
             let rowsN = Int((Double(opts.count) / Double(cols)).rounded(.up))
@@ -508,7 +508,7 @@ extension Scene {
 
     /// End-of-match screen.
     func drawEnd(_ match: Game) {
-        renderer.rect(R(0, 0, virtualWidth, virtualHeight), RGBA.black.alpha(0.8))
+        renderer.rect(renderer.visibleRect, RGBA.black.alpha(0.8))
         let image = match.winner === match.human ? "end_win" : (match.winner === match.computer ? "end_lose" : "end_draw")
         renderer.imageContain("img/icons/\(image).png", BoardLayout.endOfMatchBanner)
         renderer.text(L("Round"), .serif(24, bold: true), x: 760, y: 500, color: .gray(0.8), align: .center)
